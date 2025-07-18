@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    /* -------------- 基本設定 -------------- */
+    /* ---------- 基本設定 ---------- */
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Node",
@@ -14,27 +14,28 @@
     "isolatedModules": true,
     "noEmit": true,
 
-    /* -------------- 型チェック緩和 -------------- */
+    /* ---------- 型チェック緩和 ---------- */
     "strict": false,
     "noImplicitAny": false,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
 
-    /* -------------- パス設定 -------------- */
-    "baseUrl": "./src",        // 以後 import を src 基準に解決
-    "rootDir": "./src",        // これより外の TS は原則コンパイルしない
+    /* ---------- パス設定 ---------- */
+    /* ↓↓↓ 2 行とも削除しました ↓↓↓ */
+    /* "baseUrl": "./src",            */
+    /* "rootDir": "./src",            */
     "paths": {
-      "@/*": ["*"]             // 例） import x from "@/pages/Top"
+      "@/*": ["src/*"]              // "@/components/..." などを解決
     },
 
-    /* -------------- その他 -------------- */
+    /* ---------- その他 ---------- */
     "types": ["node", "@testing-library/jest-dom"]
   },
 
-  /* src 直下だけを対象にする */
+  /* src 配下だけを型チェック対象にする */
   "include": ["src/**/*"],
 
-  /* それでも拾われたら完全無視させる */
+  /* それでも拾われたら完全に無視させる */
   "exclude": [
     "node_modules",
     "demos/**",
