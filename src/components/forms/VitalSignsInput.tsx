@@ -3,8 +3,10 @@ import { Heart, Activity, Thermometer } from 'lucide-react';
 import { VitalSigns } from '../../types';
 
 interface VitalSignsInputProps {
-  value: VitalSigns;
-  onChange: (value: VitalSigns) => void;
+  value?: VitalSigns;
+  onChange?: (value: VitalSigns) => void;
+  onSave?: (eventData: any) => Promise<void>;
+  isSubmitting?: boolean;
 }
 
 // 体温プルダウン生成
@@ -23,17 +25,20 @@ const vitalTemplates = [
   'SPO2低下傾向あり、呼吸状態注意',
 ];
 
-const VitalSignsInput: React.FC<VitalSignsInputProps> = ({ value, onChange }) => {
+const VitalSignsInput: React.FC<VitalSignsInputProps> = ({ 
+  value, 
+  onChange, 
+  onSave,
+  isSubmitting 
+}) => {
   const [note, setNote] = useState('');
 
+  // デフォルト値設定
   const safeValue = value || {
     temperature: 36.5,
-    pulse: 70,
-    spO2: 95,
-    bloodPressure: {
-      systolic: 120,
-      diastolic: 80
-    }
+    pulse: 80,
+    spO2: 98,
+    bloodPressure: { systolic: 120, diastolic: 80 }
   };
 
   const handleChange = (field: keyof VitalSigns, val: any) => {

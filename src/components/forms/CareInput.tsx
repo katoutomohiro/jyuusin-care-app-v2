@@ -3,8 +3,10 @@ import { Heart, Shield, AlertCircle } from 'lucide-react';
 import { CareRecord } from '../../types';
 
 interface CareInputProps {
-  value: CareRecord;
-  onChange: (value: CareRecord) => void;
+  value?: CareRecord;
+  onChange?: (value: CareRecord) => void;
+  onSave?: (eventData: any) => Promise<void>;
+  isSubmitting?: boolean;
 }
 
 const CareInput: React.FC<CareInputProps> = ({ value, onChange }) => {

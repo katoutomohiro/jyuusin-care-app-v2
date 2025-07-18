@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { User, AuthState } from '../../types';
+import { AdminUser, AuthState } from '../types';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
@@ -10,7 +10,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 type AuthAction =
   | { type: 'LOGIN_START' }
-  | { type: 'LOGIN_SUCCESS'; payload: User }
+  | { type: 'LOGIN_SUCCESS'; payload: AdminUser }
   | { type: 'LOGIN_FAILURE' }
   | { type: 'LOGOUT' };
 
@@ -20,31 +20,36 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       return { ...state, isLoading: true };
     case 'LOGIN_SUCCESS':
       return {
-        user: action.payload,
-        isAuthenticated: true,
+        ...state,
         isLoading: false,
+        isAuthenticated: true,
+        user: action.payload,
+        error: undefined,
       };
     case 'LOGIN_FAILURE':
       return {
-        user: null,
-        isAuthenticated: false,
+        ...state,
         isLoading: false,
+        isAuthenticated: false,
+        user: null,
+        error: 'ログインに失敗しました',
       };
     case 'LOGOUT':
       return {
-        user: null,
-        isAuthenticated: false,
+        ...state,
         isLoading: false,
+        isAuthenticated: false,
+        user: null,
+        error: undefined,
       };
     default:
       return state;
   }
 };
 
-// デフォルトの管理者ユーザー
-const defaultUser: User = {
-  id: '1',
-  name: '管理者',
+const defaultUser: AdminUser = {
+  id: '001',
+  name: '重心ケア管理者',
   email: 'admin@example.com',
   role: 'admin',
   createdAt: new Date(),
@@ -52,60 +57,46 @@ const defaultUser: User = {
 };
 
 const initialState: AuthState = {
-  user: defaultUser,
-  isAuthenticated: true, // 初期状態でログイン済み
+  isAuthenticated: true, // 開発中は自動ログイン
   isLoading: false,
+  user: defaultUser,  // 開発中はデフォルトユーザーでログイン
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // ローカルストレージから認証状態を復元
+  // 開発中は自動ログインをスキップ
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        dispatch({ type: 'LOGIN_SUCCESS', payload: user });
-      } catch (error) {
-        localStorage.removeItem('user');
-        // エラーが発生した場合はデフォルトユーザーを使用
-        localStorage.setItem('user', JSON.stringify(defaultUser));
-      }
-    } else {
-      // ローカルストレージにユーザー情報がない場合はデフォルトユーザーを保存
-      localStorage.setItem('user', JSON.stringify(defaultUser));
-    }
+    // 本番環境では localStorage からの復元処理などをここに記述
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<void> => {
     dispatch({ type: 'LOGIN_START' });
     
     try {
-      // 簡易的な認証（実際の実装ではAPIを呼び出す）
+      // 本番環境では実際の認証 API を呼び出し
+      // 現在は開発用の模擬ログイン
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       if (email === 'admin@example.com' && password === 'password') {
-        const user: User = {
-          id: '1',
-          name: '管理者',
+        const user: AdminUser = {
+          id: '001',
+          name: '重心ケア管理者',
           email: email,
           role: 'admin',
           createdAt: new Date(),
           updatedAt: new Date(),
         };
-        
-        localStorage.setItem('user', JSON.stringify(user));
         dispatch({ type: 'LOGIN_SUCCESS', payload: user });
       } else {
-        throw new Error('認証に失敗しました');
+        dispatch({ type: 'LOGIN_FAILURE' });
       }
     } catch (error) {
       dispatch({ type: 'LOGIN_FAILURE' });
-      throw error;
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('user');
+  const logout = (): void => {
     dispatch({ type: 'LOGOUT' });
   };
 
@@ -124,8 +115,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}; 
+};

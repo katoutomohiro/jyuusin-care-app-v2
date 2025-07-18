@@ -15,9 +15,9 @@
   "author": "Jyushin Care Team",
   "license": "MIT",
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 3003 --no-open",
+    "dev": "vite --host 0.0.0.0 --port 3005 --no-open",
     "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0 --port 3003",
+    "preview": "vite preview --host 0.0.0.0 --port 3005",
     "type-check": "echo \"skip type-check\"",
     "lint": "echo \"skip lint\"",
     "test": "echo \"skip test\"",

@@ -3,8 +3,10 @@ import { Droplets, Activity } from 'lucide-react';
 import { ExcretionRecord } from '../../types';
 
 interface ExcretionInputProps {
-  value: ExcretionRecord;
-  onChange: (value: ExcretionRecord) => void;
+  value?: ExcretionRecord;
+  onChange?: (value: ExcretionRecord) => void;
+  onSave?: (eventData: any) => Promise<void>;
+  isSubmitting?: boolean;
 }
 
 const ExcretionInput: React.FC<ExcretionInputProps> = ({ value, onChange }) => {

@@ -12,32 +12,34 @@ interface ChartData {
 }
 
 interface AIChartsProps {
-  seizureData: {
+  seizureData?: {
     riskLevel: string;
     probability: number;
     timeWindow: string;
     triggers: string[];
   };
-  healthData: {
+  healthData?: {
     riskLevel: string;
     probability: number;
     factors: string[];
   };
-  trendData: {
+  trendData?: {
     trend: string;
     confidence: number;
     factors: string[];
   };
-  anomalies: any[];
-  positiveChanges: any[];
+  trends?: any; // 追加: AIInsightEngineから来るtrends prop
+  anomalies?: any[];
+  positiveChanges?: any[];
 }
 
 const AICharts: React.FC<AIChartsProps> = ({
   seizureData,
   healthData,
   trendData,
-  anomalies,
-  positiveChanges
+  trends,
+  anomalies = [],
+  positiveChanges = []
 }) => {
   // リスクレベルを数値に変換
   const getRiskScore = (riskLevel: string): number => {

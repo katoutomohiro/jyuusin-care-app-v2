@@ -3,8 +3,10 @@ import { Droplets, Coffee, Utensils } from 'lucide-react';
 import { IntakeRecord } from '../../types';
 
 interface IntakeInputProps {
-  value: IntakeRecord;
-  onChange: (value: IntakeRecord) => void;
+  value?: IntakeRecord;
+  onChange?: (value: IntakeRecord) => void;
+  onSave?: (eventData: any) => Promise<void>;
+  isSubmitting?: boolean;
 }
 
 const IntakeInput: React.FC<IntakeInputProps> = ({ value, onChange }) => {

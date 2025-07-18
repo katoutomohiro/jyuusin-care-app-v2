@@ -8,7 +8,7 @@ import ExcretionInput from '../components/forms/ExcretionInput';
 import SleepInput from '../components/forms/SleepInput';
 import ActivityInput from '../components/forms/ActivityInput';
 import CareInput from '../components/forms/CareInput';
-import { users } from '../../constants';
+import { USERS } from '../constants';
 
 interface TodayEventCounts {
   [key: string]: number;
@@ -163,7 +163,7 @@ const StructuredDailyLogPage: React.FC = () => {
         <div className="p-4">
           <h2 className="text-lg font-bold text-gray-800 mb-4">利用者を選択してください</h2>
           <div className="space-y-2">
-            {users.map((user) => (
+            {USERS.map((user) => (
               <button
                 key={user.id}
                 onClick={() => setSelectedUserId(user.id)}
@@ -202,7 +202,7 @@ const StructuredDailyLogPage: React.FC = () => {
                 </button>
                 <div className="flex-1 text-center">
                   <h2 className="text-lg font-bold text-gray-800">
-                    {users.find(u => u.id === selectedUserId)?.name}
+                    {USERS.find(u => u.id === selectedUserId)?.name}
                   </h2>
                 </div>
               </div>
@@ -276,7 +276,7 @@ const StructuredDailyLogPage: React.FC = () => {
                 <ExpressionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
               )}
               {activeEventType === 'vital' && (
-                <VitalSignsInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+                <VitalSignsInput />
               )}
               {activeEventType === 'meal' && (
                 <IntakeInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />

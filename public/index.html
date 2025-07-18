@@ -1,4 +1,18 @@
-<head>
-  <meta charset="utf-8">
-  <script type="text/javascript" src="/index.js"></script>
-</head>
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>重心ケアアプリ – Dev</title>
+
+    <!-- PWA などは本番ビルド時にだけ入れれば OK -->
+    <link rel="icon" type="image/svg+xml" href="/icon-512x512.svg" />
+  </head>
+
+  <body>
+    <div id="root"></div>
+
+    <!-- ★ Vite がトランスパイルして配信する入口 ★ -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

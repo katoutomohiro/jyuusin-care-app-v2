@@ -1,7 +1,7 @@
 // 利用者データ（現場情報）
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { ServiceType, DailyLog, FacilityInfo, User, Staff, MedicalCare } from '../types';
-import { SAMPLE_STAFF } from '../../constants';
+import { ServiceType, DailyLog, FacilityInfo, User, Staff, MedicalCare, Gender } from '../types';
+import { SAMPLE_STAFF } from '../constants';
 
 // 利用者データ（現場情報）- 24名分
 export const initialUsers: User[] = [

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { AIPredictionService } from "../../services/AIPredictionService";
-import { AIAnomalyDetectionService } from "../../services/AIAnomalyDetectionService";
+import { AIPredictionService } from "../services/AIPredictionService";
+import { AIAnomalyDetectionService } from "../services/AIAnomalyDetectionService";
 import AICharts from './AICharts';
 import { DailyLog, User } from '../types';
 
@@ -43,17 +43,17 @@ const AIInsightEngine: React.FC<AIInsightEngineProps> = ({
         const predictionService = AIPredictionService.getInstance();
 
         // 発作予測
-        const seizurePrediction = await predictionService.predictSeizure(user, dailyLogs);
+        const seizurePrediction = await predictionService.predictSeizureRisk(user, dailyLogs);
 
         // 健康状態予測
-        const healthPrediction = await predictionService.predictHealthDeterioration(user, dailyLogs);
+        const healthPrediction = await predictionService.predictHealthDecline(user, dailyLogs);
 
         // 異常検知
-        const anomalies = AIAnomalyDetectionService.detectAnomalies(dailyLogs);
+        const anomalies = await AIAnomalyDetectionService.detectAnomalies(dailyLogs);
         const positiveChanges = AIAnomalyDetectionService.detectPositiveChanges(dailyLogs);
 
         // 健康トレンド分析
-        const healthTrend = await predictionService.analyzeHealthTrend(user, dailyLogs);
+        const healthTrend = await predictionService.predictHealthDecline(user, dailyLogs);
 
         // 総合的な推奨事項の生成
         const recommendations = generateRecommendations(

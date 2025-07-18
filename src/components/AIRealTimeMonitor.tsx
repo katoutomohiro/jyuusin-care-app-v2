@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AIPredictionService } from "../../services/AIPredictionService";
-import { AIAnomalyDetectionService } from "../../services/AIAnomalyDetectionService";
+import { AIPredictionService } from "../services/AIPredictionService";
+import { AIAnomalyDetectionService } from "../services/AIAnomalyDetectionService";
 import { DailyLog, User } from '../types';
 
 interface RealTimeAlert {
@@ -49,13 +49,13 @@ const AIRealTimeMonitor: React.FC<AIRealTimeMonitorProps> = ({
       }
 
       // 発作予測
-      const seizurePrediction = await predictionService.predictSeizure(user, recentLogs);
+      const seizurePrediction = await predictionService.predictSeizureRisk(user, recentLogs);
       
       // 健康状態予測
-      const healthPrediction = await predictionService.predictHealthDeterioration(user, recentLogs);
+      const healthPrediction = await predictionService.predictHealthDecline(user, recentLogs);
       
       // 異常検知
-      const anomalies = AIAnomalyDetectionService.detectAnomalies(recentLogs);
+      const anomalies = await AIAnomalyDetectionService.detectAnomalies(recentLogs);
       const positiveChanges = AIAnomalyDetectionService.detectPositiveChanges(recentLogs);
 
       // アラート生成
@@ -67,7 +67,7 @@ const AIRealTimeMonitor: React.FC<AIRealTimeMonitorProps> = ({
           id: `seizure-${Date.now()}`,
           type: 'critical',
           title: '🚨 発作リスク：緊急',
-          message: `発作リスクが極めて高い状態です。発生確率: ${(seizurePrediction.probability * 100).toFixed(1)}%。24時間体制での観察が必要です。`,
+          message: `発作リスクが極めて高い状態です。発生確率: ${(seizurePrediction.confidence * 100).toFixed(1)}%。24時間体制での観察が必要です。`,
           timestamp: new Date(),
           severity: 10,
           actionRequired: true
@@ -108,13 +108,13 @@ const AIRealTimeMonitor: React.FC<AIRealTimeMonitorProps> = ({
       }
 
       // 異常検知アラート
-      anomalies.forEach((anomaly, index) => {
+      anomalies.forEach((anomaly: any, index: number) => {
         if (anomaly.type === 'vital' && anomaly.severity === 'critical') {
           newAlerts.push({
             id: `anomaly-${Date.now()}-${index}`,
             type: 'critical',
             title: '🚨 バイタル異常：緊急',
-            message: anomaly.message,
+            message: anomaly.message || '重要なバイタル異常が検知されました',
             timestamp: new Date(),
             severity: 9,
             actionRequired: true
