@@ -14,34 +14,19 @@
   ],
   "author": "Jyushin Care Team",
   "license": "MIT",
-
-  /* ──────────▼ ここだけ書き換え ▼────────── */
   "scripts": {
-    /* 開発サーバー ─ UI を確認するだけ */
     "dev": "vite --host 0.0.0.0 --port 3003 --no-open",
-
-    /* 本番ビルド（型チェックなどは **しない**） */
     "build": "vite build",
-
-    /* プレビュー（ビルド後の静的ファイルを確認） */
     "preview": "vite preview --host 0.0.0.0 --port 3003",
-
-    /* ------------- スキップ系 ------------- */
-    "type-check":   "echo \"⏭  skip type-check\"",
-    "lint":         "echo \"⏭  skip lint\"",
-    "test":         "echo \"⏭  skip test\"",
-    "test:coverage":"echo \"⏭  skip coverage\"",
-    "test:critical":"echo \"⏭  skip critical tests\"",
-
-    /* CI 用 – ひとまずビルドだけ成功すれば OK */
-    "ci:full":      "npm run build",
-    "ci:critical":  "npm run build",
-
-    /* pre-commit フックも無効化 */
-    "pre-commit":   "echo \"⏭  pre-commit hooks disabled\""
+    "type-check": "echo \"skip type-check\"",
+    "lint": "echo \"skip lint\"",
+    "test": "echo \"skip test\"",
+    "test:coverage": "echo \"skip coverage\"",
+    "test:critical": "echo \"skip critical tests\"",
+    "ci:full": "npm run build",
+    "ci:critical": "npm run build",
+    "pre-commit": "echo \"skip pre-commit hooks\""
   },
-  /* ──────────▲ ここだけ書き換え ▲────────── */
-
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "chart.js": "^4.5.0",
@@ -106,7 +91,15 @@
     "npm": ">=8.0.0"
   },
   "browserslist": {
-    "production": [">0.2%","not dead","not op_mini all"],
-    "development": ["last 1 chrome version","last 1 firefox version","last 1 safari version"]
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }
