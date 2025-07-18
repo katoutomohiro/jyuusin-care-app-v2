@@ -1,41 +1,46 @@
 {
   "compilerOptions": {
-    /* 基本ターゲット */
+    /* -------------- 基本設定 -------------- */
     "target": "ESNext",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-
-    /* 型チェックまわり */
-    "strict": false,
-    "noImplicitAny": false,
-    "skipLibCheck": true,
-
-    /* モジュール解決 */
     "module": "ESNext",
     "moduleResolution": "Node",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "jsx": "react-jsx",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-
-    /* JSX / React */
-    "jsx": "react-jsx",
-    "types": ["node", "@testing-library/jest-dom"],
-
-    /* その他 */
     "useDefineForClassFields": true,
     "allowJs": true,
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": true,
+
+    /* -------------- 型チェック緩和 -------------- */
+    "strict": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* -------------- パス設定 -------------- */
+    "baseUrl": "./src",        // 以後 import を src 基準に解決
+    "rootDir": "./src",        // これより外の TS は原則コンパイルしない
+    "paths": {
+      "@/*": ["*"]             // 例） import x from "@/pages/Top"
+    },
+
+    /* -------------- その他 -------------- */
+    "types": ["node", "@testing-library/jest-dom"]
   },
 
-  /* src 以下だけ型チェック対象 */
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  /* src 直下だけを対象にする */
+  "include": ["src/**/*"],
 
-  /* 型チェックから外すパス */
+  /* それでも拾われたら完全無視させる */
   "exclude": [
     "node_modules",
-    "src/tests/**",
+    "demos/**",
+    "services/**",
     "src/services/**",
-    "demos/**"
+    "tests/**",
+    "src/tests/**"
   ]
 }
