@@ -1,0 +1,245 @@
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 2,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 13,
+  "numPassedTests": 0,
+  "numFailedTests": 13,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "startTime": 1751344678766,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "",
+            "UsersPage"
+          ],
+          "fullName": " UsersPage renders users page with correct title",
+          "status": "failed",
+          "title": "renders users page with correct title",
+          "duration": 11,
+          "failureMessages": [
+            "Cannot read properties of undefined (reading 'Provider')"
+          ],
+          "location": {
+            "line": 116,
+            "column": 5
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "UsersPage"
+          ],
+          "fullName": " UsersPage displays all users in the list",
+          "status": "failed",
+          "title": "displays all users in the list",
+          "duration": 1,
+          "failureMessages": [
+            "Cannot read properties of undefined (reading 'Provider')"
+          ],
+          "location": {
+            "line": 122,
+            "column": 5
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "UsersPage"
+          ],
+          "fullName": " UsersPage filters users by search term",
+          "status": "failed",
+          "title": "filters users by search term",
+          "duration": 1,
+          "failureMessages": [
+            "Cannot read properties of undefined (reading 'Provider')"
+          ],
+          "location": {
+            "line": 128,
+            "column": 5
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "UsersPage"
+          ],
+          "fullName": " UsersPage filters users by service type",
+          "status": "failed",
+          "title": "filters users by service type",
+          "duration": 0,
+          "failureMessages": [
+            "Cannot read properties of undefined (reading 'Provider')"
+          ],
+          "location": {
+            "line": 137,
+            "column": 5
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "UsersPage"
+          ],
+          "fullName": " UsersPage shows add user button for admin users",
+          "status": "failed",
+          "title": "shows add user button for admin users",
+          "duration": 1,
+          "failureMessages": [
+            "Cannot read properties of undefined (reading 'Provider')"
+          ],
+          "location": {
+            "line": 146,
+            "column": 5
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "UsersPage"
+          ],
+          "fullName": " UsersPage opens add user modal when add button is clicked",
+          "status": "failed",
+          "title": "opens add user modal when add button is clicked",
+          "duration": 1,
+          "failureMessages": [
+            "Cannot read properties of undefined (reading 'Provider')"
+          ],
+          "location": {
+            "line": 151,
+            "column": 5
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "UsersPage"
+          ],
+          "fullName": " UsersPage handles user deletion",
+          "status": "failed",
+          "title": "handles user deletion",
+          "duration": 1,
+          "failureMessages": [
+            "Cannot read properties of undefined (reading 'Provider')"
+          ],
+          "location": {
+            "line": 161,
+            "column": 5
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "UsersPage"
+          ],
+          "fullName": " UsersPage displays statistics correctly",
+          "status": "failed",
+          "title": "displays statistics correctly",
+          "duration": 0,
+          "failureMessages": [
+            "Cannot read properties of undefined (reading 'Provider')"
+          ],
+          "location": {
+            "line": 181,
+            "column": 5
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "UsersPage"
+          ],
+          "fullName": " UsersPage shows no results message when no users match filters",
+          "status": "failed",
+          "title": "shows no results message when no users match filters",
+          "duration": 1,
+          "failureMessages": [
+            "Cannot read properties of undefined (reading 'Provider')"
+          ],
+          "location": {
+            "line": 189,
+            "column": 5
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "UsersPage"
+          ],
+          "fullName": " UsersPage clears filters when clear button is clicked",
+          "status": "failed",
+          "title": "clears filters when clear button is clicked",
+          "duration": 1,
+          "failureMessages": [
+            "Cannot read properties of undefined (reading 'Provider')"
+          ],
+          "location": {
+            "line": 197,
+            "column": 5
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "UsersPage"
+          ],
+          "fullName": " UsersPage handles form submission for adding user",
+          "status": "failed",
+          "title": "handles form submission for adding user",
+          "duration": 0,
+          "failureMessages": [
+            "Cannot read properties of undefined (reading 'Provider')"
+          ],
+          "location": {
+            "line": 211,
+            "column": 5
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "UsersPage"
+          ],
+          "fullName": " UsersPage handles form submission for editing user",
+          "status": "failed",
+          "title": "handles form submission for editing user",
+          "duration": 1,
+          "failureMessages": [
+            "Cannot read properties of undefined (reading 'Provider')"
+          ],
+          "location": {
+            "line": 234,
+            "column": 5
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "UsersPage"
+          ],
+          "fullName": " UsersPage shows loading spinner when data is loading",
+          "status": "failed",
+          "title": "shows loading spinner when data is loading",
+          "duration": 1,
+          "failureMessages": [
+            "Cannot read properties of undefined (reading 'Provider')"
+          ],
+          "location": {
+            "line": 264,
+            "column": 22
+          }
+        }
+      ],
+      "startTime": 1751344685303,
+      "endTime": 1751344685323,
+      "status": "failed",
+      "message": "",
+      "name": "C:/kaihatu/jyushin-care-app/tests/UsersPage.test.tsx"
+    }
+  ]
+}

@@ -1,0 +1,1142 @@
+import React, { useState, useEffect } from 'react';
+import { useData } from '../contexts/DataContext';
+import { useNotification } from '../contexts/NotificationContext';
+import { Save, Eye, Edit, Trash2, CheckCircle, Plus, X } from 'lucide-react';
+import { 
+  SAMPLE_STAFF, 
+  TUBE_FEEDING_AMOUNT_OPTIONS, 
+  TUBE_FEEDING_CONDITION_OPTIONS, 
+  MEAL_FREE_TEXT_TEMPLATES, 
+  WATER_TYPE_OPTIONS, 
+  WATER_AMOUNT_OPTIONS 
+} from '../../constants';
+import { NotificationType } from '../types';
+
+// 食事記録の選択肢（15個の具体的摂取量選択肢）
+const mealIntakeOptions = [
+  '全量摂取',
+  '8割程度摂取',
+  '6割程度摂取',
+  '4割程度摂取',
+  '2割程度摂取',
+  '一口だけ',
+  '好きなものだけ食べた',
+  '嫌いなものは残した',
+  '水分のみ',
+  'おかゆのみ',
+  '果物のみ',
+  'おやつのみ',
+  '経管栄養のみ',
+  '経管栄養＋少量経口',
+  '摂取なし'
+];
+
+// 食事状況テンプレート（20個）
+const mealSituationTemplates = [
+  'ゆっくりと、よく噛んで食べた',
+  '食欲旺盛で、積極的に食べた',
+  '少しずつ、時間をかけて食べた',
+  '職員の声かけで、食べ始めた',
+  '音楽を聴きながら、リラックスして食べた',
+  '家族の写真を見ながら、安心して食べた',
+  '好きなテレビ番組を見ながら、楽しそうに食べた',
+  '外の景色を見ながら、落ち着いて食べた',
+  '職員と目を合わせながら、コミュニケーションを取りながら食べた',
+  '手を握ってもらいながら、安心して食べた',
+  '背中をさすってもらいながら、リラックスして食べた',
+  '声をかけてもらいながら、励まされて食べた',
+  '小さく切ってもらって、食べやすくしてもらった',
+  '温度を調整してもらって、食べやすくしてもらった',
+  '姿勢を調整してもらって、食べやすくしてもらった',
+  'スプーンの角度を調整してもらって、食べやすくしてもらった',
+  '一口の量を調整してもらって、食べやすくしてもらった',
+  '休憩を挟みながら、ゆっくりと食べた',
+  '水分を挟みながら、食べやすくしてもらった',
+  '食後のケアをしてもらって、安心して食べた'
+];
+
+// 排泄記録の選択肢
+const excretionOptions = {
+  bristolScale: ['1型', '2型', '3型', '4型', '5型', '6型', '7型'],
+  amount: ['少量', '中量', '多量', '微量'],
+  color: ['茶色', '黒色', '緑色', '黄色', '白色', '赤色'],
+  skinCondition: ['良好', '軽度の発赤', '中等度の発赤', '重度の発赤', 'びらん', 'その他']
+};
+
+// 睡眠記録のタグ
+const sleepTags = {
+  fallingAsleep: ['スムーズ', '時間がかかった', '声かけが必要', '音楽でリラックス', '背中をさすって'],
+  duringSleep: ['ぐっすり眠った', '時々目を覚ました', '寝返りを打った', '笑顔で眠った', '穏やかな表情', '時々声を出した', '手を動かした']
+};
+
+// 発作記録の選択肢
+const seizureOptions = [
+  '全身けいれん',
+  '部分けいれん',
+  '欠神発作',
+  'ミオクローヌス',
+  '強直発作',
+  '間代発作',
+  '強直間代発作',
+  '脱力発作',
+  '複雑部分発作',
+  '単純部分発作',
+  'その他'
+];
+
+// 発作の種類の解説
+const seizureExplanations = {
+  '全身けいれん': '全身の筋肉が硬直し、けいれんする発作。意識を失うことが多い。',
+  '部分けいれん': '体の一部（手、足、顔など）のみがけいれんする発作。',
+  '欠神発作': '突然意識が途切れ、数秒間ボーッとする発作。',
+  'ミオクローヌス': '瞬間的な筋肉の収縮による、ピクッとした動きの発作。',
+  '強直発作': '筋肉が硬直する発作。けいれんは伴わない。',
+  '間代発作': '筋肉の収縮と弛緩が繰り返されるけいれん発作。',
+  '強直間代発作': '強直相と間代相が続く、典型的なてんかん発作。',
+  '脱力発作': '突然筋肉の力が抜けて、倒れる発作。',
+  '複雑部分発作': '意識障害を伴う部分発作。自動症を伴うことがある。',
+  '単純部分発作': '意識を保ったままの部分発作。',
+  'その他': '上記に当てはまらない発作。詳細を記録してください。'
+};
+
+// 見たままの現象の選択肢
+const seizurePhenomenonOptions = [
+  '目を白黒させる',
+  '口から泡を吹く',
+  '舌を噛む',
+  '尿失禁',
+  '便失禁',
+  '手足をバタバタさせる',
+  '体を硬直させる',
+  '意識を失う',
+  'ボーッとする',
+  '手を動かす',
+  '口をモグモグする',
+  'よだれが出る',
+  '呼吸が荒くなる',
+  '顔色が悪くなる',
+  '発汗',
+  'その他'
+];
+
+// 発作記録テンプレート
+const seizureTemplates = [
+  '突然意識を失い、全身がけいれんした。約2分間続いた。',
+  '右半身のみがけいれんした。意識は保たれていた。',
+  '数秒間ボーッとして、呼びかけに反応しなかった。',
+  '瞬間的に手足がピクッとした。',
+  '体が硬直し、呼吸が一時的に止まったように見えた。',
+  '手足をバタバタさせながら、口から泡を吹いた。',
+  '突然力が抜けて、椅子から滑り落ちた。',
+  '手を動かしながら、口をモグモグしていた。',
+  '目を白黒させ、よだれが出ていた。',
+  '尿失禁を伴い、全身けいれんが約3分間続いた。'
+];
+
+// 活動参加の選択肢
+const activityOptions = [
+  '音楽療法',
+  '作業療法',
+  '理学療法',
+  '言語療法',
+  '遊びの時間',
+  '散歩',
+  '入浴',
+  '着替え',
+  '食事',
+  'おやつ',
+  'テレビ視聴',
+  '絵本の読み聞かせ',
+  '手遊び',
+  'ボール遊び',
+  'おもちゃ遊び',
+  'その他'
+];
+
+// 表情・気分の選択肢
+const moodOptions = [
+  '笑顔',
+  '穏やか',
+  'リラックス',
+  '興味関心',
+  '喜び',
+  '安心',
+  '満足',
+  '活気',
+  '集中',
+  '不快',
+  '緊張',
+  '不安',
+  '疲労',
+  '痛み',
+  'その他'
+];
+
+// 特記事項カテゴリー
+const specialNotesCategories = [
+  '医療的ケア',
+  'ポジショニング',
+  'コミュニケーション',
+  '家族連携',
+  '職員間連携',
+  '環境調整',
+  'その他'
+];
+
+// 食事記録の型定義
+interface MealRecord {
+  id: string;
+  date: string;
+  recorder: string;
+  intakeMethod: '経口' | '経管栄養';
+  mealIntake: string;
+  mealSituation: string;
+  mealFreeText: string;
+  waterType: string;
+  waterAmount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 発作記録の型定義
+interface SeizureRecord {
+  id: string;
+  date: string;
+  recorder: string;
+  seizureType: string;
+  seizurePhenomenon: string[];
+  seizureStartTime: string;
+  seizureEndTime: string;
+  seizureDuration: string;
+  seizureTemplate: string;
+  seizureFreeText: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// フォームデータ型を抽出
+interface FormDataType {
+  date: string;
+  recorder: string;
+  intakeMethod: '経口' | '経管栄養';
+  mealIntake: string;
+  mealSituation: string;
+  mealFreeText: string;
+  waterType: string;
+  waterAmount: number;
+  excretionBristol: string;
+  excretionAmount: string;
+  excretionColor: string;
+  excretionSkin: string;
+  excretionFreeText: string;
+  sleepFalling: string[];
+  sleepDuring: string[];
+  sleepFreeText: string;
+  seizureType: string;
+  seizurePhenomenon: string[];
+  seizureStartTime: string;
+  seizureEndTime: string;
+  seizureDuration: string;
+  seizureTemplate: string;
+  seizureFreeText: string;
+  activityParticipation: string[];
+  mood: string[];
+  specialNotesCategory: string;
+  specialNotesFreeText: string;
+}
+
+const DailyLogNewPage: React.FC = () => {
+  const { showNotification } = useNotification();
+  const { staff } = useData();
+  const [formData, setFormData] = useState<FormDataType>({
+    date: new Date().toISOString().split('T')[0],
+    recorder: '',
+    intakeMethod: '経口',
+    mealIntake: '',
+    mealSituation: '',
+    mealFreeText: '',
+    waterType: '水',
+    waterAmount: 100,
+    excretionBristol: '',
+    excretionAmount: '',
+    excretionColor: '',
+    excretionSkin: '',
+    excretionFreeText: '',
+    sleepFalling: [],
+    sleepDuring: [],
+    sleepFreeText: '',
+    seizureType: '',
+    seizurePhenomenon: [],
+    seizureStartTime: '',
+    seizureEndTime: '',
+    seizureDuration: '',
+    seizureTemplate: '',
+    seizureFreeText: '',
+    activityParticipation: [],
+    mood: [],
+    specialNotesCategory: '',
+    specialNotesFreeText: ''
+  });
+
+  // 保存された食事記録の状態
+  const [savedMealRecords, setSavedMealRecords] = useState<MealRecord[]>([]);
+  const [isViewingRecords, setIsViewingRecords] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<MealRecord | null>(null);
+
+  // 保存された発作記録の状態
+  const [savedSeizureRecords, setSavedSeizureRecords] = useState<SeizureRecord[]>([]);
+  const [isViewingSeizureRecords, setIsViewingSeizureRecords] = useState(false);
+  const [editingSeizureRecord, setEditingSeizureRecord] = useState<SeizureRecord | null>(null);
+  const [showSeizureExplanation, setShowSeizureExplanation] = useState<string | null>(null);
+
+  const [seizureTimer, setSeizureTimer] = useState<{
+    isRunning: boolean;
+    startTime: Date | null;
+    duration: string;
+  }>({
+    isRunning: false,
+    startTime: null,
+    duration: '00:00'
+  });
+
+  // ローカルストレージから保存された記録を読み込み
+  useEffect(() => {
+    const savedRecords = localStorage.getItem('mealRecords');
+    if (savedRecords) {
+      setSavedMealRecords(JSON.parse(savedRecords));
+    }
+    
+    const savedSeizureRecords = localStorage.getItem('seizureRecords');
+    if (savedSeizureRecords) {
+      setSavedSeizureRecords(JSON.parse(savedSeizureRecords));
+    }
+  }, []);
+
+  // 指令1: 記録者を24名の職員名に設定
+  const staffOptions = staff?.map(s => ({ value: s.id, label: s.name })) || [];
+
+  // 指令2: 経管栄養の摂取量選択肢を動的に変更
+  const getMealIntakeOptions = () => {
+    if (formData.intakeMethod === '経管栄養') {
+      return TUBE_FEEDING_AMOUNT_OPTIONS;
+    }
+    return mealIntakeOptions;
+  };
+
+  // 指令3: 経管栄養の食事の様子選択肢を動的に変更
+  const getMealSituationOptions = () => {
+    if (formData.intakeMethod === '経管栄養') {
+      return TUBE_FEEDING_CONDITION_OPTIONS;
+    }
+    return mealSituationTemplates;
+  };
+
+  const handleInputChange = (field: keyof FormDataType, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleArrayChange = (field: keyof FormDataType, value: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: checked
+        ? [...(prev[field] as string[]), value]
+        : (prev[field] as string[]).filter((item: string) => item !== value)
+    }));
+  };
+
+  // 指令4: 食事自由記述テンプレートの適用
+  const applyMealTemplate = (template: string) => {
+    setFormData(prev => ({
+      ...prev,
+      mealFreeText: prev.mealFreeText + (prev.mealFreeText ? '\n' : '') + template
+    }));
+  };
+
+  // 食事記録の保存
+  const saveMealRecord = () => {
+    if (!formData.recorder.trim()) {
+      showNotification('記録者名を入力してください', NotificationType.ERROR);
+      return;
+    }
+
+    const newRecord: MealRecord = {
+      id: Date.now().toString(),
+      date: formData.date,
+      recorder: formData.recorder,
+      intakeMethod: formData.intakeMethod,
+      mealIntake: formData.mealIntake,
+      mealSituation: formData.mealSituation,
+      mealFreeText: formData.mealFreeText,
+      waterType: formData.waterType,
+      waterAmount: formData.waterAmount,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    const updatedRecords = [...savedMealRecords, newRecord];
+    setSavedMealRecords(updatedRecords);
+    localStorage.setItem('mealRecords', JSON.stringify(updatedRecords));
+
+    // フォームをリセット
+    setFormData(prev => ({
+      ...prev,
+      intakeMethod: '経口',
+      mealIntake: '',
+      mealSituation: '',
+      mealFreeText: '',
+      waterType: '水',
+      waterAmount: 100
+    }));
+
+    showNotification('食事記録を保存しました！', NotificationType.SUCCESS);
+  };
+
+  // 食事記録の編集
+  const editMealRecord = (record: MealRecord) => {
+    setEditingRecord(record);
+    setFormData(prev => ({
+      ...prev,
+      date: record.date,
+      recorder: record.recorder,
+      intakeMethod: record.intakeMethod,
+      mealIntake: record.mealIntake,
+      mealSituation: record.mealSituation,
+      mealFreeText: record.mealFreeText,
+      waterType: record.waterType,
+      waterAmount: record.waterAmount
+    }));
+  };
+
+  // 食事記録の更新
+  const updateMealRecord = () => {
+    if (!editingRecord) return;
+
+    const updatedRecord: MealRecord = {
+      ...editingRecord,
+      date: formData.date,
+      recorder: formData.recorder,
+      intakeMethod: formData.intakeMethod,
+      mealIntake: formData.mealIntake,
+      mealSituation: formData.mealSituation,
+      mealFreeText: formData.mealFreeText,
+      waterType: formData.waterType,
+      waterAmount: formData.waterAmount,
+      updatedAt: new Date().toISOString()
+    };
+
+    const updatedRecords = savedMealRecords.map(record => 
+      record.id === editingRecord.id ? updatedRecord : record
+    );
+    setSavedMealRecords(updatedRecords);
+    localStorage.setItem('mealRecords', JSON.stringify(updatedRecords));
+
+    setEditingRecord(null);
+    showNotification('食事記録を更新しました！', NotificationType.SUCCESS);
+  };
+
+  // 食事記録の削除
+  const deleteMealRecord = (id: string) => {
+    if (window.confirm('この記録を削除しますか？')) {
+      const updatedRecords = savedMealRecords.filter(record => record.id !== id);
+      setSavedMealRecords(updatedRecords);
+      localStorage.setItem('mealRecords', JSON.stringify(updatedRecords));
+      showNotification('食事記録を削除しました', NotificationType.SUCCESS);
+    }
+  };
+
+  // 発作記録の保存
+  const saveSeizureRecord = () => {
+    if (!formData.recorder.trim()) {
+      showNotification('記録者名を入力してください', NotificationType.ERROR);
+      return;
+    }
+
+    const newRecord: SeizureRecord = {
+      id: Date.now().toString(),
+      date: formData.date,
+      recorder: formData.recorder,
+      seizureType: formData.seizureType,
+      seizurePhenomenon: formData.seizurePhenomenon,
+      seizureStartTime: formData.seizureStartTime,
+      seizureEndTime: formData.seizureEndTime,
+      seizureDuration: formData.seizureDuration,
+      seizureTemplate: formData.seizureTemplate,
+      seizureFreeText: formData.seizureFreeText,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    const updatedRecords = [...savedSeizureRecords, newRecord];
+    setSavedSeizureRecords(updatedRecords);
+    localStorage.setItem('seizureRecords', JSON.stringify(updatedRecords));
+
+    // フォームをリセット
+    setFormData(prev => ({
+      ...prev,
+      seizureType: '',
+      seizurePhenomenon: [],
+      seizureStartTime: '',
+      seizureEndTime: '',
+      seizureDuration: '',
+      seizureTemplate: '',
+      seizureFreeText: ''
+    }));
+
+    showNotification('発作記録を保存しました！', NotificationType.SUCCESS);
+  };
+
+  // 発作記録の編集
+  const editSeizureRecord = (record: SeizureRecord) => {
+    setEditingSeizureRecord(record);
+    setFormData(prev => ({
+      ...prev,
+      date: record.date,
+      recorder: record.recorder,
+      seizureType: record.seizureType,
+      seizurePhenomenon: record.seizurePhenomenon,
+      seizureStartTime: record.seizureStartTime,
+      seizureEndTime: record.seizureEndTime,
+      seizureDuration: record.seizureDuration,
+      seizureTemplate: record.seizureTemplate,
+      seizureFreeText: record.seizureFreeText
+    }));
+  };
+
+  // 発作記録の更新
+  const updateSeizureRecord = () => {
+    if (!editingSeizureRecord) return;
+
+    const updatedRecord: SeizureRecord = {
+      ...editingSeizureRecord,
+      date: formData.date,
+      recorder: formData.recorder,
+      seizureType: formData.seizureType,
+      seizurePhenomenon: formData.seizurePhenomenon,
+      seizureStartTime: formData.seizureStartTime,
+      seizureEndTime: formData.seizureEndTime,
+      seizureDuration: formData.seizureDuration,
+      seizureTemplate: formData.seizureTemplate,
+      seizureFreeText: formData.seizureFreeText,
+      updatedAt: new Date().toISOString()
+    };
+
+    const updatedRecords = savedSeizureRecords.map(record => 
+      record.id === editingSeizureRecord.id ? updatedRecord : record
+    );
+    setSavedSeizureRecords(updatedRecords);
+    localStorage.setItem('seizureRecords', JSON.stringify(updatedRecords));
+
+    setEditingSeizureRecord(null);
+    showNotification('発作記録を更新しました！', NotificationType.SUCCESS);
+  };
+
+  // 発作記録の削除
+  const deleteSeizureRecord = (id: string) => {
+    if (window.confirm('この発作記録を削除しますか？')) {
+      const updatedRecords = savedSeizureRecords.filter(record => record.id !== id);
+      setSavedSeizureRecords(updatedRecords);
+      localStorage.setItem('seizureRecords', JSON.stringify(updatedRecords));
+      showNotification('発作記録を削除しました', NotificationType.SUCCESS);
+    }
+  };
+
+  const startSeizureTimer = () => {
+    setSeizureTimer({
+      isRunning: true,
+      startTime: new Date() as Date,
+      duration: '00:00'
+    });
+  };
+
+  const stopSeizureTimer = () => {
+    setSeizureTimer(prev => ({
+      ...prev,
+      isRunning: false
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('記録データ:', formData);
+    alert('きらめきの記録を保存しました！');
+  };
+
+  return (
+    <>
+      <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold mb-1 text-gray-800">日誌新規作成・記録入力</h1>
+          <div className="text-sm text-gray-400 mb-2">きらめきの記録：心臓部</div>
+          <p className="text-lg text-gray-600 mb-8">見たまま、感じたままを、呼吸するように記録しましょう</p>
+
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* 基本情報 (魂の器) */}
+            <div className="card bg-white shadow-lg rounded-xl p-6">
+              <h2 className="text-xl font-bold mb-4 text-gray-800">基本情報 (魂の器)</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="basic-date-input">日付</label>
+                  <input
+                    id="basic-date-input"
+                    name="basicDate"
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => handleInputChange('date', e.target.value)}
+                    aria-label="日付を選択してください"
+                    title="日付を選択してください"
+                    placeholder="日付を選択"
+                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="basic-recorder-input">記録者</label>
+                  <input
+                    id="basic-recorder-input"
+                    name="basicRecorder"
+                    type="text"
+                    value={formData.recorder}
+                    onChange={(e) => handleInputChange('recorder', e.target.value)}
+                    aria-label="記録者のお名前を入力してください"
+                    title="記録者のお名前を入力してください"
+                    placeholder="記録者のお名前"
+                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 食事記録 (魂の栄養) */}
+            <div className="card bg-white shadow-lg rounded-xl p-6">
+              <h2 className="text-xl font-bold mb-4 text-green-600">🍽️ 食事記録 (魂の栄養)</h2>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="meal-time-input">時間</label>
+                  <input
+                    id="meal-time-input"
+                    name="mealTime"
+                    type="time"
+                    aria-label="食事の時間を選択してください"
+                    title="食事の時間を選択してください"
+                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <fieldset>
+                    <legend className="block font-semibold text-gray-700 mb-2">摂取方法</legend>
+                    <div className="flex gap-4">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="intakeMethod"
+                          value="経口"
+                          checked={formData.intakeMethod === '経口'}
+                          onChange={(e) => handleInputChange('intakeMethod', e.target.value)}
+                          className="mr-2"
+                          aria-label="経口摂取"
+                        />
+                        経口
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="intakeMethod"
+                          value="経管栄養"
+                          checked={formData.intakeMethod === '経管栄養'}
+                          onChange={(e) => handleInputChange('intakeMethod', e.target.value)}
+                          className="mr-2"
+                          aria-label="経管栄養"
+                        />
+                        経管栄養
+                      </label>
+                    </div>
+                  </fieldset>
+                </div>
+                <div>
+                  <label htmlFor="meal-intake-select">食事摂取量</label>
+                  <select
+                    id="meal-intake-select"
+                    name="mealIntake"
+                    value={formData.mealIntake}
+                    onChange={(e) => handleInputChange('mealIntake', e.target.value)}
+                    aria-label="食事摂取量を選択してください"
+                    title="食事摂取量を選択してください"
+                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="">選択してください</option>
+                    {getMealIntakeOptions().map((option, index) => (
+                      <option key={index} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="meal-situation-select">食事の様子</label>
+                  <select
+                    id="meal-situation-select"
+                    name="mealSituation"
+                    value={formData.mealSituation}
+                    onChange={(e) => handleInputChange('mealSituation', e.target.value)}
+                    aria-label="食事の様子を選択してください"
+                    title="食事の様子を選択してください"
+                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="">選択してください</option>
+                    {getMealSituationOptions().map((template, index) => (
+                      <option key={index} value={template}>{template}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="meal-free-template-select" className="block font-semibold text-gray-700 mb-2">食事自由記述（テンプレートを選択）</label>
+                  <select
+                    id="meal-free-template-select"
+                    name="mealFreeTextTemplate"
+                    aria-label="食事自由記述テンプレートを選択"
+                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-green-500 mb-2"
+                    value=""
+                    onChange={e => {
+                      const selected = e.target.value;
+                      if (selected) {
+                        setFormData(prev => ({
+                          ...prev,
+                          mealFreeText: selected
+                        }));
+                      }
+                    }}
+                  >
+                    <option value="">テンプレートを選択してください</option>
+                    {MEAL_FREE_TEXT_TEMPLATES.map((template, idx) => (
+                      <option key={idx} value={template}>{template}</option>
+                    ))}
+                  </select>
+                  <textarea
+                    id="meal-free-text"
+                    name="mealFreeText"
+                    value={formData.mealFreeText}
+                    onChange={(e) => handleInputChange('mealFreeText', e.target.value)}
+                    aria-label="食事の様子について自由に記録してください"
+                    title="食事の様子について自由に記録してください"
+                    placeholder="食事の様子について、自由に記録してください..."
+                    className="w-full border rounded-lg p-3 h-24 focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <fieldset>
+                    <legend className="block font-semibold text-gray-700 mb-2">水分の種類</legend>
+                    <div className="flex flex-wrap gap-2">
+                      {WATER_TYPE_OPTIONS.map((type, index) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => handleInputChange('waterType', type)}
+                          className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                            formData.waterType === type
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                          }`}
+                          aria-label={`水分の種類: ${type}`}
+                          aria-pressed={formData.waterType === type}
+                          title={`水分の種類: ${type}`}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+                </div>
+                <div>
+                  <label htmlFor="water-amount-select" className="block font-semibold text-gray-700 mb-2">水分量</label>
+                  <select
+                    id="water-amount-select"
+                    name="waterAmount"
+                    value={typeof formData.waterAmount === 'number' ? formData.waterAmount : ''}
+                    onChange={(e) => handleInputChange('waterAmount', parseInt(e.target.value))}
+                    aria-label="水分量を選択してください"
+                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-green-500"
+                  >
+                    {WATER_AMOUNT_OPTIONS.map((amount, index) => (
+                      <option key={index} value={amount}>
+                        {amount}ml
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* 排泄記録 (魂の浄化) */}
+            <div className="card bg-white shadow-lg rounded-xl p-6">
+              <h2 className="text-xl font-bold mb-4 text-orange-600">🚽 排泄記録 (魂の浄化)</h2>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="excretion-time-input">時間</label>
+                  <input
+                    id="excretion-time-input"
+                    name="excretionTime"
+                    type="time"
+                    aria-label="排泄の時間を選択してください"
+                    title="排泄の時間を選択してください"
+                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="excretion-bristol-select">ブリストルスケール</label>
+                  <select
+                    id="excretion-bristol-select"
+                    name="excretionBristol"
+                    value={formData.excretionBristol}
+                    onChange={(e) => handleInputChange('excretionBristol', e.target.value)}
+                    aria-label="ブリストルスケールを選択してください"
+                    title="ブリストルスケールを選択してください"
+                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="">選択してください</option>
+                    {excretionOptions.bristolScale.map((scale, index) => (
+                      <option key={index} value={scale}>{scale}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="excretion-amount-select">排泄量</label>
+                  <select
+                    id="excretion-amount-select"
+                    name="excretionAmount"
+                    value={formData.excretionAmount}
+                    onChange={(e) => handleInputChange('excretionAmount', e.target.value)}
+                    aria-label="排泄量を選択してください"
+                    title="排泄量を選択してください"
+                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="">選択してください</option>
+                    {excretionOptions.amount.map((amount, index) => (
+                      <option key={index} value={amount}>{amount}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="excretion-color-select">便の色</label>
+                  <select
+                    id="excretion-color-select"
+                    name="excretionColor"
+                    value={formData.excretionColor}
+                    onChange={(e) => handleInputChange('excretionColor', e.target.value)}
+                    aria-label="便の色を選択してください"
+                    title="便の色を選択してください"
+                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="">選択してください</option>
+                    {excretionOptions.color.map((color, index) => (
+                      <option key={index} value={color}>{color}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="excretion-skin-select">皮膚の状態</label>
+                  <select
+                    id="excretion-skin-select"
+                    name="excretionSkin"
+                    value={formData.excretionSkin}
+                    onChange={(e) => handleInputChange('excretionSkin', e.target.value)}
+                    aria-label="皮膚の状態を選択してください"
+                    title="皮膚の状態を選択してください"
+                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="">選択してください</option>
+                    {excretionOptions.skinCondition.map((condition, index) => (
+                      <option key={index} value={condition}>{condition}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="excretion-free-text">排泄自由記述</label>
+                  <textarea
+                    id="excretion-free-text"
+                    name="excretionFreeText"
+                    value={formData.excretionFreeText}
+                    onChange={(e) => handleInputChange('excretionFreeText', e.target.value)}
+                    aria-label="排泄の様子について自由に記録してください"
+                    title="排泄の様子について自由に記録してください"
+                    placeholder="排泄の様子について、自由に記録してください..."
+                    className="w-full border rounded-lg p-3 h-24 focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 睡眠記録 (魂の休息) */}
+            <div className="card bg-white shadow-lg rounded-xl p-6">
+              <h2 className="text-xl font-bold mb-4 text-indigo-600">😴 睡眠記録 (魂の休息)</h2>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="sleep-time-input">時間</label>
+                  <input
+                    id="sleep-time-input"
+                    name="sleepTime"
+                    type="time"
+                    aria-label="睡眠の時間を選択してください"
+                    title="睡眠の時間を選択してください"
+                    className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">入眠の様子</label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {sleepTags.fallingAsleep.map((option, index) => (
+                      <label key={index} className="flex items-center p-2 border rounded hover:bg-indigo-50" htmlFor={`sleep-falling-checkbox-${index}`}>
+                        <input
+                          id={`sleep-falling-checkbox-${index}`}
+                          name="sleepFalling"
+                          type="checkbox"
+                          checked={formData.sleepFalling.includes(option)}
+                          onChange={(e) => handleArrayChange('sleepFalling', option, e.target.checked)}
+                          className="mr-2"
+                          aria-label={`入眠の様子: ${option}`}
+                        />
+                        <span className="text-sm">{option}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-2">睡眠中の様子</label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {sleepTags.duringSleep.map((option, index) => (
+                      <label key={index} className="flex items-center p-2 border rounded hover:bg-indigo-50" htmlFor={`sleep-during-checkbox-${index}`}>
+                        <input
+                          id={`sleep-during-checkbox-${index}`}
+                          name="sleepDuring"
+                          type="checkbox"
+                          checked={formData.sleepDuring.includes(option)}
+                          onChange={(e) => handleArrayChange('sleepDuring', option, e.target.checked)}
+                          className="mr-2"
+                          aria-label={`睡眠中の様子: ${option}`}
+                        />
+                        <span className="text-sm">{option}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="sleep-free-text">睡眠自由記述</label>
+                  <textarea
+                    id="sleep-free-text"
+                    name="sleepFreeText"
+                    value={formData.sleepFreeText}
+                    onChange={(e) => handleInputChange('sleepFreeText', e.target.value)}
+                    aria-label="睡眠の様子について自由に記録してください"
+                    title="睡眠の様子について自由に記録してください"
+                    placeholder="睡眠の様子について、自由に記録してください..."
+                    className="w-full border rounded-lg p-3 h-24 focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 発作記録 */}
+            <div className="card bg-white shadow-lg rounded-xl p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-red-600 flex items-center">
+                  <span className="text-2xl mr-2">⚡</span>
+                  発作記録
+                  <span className="text-sm text-gray-500 ml-2">(魂の警鐘)</span>
+                </h2>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setIsViewingSeizureRecords(!isViewingSeizureRecords)}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    {isViewingSeizureRecords ? 'フォーム表示' : '記録一覧'}
+                  </button>
+                </div>
+              </div>
+
+              {!isViewingSeizureRecords ? (
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="seizure-time-input">時間</label>
+                    <input
+                      id="seizure-time-input"
+                      name="seizureTime"
+                      type="time"
+                      aria-label="発作の時間を選択してください"
+                      title="発作の時間を選択してください"
+                      className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="seizure-type-select" className="block font-semibold text-gray-700 mb-2">発作の種類</label>
+                    <div className="relative">
+                      <select
+                        id="seizure-type-select"
+                        name="seizureType"
+                        aria-label="発作の種類を選択"
+                        value={typeof formData.seizureType === 'string' ? formData.seizureType : ''}
+                        onChange={(e) => handleInputChange('seizureType', e.target.value)}
+                        onFocus={() => setShowSeizureExplanation(formData.seizureType)}
+                        className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-red-500"
+                      >
+                        <option value="">選択してください</option>
+                        {seizureOptions.map((option, index) => (
+                          <option key={index} value={option}>{option}</option>
+                        ))}
+                      </select>
+                      {showSeizureExplanation && formData.seizureType && (
+                        <div className="absolute z-10 mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg shadow-lg max-w-md">
+                          <h4 className="font-semibold text-blue-800 mb-1">{formData.seizureType}</h4>
+                          <p className="text-sm text-blue-700">{seizureExplanations[formData.seizureType as keyof typeof seizureExplanations]}</p>
+                          <button
+                            onClick={() => setShowSeizureExplanation(null)}
+                            className="mt-2 text-xs text-blue-600 hover:text-blue-800"
+                          >
+                            閉じる
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-2">見たままの現象</label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {seizurePhenomenonOptions.map((phenomenon, index) => (
+                        <label key={index} className="flex items-center p-2 border rounded hover:bg-red-50" htmlFor={`phenomenon-checkbox-${index}`}>
+                          <input
+                            id={`phenomenon-checkbox-${index}`}
+                            name="seizurePhenomenon"
+                            type="checkbox"
+                            checked={formData.seizurePhenomenon.includes(phenomenon)}
+                            onChange={(e) => handleArrayChange('seizurePhenomenon', phenomenon, e.target.checked)}
+                            className="mr-2"
+                            aria-label={`現象: ${phenomenon}`}
+                          />
+                          <span className="text-sm">{phenomenon}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="seizure-start-time" className="block font-semibold text-gray-700 mb-2">発作開始時刻</label>
+                      <input
+                        id="seizure-start-time"
+                        type="time"
+                        value={formData.seizureStartTime}
+                        onChange={(e) => handleInputChange('seizureStartTime', e.target.value)}
+                        className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-red-500"
+                        aria-label="発作開始時刻を入力"
+                        title="発作開始時刻を入力してください"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="seizure-end-time" className="block font-semibold text-gray-700 mb-2">発作終了時刻</label>
+                      <input
+                        id="seizure-end-time"
+                        type="time"
+                        value={formData.seizureEndTime}
+                        onChange={(e) => handleInputChange('seizureEndTime', e.target.value)}
+                        className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-red-500"
+                        aria-label="発作終了時刻を入力"
+                        title="発作終了時刻を入力してください"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-4 items-center">
+                    <button
+                      type="button"
+                      onClick={startSeizureTimer}
+                      disabled={seizureTimer.isRunning}
+                      className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 disabled:bg-gray-400 transition-colors"
+                    >
+                      タイマー開始
+                    </button>
+                    <button
+                      type="button"
+                      onClick={stopSeizureTimer}
+                      disabled={!seizureTimer.isRunning}
+                      className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 disabled:bg-gray-400 transition-colors"
+                    >
+                      タイマー停止
+                    </button>
+                    <span className="text-lg font-mono bg-gray-100 px-4 py-2 rounded">
+                      {seizureTimer.duration}
+                    </span>
+                  </div>
+                  <div>
+                    <label htmlFor="seizure-template-select" className="block font-semibold text-gray-700 mb-2">発作記録テンプレート</label>
+                    <select
+                      id="seizure-template-select"
+                      name="seizureTemplate"
+                      aria-label="発作記録テンプレートを選択"
+                      value={typeof formData.seizureTemplate === 'string' ? formData.seizureTemplate : ''}
+                      onChange={(e) => handleInputChange('seizureTemplate', e.target.value)}
+                      className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-red-500"
+                    >
+                      <option value="">テンプレートを選択してください</option>
+                      {seizureTemplates.map((template, index) => (
+                        <option key={index} value={template}>{template}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="seizure-free-text" className="block font-semibold text-gray-700 mb-2">発作自由記述</label>
+                    <textarea
+                      id="seizure-free-text"
+                      name="seizureFreeText"
+                      aria-label="発作の様子について自由に記録してください"
+                      value={formData.seizureFreeText}
+                      onChange={(e) => handleInputChange('seizureFreeText', e.target.value)}
+                      placeholder="発作の様子について、詳細に記録してください..."
+                      className="w-full border rounded-lg p-3 h-24 focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-4">
+                    {editingSeizureRecord ? (
+                      <>
+                        <button
+                          onClick={() => setEditingSeizureRecord(null)}
+                          className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                        >
+                          キャンセル
+                        </button>
+                        <button
+                          onClick={updateSeizureRecord}
+                          className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          更新
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={saveSeizureRecord}
+                        className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        発作記録を保存
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">保存された発作記録</h3>
+                  {savedSeizureRecords.length === 0 ? (
+                    <p className="text-gray-500">保存された発作記録はありません</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {savedSeizureRecords.map((record) => (
+                        <div key={record.id} className="border rounded-lg p-4 bg-gray-50">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-semibold">{record.seizureType}</h4>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => editSeizureRecord(record)}
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => deleteSeizureRecord(record.id)}
+                                className="text-red-600 hover:tex

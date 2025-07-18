@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap');
+
+:root {
+  --color-cream: #FFF8E1; /* 陽だまりのクリーム色 */
+  --color-mint: #E6F9F0;  /* 若葉のミントグリーン */
+  --color-sunflower: #FFD54F; /* ひまわりのオレンジイエロー */
+  --color-accent: #FFB300; /* 濃いめのオレンジイエロー */
+  --color-text-main: #333;
+  --color-text-soft: #666;
+  --color-border: #E0E0E0;
+}
+
+body {
+  font-family: 'M PLUS Rounded 1c', 'Yu Gothic', 'Meiryo', sans-serif;
+  background: var(--color-cream);
+  color: var(--color-text-main);
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+  line-height: 1.7;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'M PLUS Rounded 1c', 'Yu Gothic', 'Meiryo', sans-serif;
+  font-weight: 700;
+  color: var(--color-text-main);
+  margin-bottom: 0.5em;
+}
+
+.card {
+  background: var(--color-mint);
+  border-radius: 18px;
+  box-shadow: 0 2px 8px rgba(255, 213, 79, 0.08);
+  padding: 1.5em 1.2em;
+  margin-bottom: 1.5em;
+  border: 1.5px solid var(--color-border);
+}
+
+.card-accent {
+  background: var(--color-sunflower);
+  border: 2px solid var(--color-accent);
+  color: var(--color-text-main);
+}
+
+.card-episode {
+  background: #FFFBE7;
+  border-left: 6px solid var(--color-sunflower);
+  padding-left: 1.5em;
+}
+
+.icon {
+  display: inline-block;
+  vertical-align: middle;
+  width: 2em;
+  height: 2em;
+  stroke: var(--color-accent);
+  stroke-width: 2.5;
+  fill: none;
+}
+
+/* ボタン・リンクも温かみのある色に */
+button, .btn {
+  font-family: inherit;
+  font-size: 1.1em;
+  border-radius: 12px;
+  background: var(--color-sunflower);
+  color: var(--color-text-main);
+  border: none;
+  padding: 0.6em 1.2em;
+  box-shadow: 0 1px 4px rgba(255, 213, 79, 0.10);
+  transition: background 0.2s;
+}
+button:hover, .btn:hover {
+  background: var(--color-accent);
+}
+
+/* サイドバーやナビも優しい色合いに */
+.sidebar, .nav {
+  background: var(--color-mint);
+  border-right: 2px solid var(--color-border);
+}
+
+/* 入力欄も丸みと優しさ */
+input, textarea, select {
+  border-radius: 10px;
+  border: 1.5px solid var(--color-border);
+  padding: 0.5em 1em;
+  font-size: 1.1em;
+  font-family: inherit;
+  background: #fff;
+}
+
+/* レスポンシブ調整 */
+@media (max-width: 600px) {
+  body {
+    font-size: 1em;
+  }
+  .card {
+    padding: 1em 0.7em;
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%; /* 古いブラウザ対応 */
+  text-size-adjust: 100%;         /* 新しいブラウザ対応 */
+}

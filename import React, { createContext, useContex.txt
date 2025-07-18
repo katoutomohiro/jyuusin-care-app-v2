@@ -1,0 +1,335 @@
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User, DailyLog, Notice, AuthUser } from '../types';
+import { StorageService } from '../services/StorageService';
+import { BackupService } from '../services/BackupService';
+
+interface DataContextType {
+  users: User[];
+  logs: DailyLog[];
+  notices: Notice[];
+  isLoading: boolean;
+  error: string | null;
+  clearError: () => void;
+  
+  // User operations
+  addUser: (user: User) => void;
+  updateUser: (id: string, updates: Partial<User>) => void;
+  deleteUser: (id: string) => void;
+  getUserById: (id: string) => User | undefined;
+  
+  // Log operations
+  addDailyLog: (log: DailyLog) => void;
+  updateDailyLog: (id: string, updates: Partial<DailyLog>) => void;
+  deleteDailyLog: (id: string) => void;
+  getDailyLogsByUserId: (userId: string) => DailyLog[];
+  getDailyLogsByDate: (date: string) => DailyLog[];
+  
+  // Notice operations
+  addNotice: (notice: Notice) => void;
+  updateNotice: (id: string, updates: Partial<Notice>) => void;
+  deleteNotice: (id: string) => void;
+  markNoticeAsRead: (noticeId: string, staffId: string) => void;
+  
+  // Data management
+  createBackup: () => Promise<string>;
+  importData: (backupData: any) => Promise<void>;
+  clearAllData: () => Promise<void>;
+  getStorageUsage: () => Promise<{ used: number; total: number }>;
+  seedInitialData: () => Promise<void>;
+}
+
+const DataContext = createContext<DataContextType | undefined>(undefined);
+
+export const useData = () => {
+  const context = useContext(DataContext);
+  if (!context) {
+    throw new Error('useData must be used within a DataProvider');
+  }
+  return context;
+};
+
+interface DataProviderProps {
+  children: ReactNode;
+}
+
+export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [logs, setLogs] = useState<DailyLog[]>([]);
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const storageService = new StorageService();
+  const backupService = new BackupService();
+
+  // Load data on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const [loadedUsers, loadedLogs, loadedNotices] = await Promise.all([
+          storageService.get('users', []),
+          storageService.get('logs', []),
+          storageService.get('notices', [])
+        ]);
+        
+        setUsers(loadedUsers);
+        setLogs(loadedLogs);
+        setNotices(loadedNotices);
+      } catch (err) {
+        setError('データの読み込みに失敗しました');
+        console.error('Failed to load data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const clearError = () => setError(null);
+
+  // User operations
+  const addUser = async (user: User) => {
+    try {
+      const newUser = { ...user, id: user.id || `user-${Date.now()}` };
+      const updatedUsers = [...users, newUser];
+      setUsers(updatedUsers);
+      await storageService.set('users', updatedUsers);
+    } catch (err) {
+      setError('利用者の追加に失敗しました');
+      throw err;
+    }
+  };
+
+  const updateUser = async (id: string, updates: Partial<User>) => {
+    try {
+      const updatedUsers = users.map(user => 
+        user.id === id ? { ...user, ...updates } : user
+      );
+      setUsers(updatedUsers);
+      await storageService.set('users', updatedUsers);
+    } catch (err) {
+      setError('利用者の更新に失敗しました');
+      throw err;
+    }
+  };
+
+  const deleteUser = async (id: string) => {
+    try {
+      const updatedUsers = users.filter(user => user.id !== id);
+      setUsers(updatedUsers);
+      await storageService.set('users', updatedUsers);
+      
+      // Also delete related logs
+      const updatedLogs = logs.filter(log => log.userId !== id);
+      setLogs(updatedLogs);
+      await storageService.set('logs', updatedLogs);
+    } catch (err) {
+      setError('利用者の削除に失敗しました');
+      throw err;
+    }
+  };
+
+  const getUserById = (id: string) => users.find(user => user.id === id);
+
+  // Log operations
+  const addDailyLog = async (log: DailyLog) => {
+    try {
+      const newLog = { ...log, id: log.id || `log-${Date.now()}` };
+      const updatedLogs = [...logs, newLog];
+      setLogs(updatedLogs);
+      await storageService.set('logs', updatedLogs);
+    } catch (err) {
+      setError('記録の追加に失敗しました');
+      throw err;
+    }
+  };
+
+  const updateDailyLog = async (id: string, updates: Partial<DailyLog>) => {
+    try {
+      const updatedLogs = logs.map(log => 
+        log.id === id ? { ...log, ...updates } : log
+      );
+      setLogs(updatedLogs);
+      await storageService.set('logs', updatedLogs);
+    } catch (err) {
+      setError('記録の更新に失敗しました');
+      throw err;
+    }
+  };
+
+  const deleteDailyLog = async (id: string) => {
+    try {
+      const updatedLogs = logs.filter(log => log.id !== id);
+      setLogs(updatedLogs);
+      await storageService.set('logs', updatedLogs);
+    } catch (err) {
+      setError('記録の削除に失敗しました');
+      throw err;
+    }
+  };
+
+  const getDailyLogsByUserId = (userId: string) => 
+    logs.filter(log => log.userId === userId);
+
+  const getDailyLogsByDate = (date: string) => 
+    logs.filter(log => log.date === date);
+
+  // Notice operations
+  const addNotice = async (notice: Notice) => {
+    try {
+      const newNotice = { ...notice, id: notice.id || `notice-${Date.now()}` };
+      const updatedNotices = [...notices, newNotice];
+      setNotices(updatedNotices);
+      await storageService.set('notices', updatedNotices);
+    } catch (err) {
+      setError('申し送り事項の追加に失敗しました');
+      throw err;
+    }
+  };
+
+  const updateNotice = async (id: string, updates: Partial<Notice>) => {
+    try {
+      const updatedNotices = notices.map(notice => 
+        notice.id === id ? { ...notice, ...updates } : notice
+      );
+      setNotices(updatedNotices);
+      await storageService.set('notices', updatedNotices);
+    } catch (err) {
+      setError('申し送り事項の更新に失敗しました');
+      throw err;
+    }
+  };
+
+  const deleteNotice = async (id: string) => {
+    try {
+      const updatedNotices = notices.filter(notice => notice.id !== id);
+      setNotices(updatedNotices);
+      await storageService.set('notices', updatedNotices);
+    } catch (err) {
+      setError('申し送り事項の削除に失敗しました');
+      throw err;
+    }
+  };
+
+  const markNoticeAsRead = async (noticeId: string, staffId: string) => {
+    try {
+      const updatedNotices = notices.map(notice => {
+        if (notice.id === noticeId && !notice.readBy.includes(staffId)) {
+          return { ...notice, readBy: [...notice.readBy, staffId] };
+        }
+        return notice;
+      });
+      setNotices(updatedNotices);
+      await storageService.set('notices', updatedNotices);
+    } catch (err) {
+      setError('申し送り事項の既読処理に失敗しました');
+      throw err;
+    }
+  };
+
+  // Data management
+  const createBackup = async (): Promise<string> => {
+    try {
+      return await backupService.createBackup();
+    } catch (err) {
+      setError('バックアップの作成に失敗しました');
+      throw err;
+    }
+  };
+
+  const importData = async (backupData: any): Promise<void> => {
+    try {
+      await backupService.importBackup(backupData);
+      
+      // Reload data after import
+      const [loadedUsers, loadedLogs, loadedNotices] = await Promise.all([
+        storageService.get('users', []),
+        storageService.get('logs', []),
+        storageService.get('notices', [])
+      ]);
+      
+      setUsers(loadedUsers);
+      setLogs(loadedLogs);
+      setNotices(loadedNotices);
+    } catch (err) {
+      setError('データの復元に失敗しました');
+      throw err;
+    }
+  };
+
+  const clearAllData = async (): Promise<void> => {
+    try {
+      await storageService.clear();
+      setUsers([]);
+      setLogs([]);
+      setNotices([]);
+    } catch (err) {
+      setError('データの削除に失敗しました');
+      throw err;
+    }
+  };
+
+  const getStorageUsage = async (): Promise<{ used: number; total: number }> => {
+    try {
+      return await storageService.getStorageUsage();
+    } catch (err) {
+      setError('ストレージ使用量の取得に失敗しました');
+      throw err;
+    }
+  };
+
+  const seedInitialData = async (): Promise<void> => {
+    try {
+      await storageService.initializeData();
+      
+      // Reload data after seeding
+      const [loadedUsers, loadedLogs, loadedNotices] = await Promise.all([
+        storageService.get('users', []),
+        storageService.get('logs', []),
+        storageService.get('notices', [])
+      ]);
+      
+      setUsers(loadedUsers);
+      setLogs(loadedLogs);
+      setNotices(loadedNotices);
+    } catch (err) {
+      setError('初期データの投入に失敗しました');
+      throw err;
+    }
+  };
+
+  const value: DataContextType = {
+    users,
+    logs,
+    notices,
+    isLoading,
+    error,
+    clearError,
+    addUser,
+    updateUser,
+    deleteUser,
+    getUserById,
+    addDailyLog,
+    updateDailyLog,
+    deleteDailyLog,
+    getDailyLogsByUserId,
+    getDailyLogsByDate,
+    addNotice,
+    updateNotice,
+    deleteNotice,
+    markNoticeAsRead,
+    createBackup,
+    importData,
+    clearAllData,
+    getStorageUsage,
+    seedInitialData
+  };
+
+  return (
+    <DataContext.Provider value={value}>
+      {children}
+    </DataContext.Provider>
+  );
+};
