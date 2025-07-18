@@ -20,12 +20,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
 
-    /* ---------- パス設定 ---------- */
-    "baseUrl": ".",                 // ここを追加（必須）
-    "paths": {
-      "@/*": ["src/*"]              // "@/components/..." で解決
-    },
-
     /* ---------- その他 ---------- */
     "types": ["node", "@testing-library/jest-dom"]
   },
