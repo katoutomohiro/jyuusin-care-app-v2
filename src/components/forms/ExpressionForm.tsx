@@ -285,3 +285,4 @@ export const ExpressionForm: React.FC<ExpressionFormProps> = ({ onSave, isSubmit
     </form>
   );
 };
+export default ExpressionForm;

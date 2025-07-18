@@ -1,8 +1,41 @@
 {
   "compilerOptions": {
+    /* 基本ターゲット ---------------------------------------------------- */
+    "target": "ESNext",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+
+    /* 型チェックまわり -------------------------------------------------- */
+    "strict": false,
+    "noImplicitAny": false,
     "skipLibCheck": true,
+
+    /* モジュール解決 ---------------------------------------------------- */
     "module": "ESNext",
-    "moduleResolution": "bundler"
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* JSX / React ------------------------------------------------------- */
+    "jsx": "react-jsx",
+    "types": ["node", "@testing-library/jest-dom"],
+
+    /* その他 ------------------------------------------------------------ */
+    "useDefineForClassFields": true,
+    "allowJs": true,
+    "isolatedModules": true,
+    "noEmit": true
   },
-  "include": ["vite.config.ts"]
-} 
+
+  /* src 配下だけを型チェック対象にする ------------------------------- */
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+
+  /* ✔ services・tests・demos は除外 ----------------------------------- */
+  "exclude": [
+    "node_modules",
+    "tests/**",      // ルート直下の tests
+    "services/**",   // ルート直下の services
+    "demos/**"       // HTML を退避させたフォルダ
+  ]
+}
