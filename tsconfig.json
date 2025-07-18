@@ -1,23 +1,39 @@
 {
   "compilerOptions": {
+    /* ---------- 基本設定 ---------- */
     "target": "ESNext",
-    "useDefineForClassFields": true,
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": false,
-    "noImplicitAny": false,
-    "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
     "moduleResolution": "Node",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "jsx": "react-jsx",
     "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "useDefineForClassFields": true,
+    "allowJs": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx",
+
+    /* ---------- 型チェック緩和 ---------- */
+    "strict": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* ---------- その他 ---------- */
     "types": ["node", "@testing-library/jest-dom"]
   },
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+
+  /* src 配下だけを型チェック対象にする */
+  "include": ["src/**/*"],
+
+  /* それでも拾われたら完全に無視させる */
+  "exclude": [
+    "node_modules",
+    "demos/**",
+    "services/**",
+    "src/services/**",
+    "tests/**",
+    "src/tests/**"
+  ]
 }

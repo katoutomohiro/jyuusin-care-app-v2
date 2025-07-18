@@ -511,3 +511,5 @@ export const SeizureForm: React.FC<SeizureFormProps> = ({ onSave, isSubmitting }
     </form>
   );
 };
+
+export default SeizureForm;
