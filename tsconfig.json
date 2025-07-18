@@ -28,16 +28,14 @@
     "noEmit": true
   },
 
-  /* src 以外は基本触らない想定 */
+  /* src 以下だけ型チェック対象 */
   "include": ["src/**/*.ts", "src/**/*.tsx"],
 
-  /* ✔ 型チェックから除外したいパス */
-  {
+  /* 型チェックから外すパス */
   "exclude": [
     "node_modules",
-    "tests/**",          // ルート直下の tests だけ
-    "services/**",       // ルート直下の services フォルダ
+    "src/tests/**",
+    "src/services/**",
     "demos/**"
   ]
 }
-
