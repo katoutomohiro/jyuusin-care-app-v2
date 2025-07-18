@@ -32,10 +32,12 @@
   "include": ["src/**/*.ts", "src/**/*.tsx"],
 
   /* ✔ 型チェックから除外したいパス */
+  {
   "exclude": [
     "node_modules",
-    "src/tests/**",
-    "src/services/**",
+    "tests/**",          // ルート直下の tests だけ
+    "services/**",       // ルート直下の services フォルダ
     "demos/**"
   ]
 }
+
