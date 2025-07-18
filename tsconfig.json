@@ -21,3 +21,16 @@
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
 }
+{
+  "compilerOptions": {
+    // …既存設定…
+  },
+
+  // ↓ ここを追加
+  "exclude": [
+    "node_modules",
+    "tests",                 // テスト全部
+    "services/**",           // AI サービス全部
+    "demos/**"               // 先ほど移動したデモ html
+  ]
+}
