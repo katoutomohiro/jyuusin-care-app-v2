@@ -18,19 +18,13 @@
     "jsx": "react-jsx",
     "types": ["node", "@testing-library/jest-dom"]
   },
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
-}
-{
-  "compilerOptions": {
-    // …既存設定…
-  },
 
-  // ↓ ここを追加
+  "include": ["src/**/*"],
+
   "exclude": [
     "node_modules",
-    "tests",                 // テスト全部
-    "services/**",           // AI サービス全部
-    "demos/**"               // 先ほど移動したデモ html
+    "tests",        // テストコード
+    "services",     // AI サービス群
+    "demos"         // デモ HTML を移動したフォルダ
   ]
 }
