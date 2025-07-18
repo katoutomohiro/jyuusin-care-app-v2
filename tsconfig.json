@@ -21,11 +21,9 @@
     "forceConsistentCasingInFileNames": true,
 
     /* ---------- パス設定 ---------- */
-    /* ↓↓↓ 2 行とも削除しました ↓↓↓ */
-    /* "baseUrl": "./src",            */
-    /* "rootDir": "./src",            */
+    "baseUrl": ".",                 // ここを追加（必須）
     "paths": {
-      "@/*": ["src/*"]              // "@/components/..." などを解決
+      "@/*": ["src/*"]              // "@/components/..." で解決
     },
 
     /* ---------- その他 ---------- */
