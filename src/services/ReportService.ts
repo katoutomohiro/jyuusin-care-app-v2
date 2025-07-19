@@ -62,58 +62,60 @@ export class ReportService {
 
         if (options.includeVitalSigns) {
           row.push(
-            log.vitalSigns?.bloodPressure || '',
-            log.vitalSigns?.pulse || '',
-            log.vitalSigns?.temperature || '',
-            log.vitalSigns?.oxygenSaturation || ''
+            log.vitals?.bloodPressure ? `${log.vitals.bloodPressure.systolic}/${log.vitals.bloodPressure.diastolic}` : '',
+            (log.vitals?.pulse || '').toString(),
+            (log.vitals?.temperature || '').toString(),
+            (log.vitals?.spO2 || '').toString()
           );
         }
         if (options.includeIntake) {
           row.push(
-            log.intake?.water || '',
-            log.intake?.food || '',
-            log.intake?.supplements || ''
+            (log.intake?.amount_ml || '').toString(),
+            log.intake?.meal_form || '',
+            log.intake?.methods?.join(';') || ''
           );
         }
         if (options.includeExcretion) {
           row.push(
-            log.excretion?.urine || '',
-            log.excretion?.stool || '',
-            log.excretion?.frequency || ''
+            log.excretion?.bristol_scale?.toString() || '',
+            log.excretion?.status?.join(';') || '',
+            log.excretion?.notes || ''
           );
         }
         if (options.includeSleep) {
           row.push(
-            log.sleep?.sleepTime || '',
-            log.sleep?.wakeTime || '',
-            log.sleep?.quality || ''
+            (log.sleep?.duration_minutes || '').toString(),
+            log.sleep?.status || '',
+            log.sleep?.notes || ''
           );
         }
         if (options.includeSeizures) {
+          const seizure = log.seizures && log.seizures.length > 0 ? log.seizures[0] : null;
           row.push(
-            log.seizure?.occurred ? 'あり' : 'なし',
-            log.seizure?.time || '',
-            log.seizure?.duration || '',
-            log.seizure?.type || '',
-            log.seizure?.severity || ''
+            seizure ? 'あり' : 'なし',
+            '', // time情報なし
+            seizure?.duration_sec?.toString() || '',
+            seizure?.type || '',
+            '' // severity情報なし
           );
         }
         if (options.includeActivities) {
           row.push(
-            (log.activities?.activities || []).join(';'),
-            log.activities?.mood || '',
-            log.activities?.socialInteraction || ''
+            log.activity?.participation?.join(';') || '',
+            log.activity?.mood || '',
+            log.activity?.notes || ''
           );
         }
         if (options.includeCare) {
           row.push(
-            (log.care?.careType || []).join(';'),
-            log.care?.medication || '',
-            log.care?.emergency ? 'あり' : 'なし'
+            (log.care_provided?.provided_care || []).join(';'),
+            '', // medication情報なし
+            log.care_provided?.provided_care?.includes('緊急対応' as any) ? 'あり' : 'なし'
           );
         }
         if (options.includeNotes) {
-          row.push(log.specialNotes?.notes || '');
+          const firstNote = log.special_notes && log.special_notes.length > 0 ? log.special_notes[0] : null;
+          row.push(firstNote?.details || '');
         }
 
         return row.map(cell => `"${cell}"`).join(',');
@@ -164,37 +166,35 @@ export class ReportService {
 
     data.logs.forEach(log => {
       // バイタルサイン統計
-      if (log.vitalSigns?.pulse) {
-        const pulse = parseFloat(log.vitalSigns.pulse);
-        if (!isNaN(pulse)) {
+      if (log.vitals?.pulse) {
+        const pulse = log.vitals.pulse;
+        if (pulse && !isNaN(pulse)) {
           totalPulse += pulse;
           pulseCount++;
         }
       }
-      if (log.vitalSigns?.temperature) {
-        const temp = parseFloat(log.vitalSigns.temperature);
-        if (!isNaN(temp)) {
+      if (log.vitals?.temperature) {
+        const temp = log.vitals.temperature;
+        if (temp && !isNaN(temp)) {
           totalTemperature += temp;
           tempCount++;
         }
       }
 
       // 発作統計
-      if (log.seizure?.occurred) {
+      if (log.seizures && log.seizures.length > 0) {
         summary.seizures.total++;
-        const type = log.seizure.type || '不明';
+        const type = log.seizures[0].type || '不明';
         summary.seizures.types[type] = (summary.seizures.types[type] || 0) + 1;
       }
 
       // 活動統計
-      if (log.activities?.activities) {
-        log.activities.activities.forEach(activity => {
-          // 活動頻度の計算（簡易版）
-        });
-      }
-      if (log.activities?.mood) {
-        summary.activities.moodTrend[log.activities.mood] = 
-          (summary.activities.moodTrend[log.activities.mood] || 0) + 1;
+      if (log.activity) {
+        // 活動頻度の計算（簡易版）
+        if (log.activity.mood) {
+          summary.activities.moodTrend[log.activity.mood] = 
+            (summary.activities.moodTrend[log.activity.mood] || 0) + 1;
+        }
       }
     });
 

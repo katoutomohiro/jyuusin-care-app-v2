@@ -3,8 +3,10 @@ import { Moon, Clock, Bed } from 'lucide-react';
 import { SleepRecord } from '../../types';
 
 interface SleepInputProps {
-  value: SleepRecord;
-  onChange: (value: SleepRecord) => void;
+  value?: SleepRecord;
+  onChange?: (value: SleepRecord) => void;
+  onSave?: (eventData: any) => Promise<void>;
+  isSubmitting?: boolean;
 }
 
 const SleepInput: React.FC<SleepInputProps> = ({ value, onChange }) => {

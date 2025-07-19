@@ -30,6 +30,7 @@ interface AIChartsProps {
   };
   anomalies: any[];
   positiveChanges: any[];
+  trends?: any;  // AIInsightEngineで使用されるため追加
 }
 
 const AICharts: React.FC<AIChartsProps> = ({

@@ -6,6 +6,13 @@ export enum ServiceType {
   DAY_SERVICE = '放課後等デイサービス',
 }
 
+// ヘルパー関数
+export const safeParseFloat = (value: string | number | undefined | null, defaultValue: number = 0): number => {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') return parseFloat(value) || defaultValue;
+  return defaultValue;
+};
+
 /**
  * 性別
  */
@@ -33,10 +40,10 @@ export enum NotificationType {
 export type User = {
   id: string;
   name: string;
-  initials: string;
-  age: number;
-  gender: Gender;
-  serviceType: ServiceType[];
+  initials?: string;  // AuthContextでは省略される場合があるためオプション
+  age?: number;       // AuthContextでは省略される場合があるためオプション
+  gender?: Gender;    // AuthContextでは省略される場合があるためオプション
+  serviceType?: ServiceType[];  // AuthContextでは省略される場合があるためオプション
   disabilityLevel?: DisabilityLevel | string;
   disabilityType?: string;
   underlyingConditions?: string[];
@@ -48,6 +55,25 @@ export type User = {
   familyContact?: { name: string; relationship: string; phone: string };
   admissionDate?: string;
   status?: 'active' | 'inactive' | 'pending';
+  email?: string;  // AuthContextで使用される場合があるため追加
+  role?: string;   // AuthContextで使用される場合があるため追加
+  createdAt?: Date;  // AuthContextで使用される場合があるため追加
+  updatedAt?: Date;  // AuthContextで使用される場合があるため追加
+};
+
+/**
+ * 運動・リハビリテーション
+ */
+export type Exercise = {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  duration?: number;
+  frequency?: string;
+  targetDate?: string;
+  status?: 'active' | 'completed' | 'paused';
+  notes?: string[];
 };
 
 /**
@@ -84,6 +110,7 @@ export type DailyLog = {
   log_id?: string;
   userId: string;
   user_id?: string;
+  userName?: string;
   staff_id: string;
   author: string;
   authorId: string;
@@ -106,16 +133,19 @@ export type DailyLog = {
     notes?: string;
   }[];
   activity: ActivityRecord;
+  activities?: ActivityRecord;  // エイリアス
   special_notes: SpecialNote[];
   special_notes_details?: string;
   createdAt?: string;
   updatedAt?: string;
   vitals?: VitalSigns;
+  vitalSigns?: VitalSigns;  // エイリアス
   intake?: IntakeRecord;
   excretion?: ExcretionRecord;
   sleep?: SleepRecord;
   seizures?: SeizureRecord[];
   care_provided?: CareRecord;
+  care?: any;  // エイリアス
 };
 
 /**
@@ -443,7 +473,7 @@ export interface DailyLogDraft {
 // 他の既存の型 (AuthContextType, DataContextTypeなど) は
 // この後、新しいデータ構造に合わせて修正していきます。
 export type AuthContextType = {
-  user: Staff | null;
+  user: Staff | null;  // Headerコンポーネント等で使用
   currentUser: Staff | null;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -534,10 +564,26 @@ export type CarePlan = {
   id: string;
   userId: string;
   title: string;
-  goals: string[];
-  tasks: string[];
-  startDate: string;
-  endDate: string;
+  goals: string[] | CareGoal[];
+  tasks?: string[];  // CarePlanCRUDServiceで省略される場合があるためオプション
+  startDate?: string;  // CarePlanCRUDServiceで省略される場合があるためオプション
+  endDate?: string;   // CarePlanCRUDServiceで省略される場合があるためオプション
+  createdAt?: string;
+  updatedAt?: string;
+  progress?: any;
+  services?: any;
+  status?: 'active' | 'completed' | 'paused' | 'draft';  // ステータス追加
+  priority?: 'low' | 'medium' | 'high' | 'urgent';  // プライオリティ追加
+  reviewDate?: string;  // レビュー日追加
+  notes?: string;  // ノート追加
+  createdBy?: string;  // 作成者追加
+  updatedBy?: string;  // 更新者追加
+  // CarePlanCRUDServiceで使用される追加プロパティ
+  category?: string;
+  longTermGoal?: string;
+  shortTermGoal?: string;
+  medicalCare?: string[];  // CarePlanCRUDServiceで使用されるため追加
+  exercises?: Exercise[]; // CarePlanCRUDServiceで使用されるため追加
 };
 
 export type Notice = {
@@ -603,9 +649,9 @@ export type FacilityInfo = {
 
 // --- 日誌記録の詳細な型定義 ---
 export interface VitalSigns {
-  temperature: number;
-  pulse: number;
-  spO2: number;
+  temperature: number | string;
+  pulse: number | string;
+  spO2: number | string;
   bloodPressure: {
     systolic: number;
     diastolic: number;
@@ -616,22 +662,39 @@ export interface IntakeRecord {
   amount_ml: number;
   meal_form: string;
   meal_amount: string;
+  mealAmount?: string;  // エイリアス
+  waterAmount?: number;
+  appetite?: string;
   status: string[];
   notes: string;
 }
 export interface ExcretionRecord {
   bristol_scale: number;
   status: string[];
+  urination?: {
+    count: number;
+  };
+  defecation?: {
+    count: number;
+  };
+  incontinence?: string;
   notes: string;
 }
 export interface SleepRecord {
   duration_minutes: number;
+  totalHours?: number;
+  hours?: number;
+  quality?: string;
+  wakeCount?: number;
   status: string;
   notes: string;
 }
 export interface SeizureRecord {
   type: string;
   duration_sec: number;
+  duration?: number;  // エイリアス
+  seizureType?: string;  // エイリアス
+  hasSeizure?: string;  // エイリアス
   details: string[];
   notes: string;
 }
@@ -639,6 +702,18 @@ export interface ActivityRecord {
   participation: string[];
   mood: string;
   notes: string;
+  rehabilitation?: {
+    type: string;
+  };
+  play?: {
+    type: string;
+  };
+  outing?: {
+    destination: string;
+  };
+  social?: {
+    type: string;
+  };
 }
 export interface CareRecord {
   provided_care: string[];
@@ -646,6 +721,8 @@ export interface CareRecord {
 export interface SpecialNote {
   category: string;
   details: string;
+  content?: string;  // エイリアス
+  importance?: string;  // エイリアス
 }
 
 /**
@@ -835,6 +912,7 @@ export enum MedicalCare {
   ENEMA = '浣腸',
   CATHETERIZATION = '導尿',
   IVH = '中心静脈栄養',
+  EMERGENCY = '緊急対応',  // 追加
   OTHER = 'その他'
 }
 
@@ -999,23 +1077,34 @@ export interface SevereDisabilityDailyLog extends DailyLog {
 export type SeizurePredictionWithAlias = {
   id: string;
   userId: string;
-  riskLevel: 'low' | 'medium' | 'high';
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';  // critical追加
   confidence: number;
   predictedTime: string;
   factors: string[];
   recommendations: string[];
   timestamp: string;
+  // AdvancedAnalyticsServiceで使用されるエイリアス
+  probability?: number;
+  timeWindow?: string;
+  triggers?: any[];
+  preventiveMeasures?: string[];
 };
 
 export type HealthPredictionWithAlias = {
   id: string;
   userId: string;
   predictionType: 'seizure' | 'vital_signs' | 'mood' | 'activity';
-  riskLevel: 'low' | 'medium' | 'high';
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';  // critical追加
   confidence: number;
   description: string;
   recommendations: string[];
   timestamp: string;
+  // AIPredictionServiceで使用されるエイリアス
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  riskFactors?: any[];
+  symptoms?: any[];
+  factors?: string[];
+  nextCheckTime?: string;
 };
 
 export enum CarePlanStatus {
@@ -1068,10 +1157,14 @@ export type CareService = {
 export type RehabilitationPlan = {
   id: string;
   userId: string;
-  title: string;
-  description: string;
-  goals: string[];
-  exercises: {
+  title?: string;  // オプショナル
+  description?: string;  // オプショナル
+  goal?: string;  // レガシーサポート
+  activity?: string;  // レガシーサポート
+  frequency?: string;  // レガシーサポート
+  notes?: string;  // レガシーサポート
+  goals?: string[];  // オプショナル
+  exercises?: {
     id: string;
     name: string;
     type: string;
@@ -1080,11 +1173,11 @@ export type RehabilitationPlan = {
     equipment: string[];
     notes: string;
   }[];
-  startDate: string;
-  endDate: string;
-  status: 'active' | 'completed' | 'paused';
-  progress: number;
-  evaluations: {
+  startDate?: string;  // オプショナル
+  endDate?: string;  // オプショナル
+  status?: 'active' | 'completed' | 'paused';  // オプショナル
+  progress?: string;  // オプショナル
+  evaluations?: {
     date: string;
     evaluator: string;
     score: number;
@@ -1097,16 +1190,28 @@ export type RehabilitationPlan = {
 export type Meal = {
   id: string;
   userId: string;
+  userName?: string;
   date: string;
   time: string;
   type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  mealType?: string;
   temperature: 'hot' | 'warm' | 'cold' | 'room_temperature';
   foodItems: FoodItem[];
+  foods?: any[];
   totalNutrition: NutritionInfo;
+  totalCalories?: number;
+  totalProtein?: number;
+  totalFat?: number;
+  totalCarbohydrate?: number;
   amount: string;
+  appetite?: string;
+  completion?: number;
+  texture?: string;
+  assistance?: string;
   notes: string;
   createdBy: string;
   createdAt: string;
+  timestamp?: string;
   consumedAt?: string;
   satisfaction?: number;
   reactions?: string[];
@@ -1118,10 +1223,29 @@ export type FoodItem = {
   category: string;
   quantity: number;
   unit: string;
+  calories?: number;
+  protein?: number;
+  fat?: number;
+  carbohydrate?: number;
+  fiber?: number;
+  sodium?: number;
+  potassium?: number;
+  calcium?: number;
+  iron?: number;
+  vitaminA?: number;
+  vitaminC?: number;
+  vitaminD?: number;
+  vitaminE?: number;
+  vitaminB1?: number;
+  vitaminB2?: number;
+  vitaminB6?: number;
+  vitaminB12?: number;
+  folate?: number;
   nutrition: NutritionInfo;
   allergens: string[];
   texture: string;
   temperature: string;
+  isActive?: boolean;
   notes?: string;
 };
 
@@ -1139,16 +1263,37 @@ export type NutritionInfo = {
 export type NutritionGoal = {
   id: string;
   userId: string;
+  userName?: string;
   dailyCalories: number;
+  calories?: number;
+  protein?: number;
+  fat?: number;
+  carbohydrate?: number;
+  fiber?: number;
+  sodium?: number;
+  potassium?: number;
+  calcium?: number;
+  iron?: number;
+  vitaminA?: number;
+  vitaminC?: number;
+  vitaminD?: number;
+  vitaminE?: number;
+  vitaminB1?: number;
+  vitaminB2?: number;
+  vitaminB6?: number;
+  vitaminB12?: number;
+  folate?: number;
   dailyProtein: number;
   dailyFat: number;
   dailyCarbohydrates: number;
   dailySodium: number;
   restrictions: DietaryRestriction[];
   allergies: UserAllergy[];
-  notes: string;
+  isActive?: boolean;
+  createdBy?: string;
   createdAt: string;
   updatedAt: string;
+  notes: string;
 };
 
 export type UserAllergy = {
@@ -1157,18 +1302,30 @@ export type UserAllergy = {
   allergen: string;
   severity: 'mild' | 'moderate' | 'severe';
   symptoms: string[];
+  diagnosisDate?: string;
+  isActive?: boolean;
   notes: string;
+  createdAt?: string;
+  updatedAt?: string;
   detectedAt: string;
 };
 
 export type DietaryRestriction = {
   id: string;
   userId: string;
+  userName?: string;
   type: string;
+  name?: string;
+  severity?: string;
+  isActive?: boolean;
+  restrictedItems?: string[];
+  alternatives?: string[];
   description: string;
   reason: string;
   startDate: string;
   endDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
   notes: string;
 };
 
@@ -1188,4 +1345,26 @@ export type NotificationContextType = {
   showNotification: (message: string, type?: NotificationType) => void;
   hideNotification: (id: string) => void;
   clearNotifications: () => void;
+};
+
+// TeamCollaborationNote型の追加
+export type TeamCollaborationNote = {
+  id: string;
+  userId: string;
+  author: string;
+  content: string;
+  timestamp: string;
+  type: 'note' | 'reminder' | 'alert';
+  category?: string;
+  isPrivate?: boolean;
+  isPinned?: boolean;  // ピン留め機能追加
+  createdAt: string;
+  updatedAt: string;
+};
+
+// AuthState型の追加
+export type AuthState = {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
 };

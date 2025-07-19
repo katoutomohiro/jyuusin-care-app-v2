@@ -1,4 +1,4 @@
-import { IoTService, IoTDevice, IoTReading, VitalSignsData, DeviceStatus } from '../services/IoTService';
+import { IoTService, IoTDevice, IoTReading, VitalSignsData } from '../services/IoTService';
 import { vi } from 'vitest';
 
 describe('IoTService', () => {
@@ -9,9 +9,14 @@ describe('IoTService', () => {
   afterEach(() => {
     // テストデータをクリア
     try {
-      IoTService['devices']?.clear();
-      IoTService['readings']?.length = 0;
-      IoTService['dataListeners']?.clear();
+      const devices = (IoTService as any)['devices'];
+      if (devices) devices.clear();
+      
+      const readings = (IoTService as any)['readings'];
+      if (readings) readings.length = 0;
+      
+      const dataListeners = (IoTService as any)['dataListeners'];
+      if (dataListeners) dataListeners.clear();
     } catch (error) {
       // エラーが発生した場合は無視
     }

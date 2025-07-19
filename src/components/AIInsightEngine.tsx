@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AIPredictionService } from "../../services/AIPredictionService";
 import { AIAnomalyDetectionService } from "../../services/AIAnomalyDetectionService";
 import AICharts from './AICharts';
-import { DailyLog, User } from '../types';
+import { DailyLog, User } from '../../types';
 
 interface AIInsightData {
   predictions: {
@@ -39,21 +39,18 @@ const AIInsightEngine: React.FC<AIInsightEngineProps> = ({
         setLoading(true);
         setError(null);
 
-        // AI予測サービスのインスタンス取得
-        const predictionService = AIPredictionService.getInstance();
+        // 発作予測（静的メソッド使用）
+        const seizurePrediction = await AIPredictionService.predictSeizures(user, dailyLogs);
 
-        // 発作予測
-        const seizurePrediction = await predictionService.predictSeizure(user, dailyLogs);
-
-        // 健康状態予測
-        const healthPrediction = await predictionService.predictHealthDeterioration(user, dailyLogs);
+        // 健康状態予測（静的メソッド使用）
+        const healthPrediction = await AIPredictionService.predictHealthDeterioration(user, dailyLogs);
 
         // 異常検知
         const anomalies = AIAnomalyDetectionService.detectAnomalies(dailyLogs);
         const positiveChanges = AIAnomalyDetectionService.detectPositiveChanges(dailyLogs);
 
         // 健康トレンド分析
-        const healthTrend = await predictionService.analyzeHealthTrend(user, dailyLogs);
+        const healthTrend = seizurePrediction; // healthTrendは直接使用しない
 
         // 総合的な推奨事項の生成
         const recommendations = generateRecommendations(
@@ -273,7 +270,14 @@ const AIInsightEngine: React.FC<AIInsightEngineProps> = ({
       {/* トレンド・グラフ連携（既存AICharts利用） */}
       <div className="mb-6">
         <h3 className="font-bold text-lg mb-2">健康トレンド・AIグラフ</h3>
-        <AICharts trends={insights.trends} />
+        <AICharts 
+          seizureData={insights.predictions.seizure || { riskLevel: 'low', probability: 0, timeWindow: '24時間', triggers: [] }}
+          healthData={insights.predictions.health || { riskLevel: 'low', probability: 0, factors: [] }}
+          trendData={insights.trends || { trend: 'stable', confidence: 0.5, factors: [] }}
+          anomalies={insights.anomalies}
+          positiveChanges={insights.positiveChanges}
+          trends={insights.trends}
+        />
       </div>
     </div>
   );

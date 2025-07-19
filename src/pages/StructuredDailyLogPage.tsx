@@ -8,7 +8,7 @@ import ExcretionInput from '../components/forms/ExcretionInput';
 import SleepInput from '../components/forms/SleepInput';
 import ActivityInput from '../components/forms/ActivityInput';
 import CareInput from '../components/forms/CareInput';
-import { users } from '../../constants';
+import { useData } from '../contexts/DataContext';
 
 interface TodayEventCounts {
   [key: string]: number;
@@ -16,6 +16,7 @@ interface TodayEventCounts {
 
 const StructuredDailyLogPage: React.FC = () => {
   const navigate = useNavigate();
+  const { users, addDailyLog } = useData();
   const [activeEventType, setActiveEventType] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
@@ -51,14 +52,52 @@ const StructuredDailyLogPage: React.FC = () => {
       
       const newRecord = {
         id: Date.now().toString(),
-        userId: selectedUserId,
+        user_id: selectedUserId,
+        event_type: activeEventType,
+        created_at: new Date().toISOString(),
         timestamp: new Date().toISOString(),
         data: eventData,
-        type: activeEventType
+        type: activeEventType,
+        staff_name: '記録者', // TODO: 実際のスタッフ名を取得
+        notes: eventData.notes || ''
       };
       
       existingRecords.push(newRecord);
       localStorage.setItem(eventKey, JSON.stringify(existingRecords));
+      
+      // DataContextにも記録を追加
+      try {
+        await addDailyLog({
+          userId: selectedUserId,
+          staff_id: 'current-staff',
+          author: '記録者',
+          authorId: 'current-staff',
+          record_date: today,
+          recorder_name: '記録者',
+          weather: '記録なし',
+          mood: [],
+          meal_intake: {
+            breakfast: '記録なし',
+            lunch: '記録なし',
+            snack: '記録なし',
+            dinner: '記録なし'
+          },
+          hydration: 0,
+          toileting: [],
+          activity: {
+            participation: ['記録なし'],
+            mood: '記録なし',
+            notes: ''
+          },
+          special_notes: [{
+            category: activeEventType || 'general',
+            details: eventData.notes || ''
+          }]
+        });
+      } catch (contextError) {
+        console.warn('DataContext保存エラー:', contextError);
+        // localStorageに保存済みなので続行
+      }
       
       // 今日の記録数を更新
       setTodayEventCounts(prev => ({
@@ -67,10 +106,14 @@ const StructuredDailyLogPage: React.FC = () => {
       }));
       
       setActiveEventType(null);
-      alert('記録を保存しました');
+      
+      // 成功メッセージ
+      const eventTypeName = eventTypes.find(t => t.id === activeEventType)?.name || '記録';
+      alert(`✅ ${eventTypeName}を保存しました\n時刻: ${new Date(newRecord.timestamp).toLocaleString('ja-JP')}`);
+      
     } catch (error) {
       console.error('保存エラー:', error);
-      alert('保存に失敗しました');
+      alert(`❌ 保存に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`);
     } finally {
       setIsSubmitting(false);
     }

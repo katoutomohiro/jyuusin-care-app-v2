@@ -1,10 +1,12 @@
 import React from 'react';
 import { Heart, Shield, AlertCircle } from 'lucide-react';
-import { CareRecord } from '../../types';
+import { CareRecord, MedicalCare } from '../../../types';
 
 interface CareInputProps {
-  value: CareRecord;
-  onChange: (value: CareRecord) => void;
+  value?: CareRecord;
+  onChange?: (value: CareRecord) => void;
+  onSave?: (eventData: any) => Promise<void>;
+  isSubmitting?: boolean;
 }
 
 const CareInput: React.FC<CareInputProps> = ({ value, onChange }) => {
@@ -42,7 +44,7 @@ const CareInput: React.FC<CareInputProps> = ({ value, onChange }) => {
             実施したケア（複数選択可）
           </label>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {['体位変換', '吸引', '酸素投与', '胃管栄養', '導尿', '浣腸', '清拭', '入浴', 'リハビリ', 'その他'].map((care) => (
+            {['体位変換', MedicalCare.SUCTION, '酸素投与', MedicalCare.TUBE_FEEDING, MedicalCare.CATHETERIZATION, MedicalCare.ENEMA, '清拭', '入浴', 'リハビリ', MedicalCare.OTHER].map((care) => (
               <label key={care} className="flex items-center gap-2 p-2 border border-gray-200 rounded-md hover:bg-gray-50">
                 <input
                   type="checkbox"

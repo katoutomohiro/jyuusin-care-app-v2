@@ -5,7 +5,7 @@ interface SeizureFormProps {
   isSubmitting: boolean;
 }
 
-export const SeizureForm: React.FC<SeizureFormProps> = ({ onSave, isSubmitting }) => {
+const SeizureForm: React.FC<SeizureFormProps> = ({ onSave, isSubmitting }) => {
   // 正確な現在時刻を取得する関数
   const getCurrentDateTime = () => {
     const now = new Date();
@@ -511,3 +511,5 @@ export const SeizureForm: React.FC<SeizureFormProps> = ({ onSave, isSubmitting }
     </form>
   );
 };
+
+export default SeizureForm;

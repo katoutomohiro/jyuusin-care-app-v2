@@ -214,7 +214,7 @@ describe('AdvancedReportingService', () => {
 
   describe('error handling', () => {
     it('should handle errors gracefully in generateReport', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       try {
         const period = { start: '2024-06-01', end: '2024-06-01' };
         const data = {};

@@ -1,4 +1,4 @@
-import { FamilyCommunicationService, FamilyMember, FamilyReport, FamilyMessage } from '../services/FamilyCommunicationService';
+import { FamilyCommunicationService, FamilyMember, NotificationMessage, CommunicationLog } from '../services/FamilyCommunicationService';
 import { vi } from 'vitest';
 
 describe('FamilyCommunicationService', () => {
@@ -11,7 +11,7 @@ describe('FamilyCommunicationService', () => {
       const familyMember = {
         userId: 'user1',
         name: '田中太郎',
-        relationship: 'parent',
+        relationship: 'parent' as const,
         email: 'tanaka@example.com',
         phone: '090-1234-5678',
         notificationPreferences: {
@@ -20,7 +20,8 @@ describe('FamilyCommunicationService', () => {
           emergency: true,
           healthAlerts: true,
           medicationReminders: false
-        }
+        },
+        isActive: true
       };
       const result = FamilyCommunicationService.registerFamilyMember(familyMember);
       expect(result.id).toBeDefined();
@@ -34,7 +35,7 @@ describe('FamilyCommunicationService', () => {
       const familyMember = {
         userId: 'user1',
         name: '田中花子',
-        relationship: 'parent',
+        relationship: 'parent' as const,
         email: 'hanako@example.com',
         phone: '090-1234-5678',
         notificationPreferences: {
@@ -43,7 +44,8 @@ describe('FamilyCommunicationService', () => {
           emergency: true,
           healthAlerts: true,
           medicationReminders: false
-        }
+        },
+        isActive: true
       };
       FamilyCommunicationService.registerFamilyMember(familyMember);
       const members = FamilyCommunicationService.getFamilyMembers('user1');
@@ -63,7 +65,7 @@ describe('FamilyCommunicationService', () => {
       const familyMember = {
         userId: 'user1',
         name: '田中次郎',
-        relationship: 'parent',
+        relationship: 'parent' as const,
         email: 'jiro@example.com',
         phone: '090-1234-5678',
         notificationPreferences: {
@@ -100,7 +102,7 @@ describe('FamilyCommunicationService', () => {
       const familyMember = {
         userId: 'user1',
         name: '田中四郎',
-        relationship: 'parent',
+        relationship: 'parent' as const,
         email: 'shiro@example.com',
         phone: '090-1234-5678',
         notificationPreferences: {
@@ -130,7 +132,7 @@ describe('FamilyCommunicationService', () => {
       const familyMember = {
         userId: 'user1',
         name: '田中五郎',
-        relationship: 'parent',
+        relationship: 'parent' as const,
         email: 'goro@example.com',
         phone: '090-1234-5678',
         notificationPreferences: {
@@ -143,8 +145,8 @@ describe('FamilyCommunicationService', () => {
         isActive: true
       };
       FamilyCommunicationService.registerFamilyMember(familyMember);
-      // 簡易的なDailyLogオブジェクトを作成
-      const dailyLog = {
+      // DailyLogの必須プロパティを含む簡易オブジェクトを作成
+      const dailyLog: any = {
         id: 'log1',
         userId: 'user1',
         staff_id: 'staff1',
@@ -154,20 +156,18 @@ describe('FamilyCommunicationService', () => {
         date: '2024-01-15',
         record_date: '2024-01-15',
         timestamp: new Date().toISOString(),
-        vitalSigns: {
-          temperature: 36.5,
-          pulse: 72,
-          spO2: 98,
-          bloodPressure: { systolic: 120, diastolic: 80 }
-        },
-        activities: ['散歩', 'リハビリ'],
-        meals: ['朝食', '昼食', '夕食'],
-        medications: [],
-        sleep: { hours: 7, quality: 'good' },
-        excretion: { type: 'normal', count: 2 },
-        care: [],
-        specialNotes: '',
         weather: '晴れ',
+        mood: ['普通'],
+        meal_intake: {
+          breakfast: '普通',
+          lunch: '普通',
+          snack: '普通',
+          dinner: '普通'
+        },
+        hydration: 1500,
+        toileting: [],
+        activity: { type: 'group', duration: 60, participation: 'active', notes: '' },
+        special_notes: [],
         overallCondition: '良好'
       };
       await FamilyCommunicationService.sendDailyNotification('user1', dailyLog);
@@ -186,7 +186,7 @@ describe('FamilyCommunicationService', () => {
       const familyMember = {
         userId: 'user1',
         name: '田中六郎',
-        relationship: 'parent',
+        relationship: 'parent' as const,
         email: 'rokuro@example.com',
         phone: '090-1234-5678',
         notificationPreferences: {
@@ -199,8 +199,8 @@ describe('FamilyCommunicationService', () => {
         isActive: true
       };
       FamilyCommunicationService.registerFamilyMember(familyMember);
-      // 簡易的なDailyLogオブジェクトの配列を作成
-      const weeklyLogs = [
+      // DailyLogの配列を作成
+      const weeklyLogs: any[] = [
         {
           id: 'log1',
           userId: 'user1',
@@ -211,20 +211,18 @@ describe('FamilyCommunicationService', () => {
           date: '2024-01-15',
           record_date: '2024-01-15',
           timestamp: new Date().toISOString(),
-          vitalSigns: {
-            temperature: 36.5,
-            pulse: 72,
-            spO2: 98,
-            bloodPressure: { systolic: 120, diastolic: 80 }
-          },
-          activities: ['散歩'],
-          meals: ['朝食', '昼食', '夕食'],
-          medications: [],
-          sleep: { hours: 7, quality: 'good' },
-          excretion: { type: 'normal', count: 2 },
-          care: [],
-          specialNotes: '',
           weather: '晴れ',
+          mood: ['普通'],
+          meal_intake: {
+            breakfast: '普通',
+            lunch: '普通',
+            snack: '普通',
+            dinner: '普通'
+          },
+          hydration: 1500,
+          toileting: [],
+          activity: { type: 'group', duration: 60, participation: 'active', notes: '' },
+          special_notes: [],
           overallCondition: '良好'
         }
       ];
@@ -244,7 +242,7 @@ describe('FamilyCommunicationService', () => {
       const familyMember = {
         userId: 'user1',
         name: '田中七郎',
-        relationship: 'parent',
+        relationship: 'parent' as const,
         email: 'shichiro@example.com',
         phone: '090-1234-5678',
         notificationPreferences: {

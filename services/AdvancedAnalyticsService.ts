@@ -1,4 +1,4 @@
-import { DailyLog, User, VitalSigns, SeizureRecord } from '../types';
+import { DailyLog, User, VitalSigns, SeizureRecord, safeParseFloat } from '../types';
 import { AIPredictionService } from './AIPredictionService';
 
 export interface HealthTrendAnalysis {
@@ -387,25 +387,25 @@ export class AdvancedAnalyticsService {
 
     return {
       temperature: this.calculateTrendData(
-        recentVitals.map(v => v.temperature),
-        previousVitals.map(v => v.temperature)
+        recentVitals.map(v => safeParseFloat(v.temperature)),
+        previousVitals.map(v => safeParseFloat(v.temperature))
       ),
       pulse: this.calculateTrendData(
-        recentVitals.map(v => v.pulse),
-        previousVitals.map(v => v.pulse)
+        recentVitals.map(v => safeParseFloat(v.pulse)),
+        previousVitals.map(v => safeParseFloat(v.pulse))
       ),
       spO2: this.calculateTrendData(
-        recentVitals.map(v => v.spO2),
-        previousVitals.map(v => v.spO2)
+        recentVitals.map(v => safeParseFloat(v.spO2)),
+        previousVitals.map(v => safeParseFloat(v.spO2))
       ),
       bloodPressure: {
         systolic: this.calculateTrendData(
-          recentVitals.map(v => v.bloodPressure.systolic),
-          previousVitals.map(v => v.bloodPressure.systolic)
+          recentVitals.map(v => safeParseFloat(v.bloodPressure.systolic)),
+          previousVitals.map(v => safeParseFloat(v.bloodPressure.systolic))
         ),
         diastolic: this.calculateTrendData(
-          recentVitals.map(v => v.bloodPressure.diastolic),
-          previousVitals.map(v => v.bloodPressure.diastolic)
+          recentVitals.map(v => safeParseFloat(v.bloodPressure.diastolic)),
+          previousVitals.map(v => safeParseFloat(v.bloodPressure.diastolic))
         )
       },
       overallHealth: this.calculateOverallHealthTrend(recentVitals, previousVitals)
@@ -562,20 +562,24 @@ export class AdvancedAnalyticsService {
     let score = 100;
 
     // 体温の評価
-    if (vitals.temperature < 35 || vitals.temperature > 38) score -= 20;
-    else if (vitals.temperature < 36 || vitals.temperature > 37.5) score -= 10;
+    const temp = safeParseFloat(vitals.temperature);
+    if (temp < 35 || temp > 38) score -= 20;
+    else if (temp < 36 || temp > 37.5) score -= 10;
 
     // 脈拍の評価
-    if (vitals.pulse < 50 || vitals.pulse > 120) score -= 20;
-    else if (vitals.pulse < 60 || vitals.pulse > 100) score -= 10;
+    const pulse = safeParseFloat(vitals.pulse);
+    if (pulse < 50 || pulse > 120) score -= 20;
+    else if (pulse < 60 || pulse > 100) score -= 10;
 
     // SpO2の評価
-    if (vitals.spO2 < 90) score -= 30;
-    else if (vitals.spO2 < 95) score -= 15;
+    const spO2 = safeParseFloat(vitals.spO2);
+    if (spO2 < 90) score -= 30;
+    else if (spO2 < 95) score -= 15;
 
     // 血圧の評価
-    if (vitals.bloodPressure.systolic > 180 || vitals.bloodPressure.systolic < 90) score -= 20;
-    else if (vitals.bloodPressure.systolic > 160 || vitals.bloodPressure.systolic < 100) score -= 10;
+    const systolic = safeParseFloat(vitals.bloodPressure.systolic);
+    if (systolic > 180 || systolic < 90) score -= 20;
+    else if (systolic > 160 || systolic < 100) score -= 10;
 
     return Math.max(0, score);
   }
@@ -835,8 +839,8 @@ export class AdvancedAnalyticsService {
     const vitalLogs = logs.filter(log => log.vitals);
     if (vitalLogs.length > 10) {
       const tempPulseCorr = this.calculateCorrelation(
-        vitalLogs.map(l => l.vitals!.temperature),
-        vitalLogs.map(l => l.vitals!.pulse)
+        vitalLogs.map(l => safeParseFloat(l.vitals!.temperature)),
+        vitalLogs.map(l => safeParseFloat(l.vitals!.pulse))
       );
       if (Math.abs(tempPulseCorr) > 0.3) {
         correlations.push({
@@ -879,12 +883,12 @@ export class AdvancedAnalyticsService {
     // バイタルサインの異常検知
     const vitalLogs = logs.filter(log => log.vitals);
     if (vitalLogs.length > 0) {
-      const temps = vitalLogs.map(l => l.vitals!.temperature);
+      const temps = vitalLogs.map(l => safeParseFloat(l.vitals!.temperature));
       const avgTemp = this.calculateAverage(temps);
       const stdTemp = this.calculateStandardDeviation(temps);
 
       vitalLogs.forEach(log => {
-        const temp = log.vitals!.temperature;
+        const temp = safeParseFloat(log.vitals!.temperature);
         if (Math.abs(temp - avgTemp) > 2 * stdTemp) {
           anomalies.push({
             type: 'vital_signs',

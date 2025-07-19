@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AIPredictionService } from "../../services/AIPredictionService";
 import { AIAnomalyDetectionService } from "../../services/AIAnomalyDetectionService";
-import { DailyLog, User } from '../types';
+import { DailyLog, User } from '../../types';
 
 interface RealTimeAlert {
   id: string;
@@ -34,8 +34,6 @@ const AIRealTimeMonitor: React.FC<AIRealTimeMonitorProps> = ({
   // リアルタイム分析
   const performRealTimeAnalysis = useCallback(async () => {
     try {
-      const predictionService = AIPredictionService.getInstance();
-      
       // 最新のログを取得（過去24時間）
       const recentLogs = dailyLogs.filter(log => {
         const logDate = new Date(log.record_date);
@@ -48,11 +46,11 @@ const AIRealTimeMonitor: React.FC<AIRealTimeMonitorProps> = ({
         return;
       }
 
-      // 発作予測
-      const seizurePrediction = await predictionService.predictSeizure(user, recentLogs);
+      // 発作予測（静的メソッド使用）
+      const seizurePrediction = await AIPredictionService.predictSeizures(user, recentLogs);
       
-      // 健康状態予測
-      const healthPrediction = await predictionService.predictHealthDeterioration(user, recentLogs);
+      // 健康状態予測（静的メソッド使用）
+      const healthPrediction = await AIPredictionService.predictHealthDeterioration(user, recentLogs);
       
       // 異常検知
       const anomalies = AIAnomalyDetectionService.detectAnomalies(recentLogs);

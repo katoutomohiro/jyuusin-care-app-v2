@@ -211,7 +211,7 @@ describe('MedicationManagementService', () => {
   });
 
   it('should handle errors gracefully in addPrescription', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation();
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
       // 不正な処方データでエラーをシミュレート
       const invalidPrescription = {} as Prescription;

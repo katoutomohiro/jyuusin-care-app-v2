@@ -3,9 +3,9 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { vi } from 'vitest';
-import LoginPage from '../pages/LoginPage';
-import { useAuth } from '../contexts/AuthContext';
-import { useNotification } from '../contexts/NotificationContext';
+import LoginPage from '../src/pages/LoginPage';
+import { useAuth } from '../src/contexts/AuthContext';
+import { useNotification } from '../src/contexts/NotificationContext';
 
 vi.mock('../contexts/AuthContext');
 vi.mock('../contexts/NotificationContext');

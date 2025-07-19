@@ -121,7 +121,6 @@ export class NotificationService {
     switch (data.type) {
       case 'notification':
         this.addNotification({
-          id: data.id,
           type: data.notificationType,
           title: data.title,
           message: data.message,
@@ -288,16 +287,15 @@ export class NotificationService {
    * 緊急通知の表示
    */
   private showEmergencyNotification(data: any): void {
-    const notification: Notification = {
-      id: this.generateId(),
+    const notification = {
       type: NotificationType.ERROR,
       title: '緊急事態',
       message: data.message,
       timestamp: new Date().toISOString(),
       userId: data.userId,
       read: false,
-      priority: 'urgent',
-      category: 'emergency',
+      priority: 'urgent' as const,
+      category: 'emergency' as const,
       metadata: data
     };
 
@@ -311,16 +309,15 @@ export class NotificationService {
    * 家族からの通知の表示
    */
   private showFamilyNotification(data: any): void {
-    const notification: Notification = {
-      id: this.generateId(),
+    const notification = {
       type: NotificationType.INFO,
       title: '家族からの連絡',
       message: data.message,
       timestamp: new Date().toISOString(),
       userId: data.userId,
       read: false,
-      priority: 'medium',
-      category: 'family',
+      priority: 'medium' as const,
+      category: 'family' as const,
       metadata: data
     };
 

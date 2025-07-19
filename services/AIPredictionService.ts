@@ -3,7 +3,7 @@
  * 発作予測、健康リスク予測、異常検知の高度なAI機能
  */
 
-import { DailyLog, User, VitalSigns, SeizureRecord, SeizurePredictionWithAlias, HealthPredictionWithAlias } from '../types';
+import { DailyLog, User, VitalSigns, SeizureRecord, SeizurePredictionWithAlias, HealthPredictionWithAlias, safeParseFloat } from '../types';
 import { format, subDays, parseISO, differenceInDays } from 'date-fns';
 
 export interface PredictionData {
@@ -150,13 +150,19 @@ export class AIPredictionService {
 
       if (seizureLogs.length === 0) {
         return {
+          id: `pred_${Date.now()}_${user.id}`,
+          userId: user.id,
           riskLevel: 'low' as 'low',
+          confidence: 0.05,
+          predictedTime: '24時間以内',
+          factors: [],
+          recommendations: ['定期的な観察を継続'],
+          timestamp: new Date().toISOString(),
           probability: 0.05,
           timeWindow: '24時間以内',
           triggers: [],
           preventiveMeasures: ['定期的な観察を継続'],
-          severity: 'low',
-          recommendations: ['定期的な観察を継続']
+          severity: 'low'
         };
       }
 
@@ -170,13 +176,19 @@ export class AIPredictionService {
 
       const preventiveMeasures = this.generateSeizurePreventiveMeasures(riskLevel, triggerAnalysis);
       return {
+        id: `pred_${Date.now()}_${user.id}`,
+        userId: user.id,
         riskLevel: riskLevel as 'low' | 'medium' | 'high' | 'critical',
+        confidence: probability,
+        predictedTime: seizurePattern.nextExpectedWindow,
+        factors: triggerAnalysis.triggers,
+        recommendations: preventiveMeasures,
+        timestamp: new Date().toISOString(),
         probability,
         timeWindow: seizurePattern.nextExpectedWindow,
         triggers: triggerAnalysis.triggers,
         preventiveMeasures,
-        severity: riskLevel,
-        recommendations: preventiveMeasures
+        severity: riskLevel
       };
     })();
     return result;
@@ -357,21 +369,22 @@ export class AIPredictionService {
   // プライベートメソッド
 
   private static analyzeTemperatureTrend(vitals: VitalSigns[], current: VitalSigns) {
-    const temps = vitals.map(v => v.temperature);
+    const temps = vitals.map(v => safeParseFloat(v.temperature));
     const avgTemp = temps.reduce((a, b) => a + b, 0) / temps.length;
-    const tempChange = current.temperature - avgTemp;
+    const currentTemp = safeParseFloat(current.temperature);
+    const tempChange = currentTemp - avgTemp;
 
-    if (current.temperature > 38.0) {
+    if (currentTemp > 38.0) {
     return {
         riskLevel: 'critical' as const,
         factors: ['高熱', '感染症の可能性']
       };
-    } else if (current.temperature > 37.5 || tempChange > 1.0) {
+    } else if (currentTemp > 37.5 || tempChange > 1.0) {
       return {
         riskLevel: 'high' as const,
         factors: ['体温上昇', '体調変化の可能性']
       };
-    } else if (current.temperature < 35.0) {
+    } else if (currentTemp < 35.0) {
       return {
         riskLevel: 'high' as const,
         factors: ['低体温', '循環不全の可能性']
@@ -385,16 +398,17 @@ export class AIPredictionService {
   }
 
   private static analyzePulseTrend(vitals: VitalSigns[], current: VitalSigns) {
-    const pulses = vitals.map(v => v.pulse);
+    const pulses = vitals.map(v => safeParseFloat(v.pulse));
     const avgPulse = pulses.reduce((a, b) => a + b, 0) / pulses.length;
-    const pulseChange = current.pulse - avgPulse;
+    const currentPulse = safeParseFloat(current.pulse);
+    const pulseChange = currentPulse - avgPulse;
 
-    if (current.pulse > 120 || current.pulse < 50) {
+    if (currentPulse > 120 || currentPulse < 50) {
     return {
         riskLevel: 'critical' as const,
         factors: ['脈拍異常', '循環器系の問題の可能性']
       };
-    } else if (current.pulse > 100 || current.pulse < 60 || Math.abs(pulseChange) > 20) {
+    } else if (currentPulse > 100 || currentPulse < 60 || Math.abs(pulseChange) > 20) {
       return {
         riskLevel: 'high' as const,
         factors: ['脈拍変化', '体調変化の可能性']
@@ -408,12 +422,13 @@ export class AIPredictionService {
   }
 
   private static analyzeSpO2Trend(vitals: VitalSigns[], current: VitalSigns) {
-    if (current.spO2 < 90) {
+    const currentSpO2 = safeParseFloat(current.spO2);
+    if (currentSpO2 < 90) {
     return {
         riskLevel: 'critical' as const,
         factors: ['低酸素血症', '呼吸器系の問題の可能性']
       };
-    } else if (current.spO2 < 95) {
+    } else if (currentSpO2 < 95) {
       return {
         riskLevel: 'high' as const,
         factors: ['酸素飽和度低下', '呼吸状態の注意']
@@ -474,9 +489,9 @@ export class AIPredictionService {
     // 発作前の状態を分析
     seizureLogs.forEach(log => {
       if (log.vitals) {
-        if (log.vitals.temperature > 37.5) triggers.push('発熱');
-        if (log.vitals.spO2 < 95) triggers.push('低酸素');
-        if (log.vitals.pulse > 100) triggers.push('脈拍上昇');
+        if (safeParseFloat(log.vitals.temperature) > 37.5) triggers.push('発熱');
+        if (safeParseFloat(log.vitals.spO2) < 95) triggers.push('低酸素');
+        if (safeParseFloat(log.vitals.pulse) > 100) triggers.push('脈拍上昇');
       }
       
       if (log.intake?.notes?.includes('むせ込み')) triggers.push('むせ込み');
@@ -676,12 +691,12 @@ export class AIPredictionService {
 
   private calculateAverageVitals(vitals: VitalSigns[]) {
     return {
-      temperature: vitals.reduce((sum, v) => sum + v.temperature, 0) / vitals.length,
-      pulse: vitals.reduce((sum, v) => sum + v.pulse, 0) / vitals.length,
-      spO2: vitals.reduce((sum, v) => sum + v.spO2, 0) / vitals.length,
+      temperature: vitals.reduce((sum, v) => sum + safeParseFloat(v.temperature), 0) / vitals.length,
+      pulse: vitals.reduce((sum, v) => sum + safeParseFloat(v.pulse), 0) / vitals.length,
+      spO2: vitals.reduce((sum, v) => sum + safeParseFloat(v.spO2), 0) / vitals.length,
       bloodPressure: {
-        systolic: vitals.reduce((sum, v) => sum + v.bloodPressure.systolic, 0) / vitals.length,
-        diastolic: vitals.reduce((sum, v) => sum + v.bloodPressure.diastolic, 0) / vitals.length
+        systolic: vitals.reduce((sum, v) => sum + safeParseFloat(v.bloodPressure.systolic), 0) / vitals.length,
+        diastolic: vitals.reduce((sum, v) => sum + safeParseFloat(v.bloodPressure.diastolic), 0) / vitals.length
       }
     };
   }
@@ -798,6 +813,12 @@ export class AIPredictionService {
   static async predictHealthDeterioration(user: User, dailyLogs: DailyLog[]): Promise<HealthPredictionWithAlias> {
     const base = await this.predictHealthRisk(user, dailyLogs);
     return {
+      id: `health_pred_${Date.now()}_${user.id}`,
+      userId: user.id,
+      predictionType: 'vital_signs',
+      confidence: base.probability,
+      description: '健康状態の予測分析',
+      timestamp: new Date().toISOString(),
       ...base,
       severity: base.riskLevel,
       riskFactors: [],

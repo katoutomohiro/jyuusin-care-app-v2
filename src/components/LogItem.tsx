@@ -1,6 +1,6 @@
 import React from 'react';
 import { Calendar, Clock, User, Edit, Trash2, Eye } from 'lucide-react';
-import { DailyLog, User as UserType } from '../types';
+import { DailyLog, User as UserType, MedicalCare } from '../../types';
 
 interface LogItemProps {
   log: DailyLog;
@@ -30,7 +30,7 @@ const LogItem: React.FC<LogItemProps> = ({ log, user, onEdit, onDelete, onView }
     // 発作がある場合は赤
     if (log.seizures && log.seizures.length > 0) return 'border-l-red-500';
     // 緊急対応がある場合はオレンジ
-    if (log.care_provided?.provided_care?.includes('緊急対応')) return 'border-l-orange-500';
+    if (log.care_provided?.provided_care?.includes(MedicalCare.EMERGENCY)) return 'border-l-orange-500';
     // 特記事項が重要の場合は黄色
     if (log.special_notes && log.special_notes.length > 0) return 'border-l-yellow-500';
     // 通常は青
@@ -39,7 +39,7 @@ const LogItem: React.FC<LogItemProps> = ({ log, user, onEdit, onDelete, onView }
 
   const getStatusText = (log: DailyLog) => {
     if (log.seizures && log.seizures.length > 0) return '発作あり';
-    if (log.care_provided?.provided_care?.includes('緊急対応')) return '緊急対応';
+    if (log.care_provided?.provided_care?.includes(MedicalCare.EMERGENCY)) return '緊急対応';
     if (log.special_notes && log.special_notes.length > 0) return '重要事項';
     return '通常';
   };
@@ -57,7 +57,7 @@ const LogItem: React.FC<LogItemProps> = ({ log, user, onEdit, onDelete, onView }
           <span className={`px-2 py-1 text-xs rounded-full ${
             log.seizures && log.seizures.length > 0 
               ? 'bg-red-100 text-red-800' 
-              : log.care_provided?.provided_care?.includes('緊急対応')
+              : log.care_provided?.provided_care?.includes(MedicalCare.EMERGENCY)
                 ? 'bg-orange-100 text-orange-800'
                 : log.special_notes && log.special_notes.length > 0
                   ? 'bg-yellow-100 text-yellow-800'

@@ -5,7 +5,7 @@ interface ExpressionFormProps {
   isSubmitting: boolean;
 }
 
-export const ExpressionForm: React.FC<ExpressionFormProps> = ({ onSave, isSubmitting }) => {
+const ExpressionForm: React.FC<ExpressionFormProps> = ({ onSave, isSubmitting }) => {
   // 正確な現在時刻を取得する関数
   const getCurrentDateTime = () => {
     const now = new Date();
@@ -285,3 +285,5 @@ export const ExpressionForm: React.FC<ExpressionFormProps> = ({ onSave, isSubmit
     </form>
   );
 };
+
+export default ExpressionForm;

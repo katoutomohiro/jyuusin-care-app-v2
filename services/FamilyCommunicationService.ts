@@ -3,7 +3,7 @@
  * 家族との情報共有とコミュニケーション機能
  */
 
-import { DailyLog, User } from '../types';
+import { DailyLog, User, safeParseFloat } from '../types';
 import { format, subDays, parseISO, isToday, isYesterday } from 'date-fns';
 
 export interface FamilyMember {
@@ -496,7 +496,7 @@ export class FamilyCommunicationService {
     // バイタルサインの平均
     const vitalsList = weeklyLogs.map(log => log.vitals || log.vitalSigns).filter(Boolean);
     if (vitalsList.length > 0) {
-      const avgTemp = (vitalsList.reduce((sum, v) => sum + (v.temperature || 0), 0) / vitalsList.length).toFixed(1);
+      const avgTemp = (vitalsList.reduce((sum, v) => sum + safeParseFloat(v.temperature), 0) / vitalsList.length).toFixed(1);
       summary.push(`平均体温: ${avgTemp}°C`);
     }
     // 活動の集計

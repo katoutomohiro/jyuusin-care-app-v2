@@ -1,11 +1,12 @@
 // AI異常検知サービス雛形
-import { DailyLog } from '../types';
+import { DailyLog, VitalSigns, SeizureRecord, safeParseFloat } from '../types';
 
 export interface AnomalyAlert {
   type: string; // 'vital' | 'seizure' | 'excretion' | 'sleep' など
   message: string;
   date: string;
   userId: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical'; // 重要度追加
   details?: any;
 }
 
@@ -28,7 +29,7 @@ export class AIAnomalyDetectionService {
 
       // バイタル異常例
       if (log.vitals) {
-        if (log.vitals.temperature > 37.5) {
+        if (safeParseFloat(log.vitals.temperature) > 37.5) {
           alerts.push({
             type: 'vital',
             message: `体温が高め (${log.vitals.temperature}℃)`,
@@ -37,7 +38,7 @@ export class AIAnomalyDetectionService {
             details: log.vitals
           });
         }
-        if (log.vitals.spO2 < 95) {
+        if (safeParseFloat(log.vitals.spO2) < 95) {
           alerts.push({
             type: 'vital',
             message: `SpO2が低め (${log.vitals.spO2}%)`,
@@ -164,7 +165,7 @@ export class AIAnomalyDetectionService {
       // 平均体温の上昇傾向
       const temperatures = userLogs
         .filter(log => log.vitals?.temperature)
-        .map(log => log.vitals!.temperature);
+        .map(log => safeParseFloat(log.vitals!.temperature));
       
       if (temperatures.length > 3) {
         const avgTemp = temperatures.reduce((a, b) => a + b, 0) / temperatures.length;

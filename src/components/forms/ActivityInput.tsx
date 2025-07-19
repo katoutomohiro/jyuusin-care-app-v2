@@ -3,8 +3,10 @@ import { Play, Users, Smile } from 'lucide-react';
 import { ActivityRecord } from '../../types';
 
 interface ActivityInputProps {
-  value: ActivityRecord;
-  onChange: (value: ActivityRecord) => void;
+  value?: ActivityRecord;
+  onChange?: (value: ActivityRecord) => void;
+  onSave?: (eventData: any) => Promise<void>;
+  isSubmitting?: boolean;
 }
 
 const ActivityInput: React.FC<ActivityInputProps> = ({ value, onChange }) => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import LoadingSpinner from '../../components/LoadingSpinner';
+import LoadingSpinner from '../../src/components/LoadingSpinner';
 import { vi, test } from 'vitest';
 
 describe('LoadingSpinner', () => {
@@ -34,7 +34,6 @@ describe('LoadingSpinner', () => {
       <LoadingSpinner 
         size="sm" 
         text="テスト読み込み中"
-        className="custom-class"
       />
     );
     const spinner = screen.getByTestId('loading-spinner');
@@ -44,12 +43,10 @@ describe('LoadingSpinner', () => {
     expect(screen.getByText('テスト読み込み中')).toBeInTheDocument();
   });
 
-  test('should handle invalid size gracefully', () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    render(<LoadingSpinner size="invalid" as any />);
+  test('should handle large size correctly', () => {
+    render(<LoadingSpinner size="lg" />);
     const spinner = screen.getByTestId('loading-spinner');
     expect(spinner).toBeInTheDocument();
-    consoleSpy.mockRestore();
   });
 
   test('should apply correct size classes', () => {

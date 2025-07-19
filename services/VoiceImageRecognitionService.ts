@@ -73,35 +73,49 @@ interface IWindow extends Window {
 
 declare const window: IWindow;
 
+// Web Speech API型定義
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
+
 // 音声認識フック
 export const useVoiceRecognition = (onResult: (transcript: string) => void) => {
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const speechRecognition = new recognition() as SpeechRecognition;
+  const speechRecognition = recognition ? new recognition() : null;
 
-  speechRecognition.continuous = true;
-  speechRecognition.interimResults = true;
-  speechRecognition.lang = 'ja-JP';
+  if (speechRecognition) {
+    speechRecognition.continuous = true;
+    speechRecognition.interimResults = true;
+    speechRecognition.lang = 'ja-JP';
 
-  speechRecognition.onresult = (event) => {
-    const transcript = Array.from(event.results)
-      .map((result: any) => result[0])
-      .map((result) => result.transcript)
-      .join('');
-    onResult(transcript);
-  };
+    speechRecognition.onresult = (event: any) => {
+      const transcript = Array.from(event.results)
+        .map((result: any) => result[0])
+        .map((result: any) => result.transcript)
+        .join('');
+      onResult(transcript);
+    };
 
-  speechRecognition.onerror = (event) => {
-    setError(event.error);
-    setIsListening(false);
-  };
+    speechRecognition.onerror = (event: any) => {
+      setError(event.error);
+      setIsListening(false);
+    };
 
-  speechRecognition.onend = () => {
-    setIsListening(false);
-  };
+    speechRecognition.onend = () => {
+      setIsListening(false);
+    };
+  }
 
   const startListening = useCallback(() => {
+    if (!speechRecognition) {
+      setError('音声認識がサポートされていません。');
+      return;
+    }
     try {
       speechRecognition.start();
       setIsListening(true);
@@ -113,7 +127,9 @@ export const useVoiceRecognition = (onResult: (transcript: string) => void) => {
   }, [speechRecognition]);
 
   const stopListening = useCallback(() => {
-    speechRecognition.stop();
+    if (speechRecognition) {
+      speechRecognition.stop();
+    }
     setIsListening(false);
   }, [speechRecognition]);
 

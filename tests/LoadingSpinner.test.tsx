@@ -31,7 +31,7 @@ describe('LoadingSpinner', () => {
 
   it('カスタムメッセージが表示される', () => {
     const customMessage = 'データを読み込み中です...';
-    render(<LoadingSpinner message={customMessage} />);
+    render(<LoadingSpinner text={customMessage} />);
 
     expect(screen.getByText(customMessage)).toBeInTheDocument();
   });

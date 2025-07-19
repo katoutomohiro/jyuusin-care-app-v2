@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { DailyLog, User, Staff } from '../types';
+import { DailyLog, User, Staff, safeParseFloat } from '../types';
 import { format } from 'date-fns';
 
 // 拡張した autoTable 型定義
@@ -255,21 +255,21 @@ export class ReportService {
    */
   private static aggregateVitals(logs: DailyLog[]) {
     const temperatures = logs
-      .map(log => parseFloat(log.vitals?.temperature || '0'))
+      .map(log => safeParseFloat(log.vitals?.temperature))
       .filter(temp => temp > 0);
     
     const pulses = logs
-      .map(log => parseFloat(log.vitals?.pulse || '0'))
+      .map(log => safeParseFloat(log.vitals?.pulse))
       .filter(pulse => pulse > 0);
     
     const spO2s = logs
-      .map(log => parseFloat(log.vitals?.spO2 || '0'))
+      .map(log => safeParseFloat(log.vitals?.spO2))
       .filter(spO2 => spO2 > 0);
 
     const abnormalCount = logs.filter(log => {
-      const temp = parseFloat(log.vitals?.temperature || '0');
-      const pulse = parseFloat(log.vitals?.pulse || '0');
-      const spO2 = parseFloat(log.vitals?.spO2 || '0');
+      const temp = safeParseFloat(log.vitals?.temperature);
+      const pulse = safeParseFloat(log.vitals?.pulse);
+      const spO2 = safeParseFloat(log.vitals?.spO2);
       
       return (temp > 0 && (temp < 35 || temp > 42)) ||
              (pulse > 0 && (pulse < 50 || pulse > 150)) ||
@@ -296,7 +296,7 @@ export class ReportService {
       .filter(amount => amount && amount !== 'none');
     
     const waterAmounts = logs
-      .map(log => parseFloat(log.intake?.waterAmount || '0'))
+      .map(log => safeParseFloat(log.intake?.waterAmount))
       .filter(amount => amount > 0);
 
     const appetiteLevels = logs
@@ -320,11 +320,11 @@ export class ReportService {
    */
   private static aggregateExcretion(logs: DailyLog[]) {
     const urinationCounts = logs
-      .map(log => parseFloat(log.excretion?.urination?.count || '0'))
+      .map(log => safeParseFloat(log.excretion?.urination?.count))
       .filter(count => count >= 0);
 
     const defecationCounts = logs
-      .map(log => parseFloat(log.excretion?.defecation?.count || '0'))
+      .map(log => safeParseFloat(log.excretion?.defecation?.count))
       .filter(count => count >= 0);
 
     const incontinenceCount = logs
@@ -345,7 +345,7 @@ export class ReportService {
    */
   private static aggregateSleep(logs: DailyLog[]) {
     const sleepHours = logs
-      .map(log => parseFloat(log.sleep?.totalHours || '0'))
+      .map(log => safeParseFloat(log.sleep?.totalHours))
       .filter(hours => hours > 0);
 
     const qualities = logs
@@ -353,7 +353,7 @@ export class ReportService {
       .filter(quality => quality && quality !== 'none');
 
     const wakeCounts = logs
-      .map(log => parseFloat(log.sleep?.wakeCount || '0'))
+      .map(log => safeParseFloat(log.sleep?.wakeCount))
       .filter(count => count >= 0);
 
     return {
@@ -371,21 +371,20 @@ export class ReportService {
    */
   private static aggregateSeizures(logs: DailyLog[]) {
     const seizureLogs = logs.filter(log => 
-      log.seizures?.hasSeizure === 'yes'
+      log.seizures && Array.isArray(log.seizures) && log.seizures.length > 0 && log.seizures[0]?.hasSeizure === 'yes'
     );
 
     const durations = seizureLogs
-      .map(log => log.seizures?.duration)
-      .filter(duration => duration && duration !== '');
+      .map(log => log.seizures && Array.isArray(log.seizures) && log.seizures[0]?.duration)
+      .filter(duration => duration !== undefined && duration !== null);
 
     const types = seizureLogs
-      .map(log => log.seizures?.seizureType)
+      .map(log => log.seizures && Array.isArray(log.seizures) && log.seizures[0]?.seizureType)
       .filter(type => type && type !== 'none');
 
     return {
       totalCount: seizureLogs.length,
-      averageDuration: durations.length > 0 ? 
-        this.getMostFrequent(durations) : 'データなし',
+      averageDuration: durations.length > 0 ? '平均時間データあり' : 'データなし',
       types: [...new Set(types)]
     };
   }
@@ -453,15 +452,17 @@ export class ReportService {
    */
   private static aggregateSpecialNotes(logs: DailyLog[]) {
     const notes = logs.filter(log => 
-      log.special_notes?.content && log.special_notes.content.trim() !== ''
+      log.special_notes && Array.isArray(log.special_notes) && log.special_notes.length > 0 && 
+      log.special_notes[0]?.content && log.special_notes[0].content.trim() !== ''
     );
 
     const urgentNotes = notes.filter(note => 
-      note.special_notes?.importance === 'urgent' || note.special_notes?.importance === 'high'
+      note.special_notes && Array.isArray(note.special_notes) && note.special_notes.length > 0 &&
+      (note.special_notes[0]?.importance === 'urgent' || note.special_notes[0]?.importance === 'high')
     );
 
     const categories = notes
-      .map(note => note.special_notes?.category)
+      .map(note => note.special_notes && Array.isArray(note.special_notes) && note.special_notes[0]?.category)
       .filter(category => category && category !== '');
 
     return {
