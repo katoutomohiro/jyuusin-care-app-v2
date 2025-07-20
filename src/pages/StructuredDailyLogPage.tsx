@@ -8,7 +8,10 @@ import ExcretionInput from '../components/forms/ExcretionInput';
 import SleepInput from '../components/forms/SleepInput';
 import ActivityInput from '../components/forms/ActivityInput';
 import CareInput from '../components/forms/CareInput';
+import MedicationInput from '../components/forms/MedicationInput';
+import OtherInput from '../components/forms/OtherInput';
 import { useData } from '../contexts/DataContext';
+import { useAdmin } from '../contexts/AdminContext';
 
 interface TodayEventCounts {
   [key: string]: number;
@@ -17,10 +20,12 @@ interface TodayEventCounts {
 const StructuredDailyLogPage: React.FC = () => {
   const navigate = useNavigate();
   const { users, addDailyLog } = useData();
+  const { isAdminMode, isAuthenticated, autoSaveEnabled } = useAdmin();
   const [activeEventType, setActiveEventType] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [todayEventCounts, setTodayEventCounts] = useState<TodayEventCounts>({});
+  const [showAdminWarning, setShowAdminWarning] = useState(false);
 
   // 今日の日付を取得
   const today = new Date().toISOString().split('T')[0];
@@ -29,7 +34,10 @@ const StructuredDailyLogPage: React.FC = () => {
   useEffect(() => {
     const loadTodayEventCounts = () => {
       const counts: TodayEventCounts = {};
-      const eventTypes = ['seizure', 'expression', 'vital', 'meal', 'excretion', 'sleep', 'activity', 'care'];
+      const eventTypes = [
+        'seizure', 'expression', 'vital', 'meal', 'excretion', 
+        'sleep', 'activity', 'care', 'medication', 'other'
+      ];
       
       eventTypes.forEach(eventType => {
         const key = `${eventType}_records_${today}`;
@@ -44,6 +52,13 @@ const StructuredDailyLogPage: React.FC = () => {
   }, [today]);
 
   const handleSaveEvent = async (eventData: any) => {
+    // 管理者権限チェック
+    if (isAdminMode && !isAuthenticated) {
+      setShowAdminWarning(true);
+      setTimeout(() => setShowAdminWarning(false), 5000);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // データ保存処理
@@ -59,11 +74,20 @@ const StructuredDailyLogPage: React.FC = () => {
         data: eventData,
         type: activeEventType,
         staff_name: '記録者', // TODO: 実際のスタッフ名を取得
-        notes: eventData.notes || ''
+        notes: eventData.notes || '',
+        admin_created: isAdminMode && isAuthenticated,
+        auto_saved: autoSaveEnabled
       };
       
       existingRecords.push(newRecord);
-      localStorage.setItem(eventKey, JSON.stringify(existingRecords));
+      
+      // 自動保存設定に応じて保存
+      if (autoSaveEnabled) {
+        localStorage.setItem(eventKey, JSON.stringify(existingRecords));
+        console.log(`💾 自動保存: ${activeEventType} 記録が保存されました`);
+      } else {
+        console.log(`📝 記録作成: ${activeEventType} 記録（手動保存モード）`);
+      }
       
       // DataContextにも記録を追加
       try {
@@ -173,13 +197,58 @@ const StructuredDailyLogPage: React.FC = () => {
       id: 'care', 
       name: '医療的ケア', 
       color: 'bg-pink-500',
+      icon: '🏥',
+      description: '吸引・酸素・人工呼吸器'
+    },
+    { 
+      id: 'medication', 
+      name: '薬剤投与', 
+      color: 'bg-cyan-500',
       icon: '💊',
-      description: '吸引・胃ろう・投薬'
+      description: '抗てんかん薬・内服薬'
+    },
+    { 
+      id: 'other', 
+      name: 'その他記録', 
+      color: 'bg-gray-500',
+      icon: '📝',
+      description: '行動・家族・事故記録'
     }
   ];
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* 管理者状態情報バー */}
+      {(isAdminMode || !autoSaveEnabled || showAdminWarning) && (
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-b border-yellow-200">
+          <div className="max-w-md mx-auto px-4 py-2">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center space-x-4">
+                {isAdminMode && (
+                  <div className={`flex items-center ${isAuthenticated ? 'text-green-700' : 'text-red-700'}`}>
+                    <span className="mr-1">👑</span>
+                    <span className="font-medium">
+                      管理者モード: {isAuthenticated ? '認証済み' : '未認証'}
+                    </span>
+                  </div>
+                )}
+                <div className={`flex items-center ${autoSaveEnabled ? 'text-green-700' : 'text-orange-700'}`}>
+                  <span className="mr-1">💾</span>
+                  <span className="font-medium">
+                    自動保存: {autoSaveEnabled ? '有効' : '無効'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            {showAdminWarning && (
+              <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded text-red-800 text-sm">
+                ⚠️ 管理者モードが有効ですが認証されていません。設定画面で認証を行ってください。
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ヘッダー */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-md mx-auto px-4 py-4">
@@ -335,6 +404,12 @@ const StructuredDailyLogPage: React.FC = () => {
               )}
               {activeEventType === 'care' && (
                 <CareInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+              )}
+              {activeEventType === 'medication' && (
+                <MedicationInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+              )}
+              {activeEventType === 'other' && (
+                <OtherInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
               )}
             </div>
           )}

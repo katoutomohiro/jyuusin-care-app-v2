@@ -15,8 +15,8 @@
   "author": "Jyushin Care Team",
   "license": "MIT",
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 3004 --no-open --logLevel error --clearScreen false",
-    "dev:silent": "vite --host 0.0.0.0 --port 3004 --no-open --logLevel silent --clearScreen false",
+    "dev": "vite --host 0.0.0.0 --port 3003 --no-open --logLevel error --clearScreen false",
+    "dev:silent": "vite --host 0.0.0.0 --port 3003 --no-open --logLevel silent --clearScreen false",
     "dev:clean": "VITE_DISABLE_WEBSOCKET=true npm run dev:silent",
     "dev:ultra-silent": "NODE_ENV=development VITE_LOG_LEVEL=silent NO_COLOR=1 vite --host 0.0.0.0 --port 3004 --no-open --logLevel silent --clearScreen false 2>/dev/null",
     "build": "vite build --logLevel error",

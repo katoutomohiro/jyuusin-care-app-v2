@@ -3,6 +3,7 @@ import { Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { AdminProvider } from './contexts/AdminContext';
 import StructuredDailyLogPage from './pages/StructuredDailyLogPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
@@ -103,35 +104,37 @@ const App: React.FC = () => {
       <AuthProvider>
         <DataProvider>
           <NotificationProvider>
-            <div className="flex min-h-screen">
-              {/* サイドナビ */}
-              <nav className="w-64 bg-white border-r p-6 flex flex-col gap-4 overflow-y-auto">
-                <h2 className="text-xl font-bold mb-6">魂の器ナビゲーション</h2>
-                {navItems.map(item => (
-                  <Link key={item.path} to={item.path} className="py-2 px-4 rounded hover:bg-yellow-100 font-semibold flex flex-col">
-                    <span>{item.label}</span>
-                    <span style={{ fontSize: '0.85em', color: '#888888', fontWeight: 400 }}>{item.subtitle}</span>
-                  </Link>
-                ))}
-              </nav>
-              {/* メイン */}
-              <main className="flex-1 bg-gray-50 overflow-y-auto">
-                <Routes>
-                  <Route path="/" element={<DashboardPage />} />
-                  <Route path="/users" element={<UserListPage />} />
-                  <Route path="/users/:id" element={<UserDetailPage />} />
-                  <Route path="/daily-log" element={<StructuredDailyLogPage />} />
-                  <Route path="/daily-log/:userId" element={<StructuredDailyLogPage />} />
-                  <Route path="/staff-schedule" element={<StaffSchedulePage />} />
-                  <Route path="/transport-plan" element={<TransportPlanPage />} />
-                  <Route path="/kaizen" element={<KaizenPage />} />
-                  <Route path="/learning" element={<LearningHubPage />} />
-                  <Route path="/supplies" element={<SuppliesStatusPage />} />
-                  <Route path="/reports" element={<ReportEnginePage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
-                </Routes>
-              </main>
-            </div>
+            <AdminProvider>
+              <div className="flex min-h-screen">
+                {/* サイドナビ */}
+                <nav className="w-64 bg-white border-r p-6 flex flex-col gap-4 overflow-y-auto">
+                  <h2 className="text-xl font-bold mb-6">魂の器ナビゲーション</h2>
+                  {navItems.map(item => (
+                    <Link key={item.path} to={item.path} className="py-2 px-4 rounded hover:bg-yellow-100 font-semibold flex flex-col">
+                      <span>{item.label}</span>
+                      <span style={{ fontSize: '0.85em', color: '#888888', fontWeight: 400 }}>{item.subtitle}</span>
+                    </Link>
+                  ))}
+                </nav>
+                {/* メイン */}
+                <main className="flex-1 bg-gray-50 overflow-y-auto">
+                  <Routes>
+                    <Route path="/" element={<DashboardPage />} />
+                    <Route path="/users" element={<UserListPage />} />
+                    <Route path="/users/:id" element={<UserDetailPage />} />
+                    <Route path="/daily-log" element={<StructuredDailyLogPage />} />
+                    <Route path="/daily-log/:userId" element={<StructuredDailyLogPage />} />
+                    <Route path="/staff-schedule" element={<StaffSchedulePage />} />
+                    <Route path="/transport-plan" element={<TransportPlanPage />} />
+                    <Route path="/kaizen" element={<KaizenPage />} />
+                    <Route path="/learning" element={<LearningHubPage />} />
+                    <Route path="/supplies" element={<SuppliesStatusPage />} />
+                    <Route path="/reports" element={<ReportEnginePage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
+                  </Routes>
+                </main>
+              </div>
+            </AdminProvider>
           </NotificationProvider>
         </DataProvider>
       </AuthProvider>

@@ -358,7 +358,8 @@ interface DataState {
 
 interface DataContextType extends DataState {
   addUser: (user: Partial<User>) => void;
-  updateUser: (user: Partial<User>) => void;
+  updateUser: (userId: string, updates: Partial<User>) => void;
+  removeUser: (userId: string) => void;
   deleteUser: (id: string) => void;
   addDailyLog: (log: Omit<DailyLog, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateDailyLog: (id: string, updates: Partial<DailyLog>) => void;
@@ -510,9 +511,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch({ type: 'ADD_USER', payload: newUser });
   };
 
-  const updateUser = (userData: Partial<User>) => {
-    if (!userData.id) return;
-    dispatch({ type: 'UPDATE_USER', payload: { id: userData.id, updates: userData } });
+  const updateUser = (userId: string, updates: Partial<User>) => {
+    dispatch({ type: 'UPDATE_USER', payload: { id: userId, updates } });
+  };
+
+  const removeUser = (userId: string) => {
+    dispatch({ type: 'DELETE_USER', payload: userId });
   };
 
   const deleteUser = (id: string) => {
@@ -553,6 +557,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     ...state,
     addUser,
     updateUser,
+    removeUser,
     deleteUser,
     addDailyLog,
     updateDailyLog,
