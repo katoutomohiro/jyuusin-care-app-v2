@@ -270,6 +270,194 @@ const UserListPage: React.FC = () => {
           </div>
         )}
 
+        {/* 利用者編集フォーム */}
+        {editingUser && isAdminMode && (() => {
+          const userToEdit = users.find(u => u.id === editingUser);
+          if (!userToEdit) return null;
+
+          const [editData, setEditData] = useState({
+            name: userToEdit.name,
+            age: userToEdit.age.toString(),
+            gender: userToEdit.gender,
+            serviceType: userToEdit.serviceType,
+            disabilityLevel: userToEdit.disabilityLevel,
+            careLevel: userToEdit.careLevel,
+            medicalCare: userToEdit.medicalCare || [],
+            emergencyContact: (userToEdit as any).emergencyContact || '',
+            notes: userToEdit.notes || ''
+          });
+
+          const handleEditSave = () => {
+            const updatedUser = {
+              ...userToEdit,
+              name: editData.name,
+              age: parseInt(editData.age),
+              gender: editData.gender as '男性' | '女性',
+              serviceType: editData.serviceType,
+              disabilityLevel: editData.disabilityLevel,
+              careLevel: editData.careLevel,
+              medicalCare: editData.medicalCare,
+              notes: editData.notes,
+              initials: editData.name.charAt(0)
+            };
+            
+            handleUpdateUser(userToEdit.id, updatedUser);
+          };
+
+          return (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <h2 className="text-2xl font-bold mb-6">{userToEdit.name}さんの情報を編集</h2>
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">お名前 *</label>
+                      <input
+                        type="text"
+                        value={editData.name}
+                        onChange={(e) => setEditData({...editData, name: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">年齢 *</label>
+                      <input
+                        type="number"
+                        value={editData.age}
+                        onChange={(e) => setEditData({...editData, age: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">性別</label>
+                      <select
+                        value={editData.gender}
+                        onChange={(e) => setEditData({...editData, gender: e.target.value as '男性' | '女性'})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="男性">男性</option>
+                        <option value="女性">女性</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">障害区分</label>
+                      <select
+                        value={editData.disabilityLevel}
+                        onChange={(e) => setEditData({...editData, disabilityLevel: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        {disabilityLevels.map(level => (
+                          <option key={level} value={level}>{level}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">介助レベル</label>
+                      <select
+                        value={editData.careLevel}
+                        onChange={(e) => setEditData({...editData, careLevel: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        {careLevels.map(level => (
+                          <option key={level} value={level}>{level}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">サービス種別</label>
+                    <div className="space-y-2">
+                      {serviceTypes.map(service => (
+                        <label key={service} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={editData.serviceType.includes(service)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setEditData({...editData, serviceType: [...editData.serviceType, service]});
+                              } else {
+                                setEditData({...editData, serviceType: editData.serviceType.filter(s => s !== service)});
+                              }
+                            }}
+                            className="mr-2"
+                          />
+                          {service}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">医療ケア</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {medicalCareOptions.map(care => (
+                        <label key={care} className="flex items-center text-sm">
+                          <input
+                            type="checkbox"
+                            checked={editData.medicalCare.includes(care)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setEditData({...editData, medicalCare: [...editData.medicalCare, care]});
+                              } else {
+                                setEditData({...editData, medicalCare: editData.medicalCare.filter(c => c !== care)});
+                              }
+                            }}
+                            className="mr-1"
+                          />
+                          {care}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">緊急連絡先</label>
+                    <input
+                      type="text"
+                      value={editData.emergencyContact}
+                      onChange={(e) => setEditData({...editData, emergencyContact: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="090-1234-5678（お母様）"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">特記事項</label>
+                    <textarea
+                      value={editData.notes}
+                      onChange={(e) => setEditData({...editData, notes: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      rows={3}
+                      placeholder="特別な配慮事項やご本人の好きなこと等"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-3 mt-6">
+                  <button
+                    onClick={() => setEditingUser(null)}
+                    className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    キャンセル
+                  </button>
+                  <button
+                    onClick={handleEditSave}
+                    disabled={!editData.name || !editData.age}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    保存する
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* 利用者一覧 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {users.map(user => (

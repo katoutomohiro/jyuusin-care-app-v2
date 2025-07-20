@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重心ケアアプリ - アクセス用</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        .access-section {
+            margin: 30px 0;
+            padding: 25px;
+            border: 3px solid #007bff;
+            border-radius: 10px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+        .url {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            margin: 20px 0;
+            word-break: break-all;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            border: 2px solid #007bff;
+        }
+        .big-button {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 20px 40px;
+            text-decoration: none;
+            border-radius: 10px;
+            margin: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .big-button:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        .qr-placeholder {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            background: #e9ecef;
+            border: 2px dashed #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #6c757d;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .instructions {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            color: #0c5460;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #155724;
+        }
+        .step {
+            text-align: left;
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 重心ケアアプリ</h1>
+        <div style="text-align: center; font-size: 18px; color: #666; margin-bottom: 30px;">
+            職員評価・テスト用アクセス
+        </div>
+        
+        <div class="access-section">
+            <h2 style="color: #007bff; margin-top: 0;">📱 同じPC内からのアクセス</h2>
+            <div class="url">http://localhost:3003</div>
+            <a href="http://localhost:3003" target="_blank" class="big-button">
+                🖥️ アプリを開く
+            </a>
+            <div style="margin-top: 15px; color: #666;">
+                このPCのブラウザから直接アクセス
+            </div>
+        </div>
+
+        <div class="access-section">
+            <h2 style="color: #007bff; margin-top: 0;">🌐 ネットワーク内からのアクセス</h2>
+            <div class="url">http://192.168.1.100:3003</div>
+            <a href="http://192.168.1.100:3003" target="_blank" class="big-button">
+                📱 ネットワークでアクセス
+            </a>
+            <div class="success">
+                ✅ 同じWi-Fiネットワーク内のスマートフォン・タブレットからアクセス可能
+            </div>
+            
+            <div class="qr-placeholder">
+                📱 QRコード<br>
+                スマートフォンのカメラで<br>
+                上記URLを直接入力するか、<br>
+                QRコード生成サイトを利用
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h3 style="margin-top: 0;">📋 アクセス手順</h3>
+            
+            <div class="step">
+                <strong>🖥️ PCの場合：</strong><br>
+                上記の青いボタンをクリックしてください
+            </div>
+            
+            <div class="step">
+                <strong>📱 スマートフォンの場合：</strong><br>
+                1. 同じWi-Fiネットワークに接続<br>
+                2. ブラウザで「http://192.168.1.100:3003」を入力<br>
+                3. または上記の「📱 ネットワークでアクセス」ボタンをタップ
+            </div>
+            
+            <div class="step">
+                <strong>📋 QRコードが必要な場合：</strong><br>
+                1. 「QRコード作成サイト」で検索<br>
+                2. 「http://192.168.1.100:3003」を入力して生成<br>
+                3. 生成されたQRコードをスマートフォンでスキャン
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+            <h3 style="color: #856404; margin-top: 0;">⚠️ 注意事項</h3>
+            <div style="color: #666; text-align: left;">
+                • これは開発版のため、実際の利用者データは入力しないでください<br>
+                • テスト用のサンプルデータをご利用ください<br>
+                • 不具合やご要望がございましたら、スクリーンショットと共にお知らせください
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // シンプルな機能確認
+        console.log('ページが正常に読み込まれました');
+        
+        // ボタンクリック時の動作確認
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM読み込み完了');
+            
+            // 開発サーバーの状態確認（簡易版）
+            setTimeout(function() {
+                fetch('http://localhost:3003')
+                    .then(function(response) {
+                        if (response.ok) {
+                            console.log('開発サーバー稼働中');
+                        }
+                    })
+                    .catch(function(error) {
+                        console.log('開発サーバー接続エラー:', error);
+                    });
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
