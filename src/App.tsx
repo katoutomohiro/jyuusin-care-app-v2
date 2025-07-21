@@ -17,6 +17,7 @@ import KaizenPage from './pages/KaizenPage';
 import LearningHubPage from './pages/LearningHubPage';
 import SuppliesStatusPage from './pages/SuppliesStatusPage';
 import ReportEnginePage from './pages/ReportEnginePage';
+import AIAnalysisDashboard from './pages/AIAnalysisDashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 import { DailyLog } from './types';
 
@@ -24,6 +25,7 @@ const navItems = [
   { path: '/', label: 'ダッシュボード', subtitle: '魂の物語' },
   { path: '/users', label: '利用者管理', subtitle: '大切な仲間たち' },
   { path: '/daily-log', label: '日誌入力', subtitle: 'きらめきの記録' },
+  { path: '/ai-analysis', label: 'AI分析', subtitle: '🤖 重症心身障害専門AI分析' },
   { path: '/staff-schedule', label: '職員スケジュール', subtitle: '今日のチーム体制' },
   { path: '/transport-plan', label: '送迎計画', subtitle: '魂の旅路の案内' },
   { path: '/kaizen', label: '改善提案', subtitle: 'ヒヤリハット・学びの種' },
@@ -124,6 +126,7 @@ const App: React.FC = () => {
                     <Route path="/users/:id" element={<UserDetailPage />} />
                     <Route path="/daily-log" element={<StructuredDailyLogPage />} />
                     <Route path="/daily-log/:userId" element={<StructuredDailyLogPage />} />
+                    <Route path="/ai-analysis" element={<AIAnalysisDashboard />} />
                     <Route path="/staff-schedule" element={<StaffSchedulePage />} />
                     <Route path="/transport-plan" element={<TransportPlanPage />} />
                     <Route path="/kaizen" element={<KaizenPage />} />

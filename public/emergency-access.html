@@ -60,7 +60,7 @@
         <canvas id="qrcode" width="256" height="256"></canvas>
         
         <div class="url-box" id="currentUrl">
-            http://192.168.1.100:3003
+            http://192.168.2.7:3003
         </div>
         
         <p><strong>QRコードが表示されない場合は、上記URLを直接入力してください</strong></p>
@@ -82,6 +82,61 @@
     </div>
 
     <script>
+        // 外部QRコードライブラリを使用
+        function generateQRWithLibrary(text, canvasId) {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+            script.onload = function() {
+                const canvas = document.getElementById(canvasId);
+                QRCode.toCanvas(canvas, text, {
+                    width: 256,
+                    margin: 2,
+                    color: {
+                        dark: '#000000',
+                        light: '#FFFFFF'
+                    }
+                }, function (error) {
+                    if (error) {
+                        console.error('QRコード生成エラー:', error);
+                        // フォールバック: シンプルなテキスト表示
+                        fallbackQR(text, canvasId);
+                    }
+                });
+            };
+            script.onerror = function() {
+                // ライブラリ読み込み失敗時のフォールバック
+                fallbackQR(text, canvasId);
+            };
+            document.head.appendChild(script);
+        }
+
+        // フォールバック用シンプルQRコード
+        function fallbackQR(text, canvasId) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const size = canvas.width;
+            
+            // 背景を白で塗りつぶし
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, size, size);
+            
+            // 黒枠を描画
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, size, 20);
+            ctx.fillRect(0, size-20, size, 20);
+            ctx.fillRect(0, 0, 20, size);
+            ctx.fillRect(size-20, 0, 20, size);
+            
+            // テキストを中央に表示
+            ctx.fillStyle = '#000000';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('QRコード生成中...', size/2, size/2 - 10);
+            ctx.fillText('下記URLを手動入力:', size/2, size/2 + 10);
+            ctx.font = '10px Arial';
+            ctx.fillText(text, size/2, size/2 + 30);
+        }
+
         // シンプルなQRコード生成（ドット行列方式）
         function generateQR(text, canvas) {
             const ctx = canvas.getContext('2d');
@@ -151,9 +206,10 @@
         
         // QRコード生成実行
         window.onload = function() {
-            const canvas = document.getElementById('qrcode');
-            const url = 'http://192.168.1.100:3003';
-            generateQR(url, canvas);
+            const url = 'http://192.168.2.7:3003';
+            
+            // まず外部ライブラリで試行
+            generateQRWithLibrary(url, 'qrcode');
             
             // 現在時刻を表示
             const now = new Date().toLocaleString('ja-JP');

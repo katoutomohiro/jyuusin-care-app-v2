@@ -10,6 +10,7 @@ import ActivityInput from '../components/forms/ActivityInput';
 import CareInput from '../components/forms/CareInput';
 import MedicationInput from '../components/forms/MedicationInput';
 import OtherInput from '../components/forms/OtherInput';
+import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
 import { useData } from '../contexts/DataContext';
 import { useAdmin } from '../contexts/AdminContext';
 
@@ -26,6 +27,7 @@ const StructuredDailyLogPage: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [todayEventCounts, setTodayEventCounts] = useState<TodayEventCounts>({});
   const [showAdminWarning, setShowAdminWarning] = useState(false);
+  const [showAIAnalysis, setShowAIAnalysis] = useState(false);
 
   // 今日の日付を取得
   const today = new Date().toISOString().split('T')[0];
@@ -160,18 +162,18 @@ const StructuredDailyLogPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-2 sm:p-4">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">📋 構造化日誌入力</h1>
-          <p className="text-gray-600">利用者の日常記録を構造化して記録します</p>
+        <div className="text-center mb-4 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">📋 構造化日誌入力</h1>
+          <p className="text-gray-600 text-sm sm:text-base">利用者の日常記録を構造化して記録します</p>
         </div>
 
         {/* 管理モード・自動保存状態表示 */}
         {(isAdminMode || !autoSaveEnabled || showAdminWarning) && (
-          <div className="bg-white rounded-xl shadow-lg p-4 mb-6 border-l-4 border-blue-500">
-            <div className="flex flex-wrap justify-between items-center text-sm">
-              <div className="flex space-x-4">
+          <div className="bg-white rounded-xl shadow-lg p-3 sm:p-4 mb-4 sm:mb-6 border-l-4 border-blue-500">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs sm:text-sm space-y-2 sm:space-y-0">
+              <div className="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-4">
                 {isAdminMode && (
                   <div className={`flex items-center ${isAuthenticated ? 'text-green-700' : 'text-red-700'}`}>
                     <span className="font-semibold mr-2">🔒</span>
@@ -211,25 +213,40 @@ const StructuredDailyLogPage: React.FC = () => {
 
         {/* 利用者選択 */}
         {!selectedUserId && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">📝 記録する利用者を選択</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">📝 記録する利用者を選択</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {users.map((user) => (
-                <button
-                  key={user.id}
-                  onClick={() => setSelectedUserId(user.id)}
-                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 text-left"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold">{user.name.charAt(0)}</span>
+                <div key={user.id} className="border-2 border-gray-200 rounded-lg hover:border-blue-300 transition-all duration-200">
+                  <button
+                    onClick={() => setSelectedUserId(user.id)}
+                    className="p-4 text-left w-full hover:bg-blue-50 rounded-lg transition-all duration-200"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-blue-600 font-semibold text-lg">{user.name.charAt(0)}</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-gray-800 text-lg">{user.name}</div>
+                        <div className="text-sm text-gray-500">記録を開始</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-semibold text-gray-800">{user.name}</div>
-                      <div className="text-sm text-gray-500">記録を開始</div>
-                    </div>
+                  </button>
+                  
+                  {/* AI分析ボタン */}
+                  <div className="px-4 pb-3">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedUserId(user.id);
+                        setShowAIAnalysis(true);
+                      }}
+                      className="w-full mt-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white py-2 px-4 rounded-lg font-medium transition-all duration-200 text-sm"
+                    >
+                      🤖 AI分析を表示
+                    </button>
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           </div>
@@ -237,50 +254,58 @@ const StructuredDailyLogPage: React.FC = () => {
 
         {/* 記録画面 */}
         {selectedUserId && (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {!activeEventType ? (
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <div className="flex justify-between items-center mb-4">
+              <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 space-y-2 sm:space-y-0">
                   <button
                     onClick={() => setSelectedUserId('')}
-                    className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+                    className="text-blue-600 hover:text-blue-800 flex items-center space-x-1 text-sm sm:text-base"
                   >
                     <span>←</span>
                     <span>利用者選択に戻る</span>
                   </button>
                 </div>
 
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                <div className="text-center mb-4 sm:mb-6">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
                     📝 {users.find(u => u.id === selectedUserId)?.name}さんの記録
                   </h2>
-                  <div className="text-sm text-gray-600">
-                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
+                  <div className="text-xs sm:text-sm text-gray-600">
+                    <span className="bg-blue-100 text-blue-800 px-2 sm:px-3 py-1 rounded-full">
                       今日の記録: {Object.values(todayEventCounts).reduce((total, count) => total + count, 0)}件
                     </span>
                   </div>
-                  <div className="mt-2 flex flex-wrap justify-center gap-2 text-xs">
+                  <div className="mt-2 flex flex-wrap justify-center gap-1 sm:gap-2 text-xs">
                     {Object.entries(todayEventCounts).map(([type, count]) => (
                       <span key={type} className="text-gray-500">
                         {eventTypes.find(t => t.id === type)?.name}: {count}
                       </span>
                     ))}
                   </div>
+                  
+                  {/* AI分析ボタン */}
+                  <button
+                    onClick={() => setShowAIAnalysis(true)}
+                    className="mt-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white py-2 px-6 rounded-lg font-medium transition-all duration-200"
+                  >
+                    🤖 AI分析を表示
+                  </button>
                 </div>
 
                 <h3 className="text-lg font-semibold text-gray-700 mb-4">記録する項目を選択してください</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                   {eventTypes.map((eventType) => (
                     <button
                       key={eventType.id}
                       onClick={() => setActiveEventType(eventType.id)}
-                      className={`relative p-4 rounded-lg border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 ${eventType.color} bg-opacity-10`}
+                      className={`relative p-3 sm:p-4 rounded-lg border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 ${eventType.color} bg-opacity-10 min-h-[80px] sm:min-h-[100px]`}
                     >
                       <div className="text-center">
-                        <div className="text-2xl mb-2">{eventType.icon}</div>
-                        <div className="font-medium text-gray-800">{eventType.name}</div>
+                        <div className="text-xl sm:text-2xl mb-1 sm:mb-2">{eventType.icon}</div>
+                        <div className="font-medium text-gray-800 text-xs sm:text-sm leading-tight">{eventType.name}</div>
                         {todayEventCounts[eventType.id] > 0 && (
-                          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
+                          <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
                             {todayEventCounts[eventType.id]}
                           </div>
                         )}
@@ -290,19 +315,21 @@ const StructuredDailyLogPage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <div className="flex justify-between items-center mb-6">
+              <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 space-y-2 sm:space-y-0">
                   <button
                     onClick={() => setActiveEventType(null)}
-                    className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+                    className="text-blue-600 hover:text-blue-800 flex items-center space-x-1 text-sm sm:text-base"
                   >
                     <span>←</span>
                     <span>項目選択に戻る</span>
                   </button>
-                  <h2 className="text-xl font-bold text-gray-800">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-800">
                     {eventTypes.find(t => t.id === activeEventType)?.name}の記録
                   </h2>
                 </div>
+
+                <div className="w-full overflow-x-hidden">
 
                 {/* フォームコンポーネント */}
                 {activeEventType === 'seizure' && (
@@ -335,11 +362,21 @@ const StructuredDailyLogPage: React.FC = () => {
                 {activeEventType === 'other' && (
                   <OtherInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
                 )}
+                </div>
               </div>
             )}
           </div>
         )}
       </div>
+      
+      {/* AI分析表示 */}
+      {showAIAnalysis && selectedUserId && (
+        <AIAnalysisDisplay
+          user={users.find(u => u.id === selectedUserId)!}
+          isVisible={showAIAnalysis}
+          onClose={() => setShowAIAnalysis(false)}
+        />
+      )}
     </div>
   );
 };

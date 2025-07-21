@@ -17,6 +17,30 @@ body {
   font-size: 1.15rem;
   letter-spacing: 0.02em;
   line-height: 1.7;
+  /* モバイル最適化 */
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* モバイル用フォントサイズ調整 */
+@media (max-width: 640px) {
+  body {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  
+  h1 {
+    font-size: 1.5rem;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+  }
+  
+  h3 {
+    font-size: 1.125rem;
+  }
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -77,6 +101,53 @@ button:hover, .btn:hover {
 .sidebar, .nav {
   background: var(--color-mint);
   border-right: 2px solid var(--color-border);
+}
+
+/* モバイル用追加スタイル */
+@media (max-width: 640px) {
+  /* タッチ操作に適したボタンサイズ */
+  button, .btn {
+    min-height: 44px;
+    min-width: 44px;
+    font-size: 1rem;
+    padding: 0.75em 1em;
+  }
+  
+  /* フォーム要素のモバイル最適化 */
+  input, textarea, select {
+    font-size: 16px; /* iOS zoom防止 */
+    min-height: 44px;
+    padding: 0.75rem;
+    border-radius: 8px;
+  }
+  
+  /* カードのパディング調整 */
+  .card {
+    padding: 1rem 0.75rem;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+  }
+  
+  /* テキストエリアの調整 */
+  textarea {
+    min-height: 120px;
+  }
+  
+  /* モバイル用のスクロール最適化 */
+  .scroll-container {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* 横画面（ランドスケープ）でのタブレット対応 */
+@media (max-width: 1024px) and (orientation: landscape) {
+  body {
+    font-size: 1rem;
+  }
+  
+  .grid {
+    gap: 0.75rem;
+  }
 }
 
 /* 入力欄も丸みと優しさ */
