@@ -13,6 +13,7 @@ import OtherInput from '../components/forms/OtherInput';
 import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
 import { useData } from '../contexts/DataContext';
 import { useAdmin } from '../contexts/AdminContext';
+import { useConfigurableComponent } from '../../services/DynamicConfigSystem';
 
 interface TodayEventCounts {
   [key: string]: number;
@@ -22,6 +23,7 @@ const StructuredDailyLogPage: React.FC = () => {
   const navigate = useNavigate();
   const { users, addDailyLog } = useData();
   const { isAdminMode, isAuthenticated, autoSaveEnabled } = useAdmin();
+  const { eventTypes, systemSettings, facilityName } = useConfigurableComponent('structuredDailyLog');
   const [activeEventType, setActiveEventType] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
@@ -32,8 +34,8 @@ const StructuredDailyLogPage: React.FC = () => {
   // 今日の日付を取得
   const today = new Date().toISOString().split('T')[0];
 
-  // イベントタイプの定義
-  const eventTypes = [
+  // 動的に読み込まれたイベントタイプを使用（フォールバック付き）
+  const defaultEventTypes = [
     { id: 'seizure', name: '発作', icon: '⚡', color: 'bg-red-500' },
     { id: 'expression', name: '表情・反応', icon: '😊', color: 'bg-blue-500' },
     { id: 'vital', name: 'バイタル', icon: '🌡️', color: 'bg-green-500' },
@@ -46,10 +48,12 @@ const StructuredDailyLogPage: React.FC = () => {
     { id: 'other', name: 'その他', icon: '📝', color: 'bg-gray-500' }
   ];
 
+  const currentEventTypes = eventTypes.length > 0 ? eventTypes : defaultEventTypes;
+
   // 今日の記録数を取得
   useEffect(() => {
     const counts: TodayEventCounts = {};
-    eventTypes.forEach(type => {
+    currentEventTypes.forEach(type => {
       counts[type.id] = 0;
     });
 
@@ -72,7 +76,7 @@ const StructuredDailyLogPage: React.FC = () => {
     }
 
     setTodayEventCounts(counts);
-  }, [users, today]);
+  }, [users, today, currentEventTypes]);
 
   // 管理者権限の警告表示
   useEffect(() => {
@@ -166,7 +170,7 @@ const StructuredDailyLogPage: React.FC = () => {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-4 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">📋 構造化日誌入力</h1>
-          <p className="text-gray-600 text-sm sm:text-base">利用者の日常記録を構造化して記録します</p>
+          <p className="text-gray-600 text-sm sm:text-base">{facilityName} - 利用者の日常記録を構造化して記録します</p>
         </div>
 
         {/* 管理モード・自動保存状態表示 */}
@@ -279,7 +283,7 @@ const StructuredDailyLogPage: React.FC = () => {
                   <div className="mt-2 flex flex-wrap justify-center gap-1 sm:gap-2 text-xs">
                     {Object.entries(todayEventCounts).map(([type, count]) => (
                       <span key={type} className="text-gray-500">
-                        {eventTypes.find(t => t.id === type)?.name}: {count}
+                        {currentEventTypes.find(t => t.id === type)?.name}: {count}
                       </span>
                     ))}
                   </div>
@@ -295,7 +299,7 @@ const StructuredDailyLogPage: React.FC = () => {
 
                 <h3 className="text-lg font-semibold text-gray-700 mb-4">記録する項目を選択してください</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                  {eventTypes.map((eventType) => (
+                  {currentEventTypes.map((eventType) => (
                     <button
                       key={eventType.id}
                       onClick={() => setActiveEventType(eventType.id)}
