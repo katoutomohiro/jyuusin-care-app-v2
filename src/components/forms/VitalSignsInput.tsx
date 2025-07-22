@@ -16,18 +16,19 @@ const VitalSignsInput: React.FC<VitalSignsInputProps> = ({ onSave, isSubmitting 
 
   const [formData, setFormData] = useState({
     event_timestamp: getCurrentDateTime(),
-    temperature: '',
-    pulse: '',
-    blood_pressure_systolic: '',
-    blood_pressure_diastolic: '',
-    spo2: '',
-    respiratory_rate: '',
+    temperature: '36.5',
+    pulse: '70',
+    blood_pressure_systolic: '120',
+    blood_pressure_diastolic: '80',
+    spo2: '95',
+    respiratory_rate: '30',
     measurement_conditions: [] as string[],
     measurement_position: '',
     measurement_location: '',
     vital_status: [] as string[],
     special_findings: [] as string[],
     intervention_required: [] as string[],
+    common_notes: [] as string[],
     notes: ''
   });
 
@@ -79,6 +80,30 @@ const VitalSignsInput: React.FC<VitalSignsInputProps> = ({ onSave, isSubmitting 
     '環境調整', 'バイタル頻回測定', 'その他'
   ];
 
+  // 重症心身障害児者特化の特記事項選択肢
+  const commonNotes = [
+    'バイタルサイン安定、経過良好',
+    '発作の前兆症状なし、安定している',
+    '呼吸状態良好、SpO2正常範囲',
+    '体温平熱、発熱傾向なし',
+    '食事摂取後の測定、消化良好',
+    '吸引後のバイタル測定、改善あり',
+    '体位変換後の測定、安楽な様子',
+    '薬剤投与後の経過観察中',
+    '興奮状態での測定、要観察',
+    '傾眠傾向あり、バイタル安定',
+    '啼泣後の測定、徐々に安定',
+    '入浴前後のバイタル変化なし',
+    '季節変化による体調管理中',
+    '家族面会時の測定、リラックス状態',
+    '療育活動後の測定、疲労なし',
+    '排便・排尿後の測定、安定',
+    '睡眠十分、覚醒時のバイタル良好',
+    '水分摂取良好、脱水症状なし',
+    '環境温度調整後、体温安定',
+    '医師指示による頻回測定実施中'
+  ];
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
@@ -128,79 +153,109 @@ const VitalSignsInput: React.FC<VitalSignsInputProps> = ({ onSave, isSubmitting 
       {/* バイタルサイン数値 */}
       <div className="bg-white rounded-xl p-4 shadow-sm">
         <h3 className="text-sm font-semibold text-gray-700 mb-3">📊 バイタルサイン数値</h3>
+        
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">体温 (℃)</label>
-            <input
-              type="number"
-              step="0.1"
-              min="30"
-              max="45"
+            <select
               value={formData.temperature}
               onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-              placeholder="36.5"
-            />
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
+            >
+              {Array.from({ length: 51 }, (_, i) => {
+                const temp = (34.0 + i * 0.1).toFixed(1);
+                return (
+                  <option key={temp} value={temp}>
+                    {temp}°C {temp === "36.5" ? "(基準値)" : ""}
+                  </option>
+                );
+              })}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">脈拍 (回/分)</label>
-            <input
-              type="number"
-              min="30"
-              max="200"
+            <select
               value={formData.pulse}
               onChange={(e) => setFormData({ ...formData, pulse: e.target.value })}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-              placeholder="70"
-            />
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
+            >
+              {Array.from({ length: 121 }, (_, i) => {
+                const pulse = 40 + i;
+                return (
+                  <option key={pulse} value={pulse}>
+                    {pulse}回/分 {pulse === 70 ? "(基準値)" : ""}
+                  </option>
+                );
+              })}
+            </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">収縮期血圧</label>
-            <input
-              type="number"
-              min="50"
-              max="250"
+            <label className="block text-sm font-medium text-gray-600 mb-1">収縮期血圧 (mmHg)</label>
+            <select
               value={formData.blood_pressure_systolic}
               onChange={(e) => setFormData({ ...formData, blood_pressure_systolic: e.target.value })}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-              placeholder="120"
-            />
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
+            >
+              {Array.from({ length: 131 }, (_, i) => {
+                const systolic = 70 + i;
+                return (
+                  <option key={systolic} value={systolic}>
+                    {systolic}mmHg {systolic === 120 ? "(基準値)" : ""}
+                  </option>
+                );
+              })}
+            </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">拡張期血圧</label>
-            <input
-              type="number"
-              min="30"
-              max="150"
+            <label className="block text-sm font-medium text-gray-600 mb-1">拡張期血圧 (mmHg)</label>
+            <select
               value={formData.blood_pressure_diastolic}
               onChange={(e) => setFormData({ ...formData, blood_pressure_diastolic: e.target.value })}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-              placeholder="80"
-            />
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
+            >
+              {Array.from({ length: 91 }, (_, i) => {
+                const diastolic = 40 + i;
+                return (
+                  <option key={diastolic} value={diastolic}>
+                    {diastolic}mmHg {diastolic === 80 ? "(基準値)" : ""}
+                  </option>
+                );
+              })}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">SpO2 (%)</label>
-            <input
-              type="number"
-              min="70"
-              max="100"
+            <select
               value={formData.spo2}
               onChange={(e) => setFormData({ ...formData, spo2: e.target.value })}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-              placeholder="98"
-            />
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
+            >
+              {Array.from({ length: 36 }, (_, i) => {
+                const spo2 = 65 + i;
+                return (
+                  <option key={spo2} value={spo2}>
+                    {spo2}% {spo2 === 95 ? "(基準値)" : ""}
+                  </option>
+                );
+              })}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">呼吸数 (回/分)</label>
-            <input
-              type="number"
-              min="5"
-              max="60"
+            <select
               value={formData.respiratory_rate}
               onChange={(e) => setFormData({ ...formData, respiratory_rate: e.target.value })}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-              placeholder="20"
-            />
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
+            >
+              {Array.from({ length: 41 }, (_, i) => {
+                const respiratory = 10 + i;
+                return (
+                  <option key={respiratory} value={respiratory}>
+                    {respiratory}回/分 {respiratory === 30 ? "(基準値)" : ""}
+                  </option>
+                );
+              })}
+            </select>
           </div>
         </div>
       </div>
@@ -210,26 +265,25 @@ const VitalSignsInput: React.FC<VitalSignsInputProps> = ({ onSave, isSubmitting 
         <label className="block text-sm font-semibold text-gray-700 mb-3">
           🔍 測定条件（複数選択可）
         </label>
-        <div className="grid grid-cols-2 gap-2">
+        <select
+          multiple
+          value={formData.measurement_conditions}
+          onChange={(e) => {
+            const selectedValues = Array.from(e.target.selectedOptions, option => option.value);
+            setFormData({ ...formData, measurement_conditions: selectedValues });
+          }}
+          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
+          size={6}
+        >
           {measurementConditions.map((condition) => (
-            <button
-              key={condition}
-              type="button"
-              onClick={() => toggleArrayItem(
-                formData.measurement_conditions, 
-                condition, 
-                (newArray) => setFormData({ ...formData, measurement_conditions: newArray })
-              )}
-              className={`p-2 rounded-lg text-sm font-medium transition-all ${
-                formData.measurement_conditions.includes(condition)
-                  ? 'bg-green-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
+            <option key={condition} value={condition} className="p-2">
               {condition}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
+        <p className="text-xs text-gray-500 mt-1">
+          💡 Ctrlキー（Windowsの場合）またはCmdキー（Macの場合）を押しながらクリックで複数選択可能
+        </p>
       </div>
 
       {/* 測定体位 */}
@@ -237,22 +291,18 @@ const VitalSignsInput: React.FC<VitalSignsInputProps> = ({ onSave, isSubmitting 
         <label className="block text-sm font-semibold text-gray-700 mb-3">
           🛏️ 測定時の体位
         </label>
-        <div className="grid grid-cols-3 gap-2">
+        <select
+          value={formData.measurement_position}
+          onChange={(e) => setFormData({ ...formData, measurement_position: e.target.value })}
+          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+        >
+          <option value="">選択してください</option>
           {measurementPositions.map((position) => (
-            <button
-              key={position}
-              type="button"
-              onClick={() => setFormData({ ...formData, measurement_position: position })}
-              className={`p-2 rounded-lg text-sm font-medium transition-all ${
-                formData.measurement_position === position
-                  ? 'bg-blue-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
+            <option key={position} value={position}>
               {position}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
       {/* 測定部位 */}
@@ -260,22 +310,18 @@ const VitalSignsInput: React.FC<VitalSignsInputProps> = ({ onSave, isSubmitting 
         <label className="block text-sm font-semibold text-gray-700 mb-3">
           📍 測定部位
         </label>
-        <div className="grid grid-cols-3 gap-2">
+        <select
+          value={formData.measurement_location}
+          onChange={(e) => setFormData({ ...formData, measurement_location: e.target.value })}
+          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white"
+        >
+          <option value="">選択してください</option>
           {measurementLocations.map((location) => (
-            <button
-              key={location}
-              type="button"
-              onClick={() => setFormData({ ...formData, measurement_location: location })}
-              className={`p-2 rounded-lg text-sm font-medium transition-all ${
-                formData.measurement_location === location
-                  ? 'bg-purple-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
+            <option key={location} value={location}>
               {location}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
       {/* バイタル状態 */}
@@ -283,26 +329,25 @@ const VitalSignsInput: React.FC<VitalSignsInputProps> = ({ onSave, isSubmitting 
         <label className="block text-sm font-semibold text-gray-700 mb-3">
           📈 バイタル状態（複数選択可）
         </label>
-        <div className="grid grid-cols-2 gap-2">
+        <select
+          multiple
+          value={formData.vital_status}
+          onChange={(e) => {
+            const selectedValues = Array.from(e.target.selectedOptions, option => option.value);
+            setFormData({ ...formData, vital_status: selectedValues });
+          }}
+          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white"
+          size={6}
+        >
           {vitalStatusOptions.map((status) => (
-            <button
-              key={status}
-              type="button"
-              onClick={() => toggleArrayItem(
-                formData.vital_status, 
-                status, 
-                (newArray) => setFormData({ ...formData, vital_status: newArray })
-              )}
-              className={`p-2 rounded-lg text-sm font-medium transition-all ${
-                formData.vital_status.includes(status)
-                  ? 'bg-yellow-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
+            <option key={status} value={status} className="p-2">
               {status}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
+        <p className="text-xs text-gray-500 mt-1">
+          💡 Ctrlキー（Windowsの場合）またはCmdキー（Macの場合）を押しながらクリックで複数選択可能
+        </p>
       </div>
 
       {/* 特別な所見 */}
@@ -310,26 +355,25 @@ const VitalSignsInput: React.FC<VitalSignsInputProps> = ({ onSave, isSubmitting 
         <label className="block text-sm font-semibold text-gray-700 mb-3">
           👁️ 特別な所見（複数選択可）
         </label>
-        <div className="grid grid-cols-2 gap-2">
+        <select
+          multiple
+          value={formData.special_findings}
+          onChange={(e) => {
+            const selectedValues = Array.from(e.target.selectedOptions, option => option.value);
+            setFormData({ ...formData, special_findings: selectedValues });
+          }}
+          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 bg-white"
+          size={6}
+        >
           {specialFindings.map((finding) => (
-            <button
-              key={finding}
-              type="button"
-              onClick={() => toggleArrayItem(
-                formData.special_findings, 
-                finding, 
-                (newArray) => setFormData({ ...formData, special_findings: newArray })
-              )}
-              className={`p-2 rounded-lg text-sm font-medium transition-all ${
-                formData.special_findings.includes(finding)
-                  ? 'bg-red-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
+            <option key={finding} value={finding} className="p-2">
               {finding}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
+        <p className="text-xs text-gray-500 mt-1">
+          💡 Ctrlキー（Windowsの場合）またはCmdキー（Macの場合）を押しながらクリックで複数選択可能
+        </p>
       </div>
 
       {/* 介入の必要性 */}
@@ -337,40 +381,77 @@ const VitalSignsInput: React.FC<VitalSignsInputProps> = ({ onSave, isSubmitting 
         <label className="block text-sm font-semibold text-gray-700 mb-3">
           🚨 介入の必要性（複数選択可）
         </label>
-        <div className="grid grid-cols-2 gap-2">
+        <select
+          multiple
+          value={formData.intervention_required}
+          onChange={(e) => {
+            const selectedValues = Array.from(e.target.selectedOptions, option => option.value);
+            setFormData({ ...formData, intervention_required: selectedValues });
+          }}
+          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white"
+          size={6}
+        >
           {interventionOptions.map((intervention) => (
-            <button
-              key={intervention}
-              type="button"
-              onClick={() => toggleArrayItem(
-                formData.intervention_required, 
-                intervention, 
-                (newArray) => setFormData({ ...formData, intervention_required: newArray })
-              )}
-              className={`p-2 rounded-lg text-sm font-medium transition-all ${
-                formData.intervention_required.includes(intervention)
-                  ? 'bg-orange-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
+            <option key={intervention} value={intervention} className="p-2">
               {intervention}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
+        <p className="text-xs text-gray-500 mt-1">
+          💡 Ctrlキー（Windowsの場合）またはCmdキー（Macの場合）を押しながらクリックで複数選択可能
+        </p>
       </div>
 
       {/* 特記事項 */}
       <div className="bg-white rounded-xl p-4 shadow-sm">
+        <label className="block text-sm font-semibold text-gray-700 mb-3">
+          📝 よく使用する特記事項（複数選択可）
+        </label>
+        <select
+          multiple
+          value={formData.common_notes}
+          onChange={(e) => {
+            const selectedValues = Array.from(e.target.selectedOptions, option => option.value);
+            setFormData({ ...formData, common_notes: selectedValues });
+          }}
+          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white mb-4"
+          size={8}
+        >
+          {commonNotes.map((note) => (
+            <option key={note} value={note} className="p-2">
+              {note}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-gray-500 mb-4">
+          💡 Ctrlキー（Windowsの場合）またはCmdキー（Macの場合）を押しながらクリックで複数選択可能
+        </p>
+        
         <label className="block text-sm font-semibold text-gray-700 mb-2">
-          📝 特記事項・詳細メモ
+          ✏️ 追加の詳細メモ（自由記入）
         </label>
         <textarea
           value={formData.notes}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-          rows={4}
-          placeholder="測定時の特記事項、医師への申し送り、家族への連絡内容など..."
+          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          rows={3}
+          placeholder="上記の選択肢にない特記事項、医師への申し送り、家族への連絡内容など..."
         />
+        
+        {/* 選択された定型文の表示 */}
+        {formData.common_notes.length > 0 && (
+          <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+            <p className="text-sm font-medium text-blue-800 mb-2">✅ 選択された特記事項:</p>
+            <ul className="text-sm text-blue-700 space-y-1">
+              {formData.common_notes.map((note, index) => (
+                <li key={index} className="flex items-start">
+                  <span className="mr-2">•</span>
+                  <span>{note}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       {/* 保存ボタン */}

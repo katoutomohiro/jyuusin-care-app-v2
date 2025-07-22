@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../contexts/AdminContext';
 
 interface AppConfigItem {
@@ -27,6 +28,7 @@ interface AppConfig {
 
 const AdminAppConfigPage: React.FC = () => {
   const { isAdminMode, isAuthenticated } = useAdmin();
+  const navigate = useNavigate();
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('eventTypes');
   const [isLoading, setIsLoading] = useState(true);
@@ -467,9 +469,14 @@ const AdminAppConfigPage: React.FC = () => {
         {/* ヘッダー */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">⚙️ アプリ設定管理</h1>
-              <p className="text-gray-600 mt-2">アプリのすべての項目を編集・追加・削除できます</p>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => navigate('/')}
+                className="text-blue-600 hover:text-blue-800 flex items-center space-x-2"
+              >
+                <span>←</span>
+                <span>メインメニューに戻る</span>
+              </button>
             </div>
             <div className="flex space-x-4">
               {saveStatus && (
@@ -484,6 +491,10 @@ const AdminAppConfigPage: React.FC = () => {
                 💾 設定を保存
               </button>
             </div>
+          </div>
+          <div className="mt-4">
+            <h1 className="text-3xl font-bold text-gray-800">⚙️ アプリ設定管理</h1>
+            <p className="text-gray-600 mt-2">アプリのすべての項目を編集・追加・削除できます</p>
           </div>
         </div>
 

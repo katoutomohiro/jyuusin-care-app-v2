@@ -3,7 +3,7 @@ import { Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { NotificationProvider } from './contexts/NotificationContext';
-import { AdminProvider } from './contexts/AdminContext';
+import { AdminProvider, useAdmin } from './contexts/AdminContext';
 import StructuredDailyLogPage from './pages/StructuredDailyLogPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
@@ -21,40 +21,25 @@ import AIAnalysisDashboard from './pages/AIAnalysisDashboard';
 import AdminAppConfigPage from './pages/AdminAppConfigPage';
 import NavigationEditorPage from './pages/NavigationEditorPage';
 import InlineEditableNavigation from './components/InlineEditableNavigation';
+import AdminAuthComponent from './components/AdminAuthComponent';
 import ErrorBoundary from './components/ErrorBoundary';
 import { DailyLog } from './types';
 
-const navItems = [
-  { path: '/', label: 'ダッシュボード', subtitle: '魂の物語' },
-  { path: '/users', label: '利用者管理', subtitle: '大切な仲間たち' },
-  { path: '/daily-log', label: '日誌入力', subtitle: 'きらめきの記録' },
-  { path: '/ai-analysis', label: 'AI分析', subtitle: '🤖 重症心身障害専門AI分析' },
-  { path: '/admin-config', label: 'アプリ設定管理', subtitle: '⚙️ 管理者専用設定' },
-  { path: '/staff-schedule', label: '職員スケジュール', subtitle: '今日のチーム体制' },
-  { path: '/transport-plan', label: '送迎計画', subtitle: '魂の旅路の案内' },
-  { path: '/kaizen', label: '改善提案', subtitle: 'ヒヤリハット・学びの種' },
-  { path: '/learning', label: '研修資料', subtitle: '学びの広場' },
-  { path: '/supplies', label: '備品管理', subtitle: '備品チェックリスト' },
-  { path: '/reports', label: '多職種連携レポート', subtitle: '魂の翻訳機' },
-  { path: '/settings', label: '設定', subtitle: '理想郷の調律' },
-];
-
 const App: React.FC = () => {
-  // ⑤ナビゲーション項目の動的管理
+  // ナビゲーション項目の動的管理
   const [navItems, setNavItems] = useState([
-    { id: '1', path: '/', label: 'ダッシュボード', subtitle: '魂の物語', icon: '🏠', order: 1, visible: true },
-    { id: '2', path: '/users', label: '利用者管理', subtitle: '大切な仲間たち', icon: '👥', order: 2, visible: true },
-    { id: '3', path: '/daily-log', label: '日誌入力', subtitle: 'きらめきの記録', icon: '📝', order: 3, visible: true },
-    { id: '4', path: '/ai-analysis', label: 'AI分析', subtitle: '🤖 重症心身障害専門AI分析', icon: '🤖', order: 4, visible: true },
-    { id: '5', path: '/admin-config', label: 'アプリ設定管理', subtitle: '⚙️ 管理者専用設定', icon: '⚙️', order: 5, visible: true, adminOnly: true },
-    { id: '13', path: '/navigation-editor', label: 'ナビゲーション編集', subtitle: '⚙️ メニュー項目の編集', icon: '🧭', order: 5.5, visible: true, adminOnly: true },
-    { id: '6', path: '/staff-schedule', label: '職員スケジュール', subtitle: '今日のチーム体制', icon: '📅', order: 6, visible: true },
-    { id: '7', path: '/transport-plan', label: '送迎計画', subtitle: '魂の旅路の案内', icon: '🚌', order: 7, visible: true },
-    { id: '8', path: '/kaizen', label: '改善提案', subtitle: 'ヒヤリハット・学びの種', icon: '💡', order: 8, visible: true },
-    { id: '9', path: '/learning', label: '研修資料', subtitle: '学びの広場', icon: '📚', order: 9, visible: true },
-    { id: '10', path: '/supplies', label: '備品管理', subtitle: '備品チェックリスト', icon: '📦', order: 10, visible: true },
-    { id: '11', path: '/reports', label: '多職種連携レポート', subtitle: '魂の翻訳機', icon: '📊', order: 11, visible: true },
-    { id: '12', path: '/settings', label: '設定', subtitle: '理想郷の調律', icon: '⚙️', order: 12, visible: true },
+    { path: '/', label: 'ダッシュボード', subtitle: '魂の物語', visible: true, order: 1, adminOnly: false, icon: '🏠' },
+    { path: '/users', label: '利用者管理', subtitle: '大切な仲間たち', visible: true, order: 2, adminOnly: false, icon: '👥' },
+    { path: '/daily-log', label: '日誌入力', subtitle: 'きらめきの記録', visible: true, order: 3, adminOnly: false, icon: '📝' },
+    { path: '/ai-analysis', label: 'AI分析', subtitle: '🤖 重症心身障害専門AI分析', visible: true, order: 4, adminOnly: false, icon: '🤖' },
+    { path: '/admin-config', label: 'アプリ設定管理', subtitle: '⚙️ 管理者専用設定', visible: true, order: 5, adminOnly: true, icon: '⚙️' },
+    { path: '/staff-schedule', label: '職員スケジュール', subtitle: '今日のチーム体制', visible: true, order: 6, adminOnly: false, icon: '📅' },
+    { path: '/transport-plan', label: '送迎計画', subtitle: '魂の旅路の案内', visible: true, order: 7, adminOnly: false, icon: '🚌' },
+    { path: '/kaizen', label: '改善提案', subtitle: 'ヒヤリハット・学びの種', visible: true, order: 8, adminOnly: false, icon: '💡' },
+    { path: '/learning', label: '研修資料', subtitle: '学びの広場', visible: true, order: 9, adminOnly: false, icon: '📚' },
+    { path: '/supplies', label: '備品管理', subtitle: '備品チェックリスト', visible: true, order: 10, adminOnly: false, icon: '📦' },
+    { path: '/reports', label: '多職種連携レポート', subtitle: '魂の翻訳機', visible: true, order: 11, adminOnly: false, icon: '📊' },
+    { path: '/settings', label: '設定', subtitle: '理想郷の調律', visible: true, order: 12, adminOnly: false, icon: '⚙️' },
   ]);
 
   // ローカルストレージからナビゲーション設定を読み込み
@@ -149,6 +134,10 @@ const App: React.FC = () => {
                 {/* サイドナビ */}
                 <nav className="w-64 bg-white border-r p-6 flex flex-col gap-4 overflow-y-auto">
                   <h2 className="text-xl font-bold mb-6">魂の器ナビゲーション</h2>
+                  
+                  {/* 管理者認証コンポーネント */}
+                  <AdminAuthComponent />
+                  
                   {navItems
                     .filter(item => item.visible && (!item.adminOnly || true)) // 管理者モード状態に応じてフィルタリング
                     .sort((a, b) => a.order - b.order)
