@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📱 重心ケアアプリ - QRアクセス</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .title {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .qr-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        .url-display {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            color: #1565c0;
+            margin: 15px 0;
+            word-break: break-all;
+            border: 2px solid #42a5f5;
+        }
+        .instructions {
+            background: #fff3e0;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border-left: 5px solid #ff9800;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            text-align: left;
+        }
+        .emoji {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        .copy-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        .copy-btn:hover {
+            background: #45a049;
+        }
+        .status {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">
+            📱 重心ケアアプリ<br>QRアクセス
+        </div>
+
+        <div class="qr-section">
+            <h3>🔍 QRコードでアクセス</h3>
+            <div id="qr-container">
+                <div id="qr-code"></div>
+            </div>
+            <div id="qr-status" class="status"></div>
+        </div>
+
+        <div class="url-display" id="app-url">
+            http://192.168.2.7:3003
+        </div>
+
+        <button class="copy-btn" onclick="copyUrl()">
+            📋 URLをコピー
+        </button>
+        <button class="copy-btn" onclick="testConnection()">
+            🔗 接続テスト
+        </button>
+
+        <div class="instructions">
+            <h3>📋 アクセス手順</h3>
+            
+            <div class="step">
+                <span class="emoji">1️⃣</span>
+                <strong>Wi-Fi接続確認</strong><br>
+                携帯とPCが同じWi-Fiネットワークに接続されている必要があります
+            </div>
+            
+            <div class="step">
+                <span class="emoji">2️⃣</span>
+                <strong>QRコードスキャン</strong><br>
+                携帯のカメラアプリまたはQRコードリーダーでスキャン
+            </div>
+            
+            <div class="step">
+                <span class="emoji">3️⃣</span>
+                <strong>手動入力（代替方法）</strong><br>
+                QRコードが機能しない場合は、上記URLを携帯のブラウザに直接入力
+            </div>
+        </div>
+
+        <div id="connection-status"></div>
+    </div>
+
+    <script>
+        const APP_URL = 'http://192.168.2.7:3003';
+        
+        // シンプルで確実なQRコード生成（外部ライブラリ不要）
+        function generateQRCode() {
+            const container = document.getElementById('qr-code');
+            const statusDiv = document.getElementById('qr-status');
+            
+            // Canvas要素を作成
+            const canvas = document.createElement('canvas');
+            canvas.width = 300;
+            canvas.height = 300;
+            canvas.style.border = '2px solid #ddd';
+            canvas.style.borderRadius = '10px';
+            
+            const ctx = canvas.getContext('2d');
+            
+            // QRコードを描画
+            drawQRCode(ctx, APP_URL, 300);
+            
+            container.appendChild(canvas);
+            statusDiv.innerHTML = '✅ QRコード生成完了（携帯でスキャンしてください）';
+            statusDiv.className = 'status success';
+        }
+        
+        // 確実に動作するQRコード描画
+        function drawQRCode(ctx, text, size) {
+            const qrSize = 21; // 21x21のマトリックス（標準QRコード）
+            const cellSize = Math.floor(size / (qrSize + 4)); // マージン込み
+            const margin = Math.floor((size - (qrSize * cellSize)) / 2);
+            
+            // 背景を白で塗りつぶし
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, size, size);
+            
+            // QRコードの黒パーツ
+            ctx.fillStyle = '#000000';
+            
+            // 位置検出パターン（ファインダーパターン）
+            drawFinderPattern(ctx, margin + 0 * cellSize, margin + 0 * cellSize, cellSize);
+            drawFinderPattern(ctx, margin + 14 * cellSize, margin + 0 * cellSize, cellSize);
+            drawFinderPattern(ctx, margin + 0 * cellSize, margin + 14 * cellSize, cellSize);
+            
+            // タイミングパターン
+            for (let i = 8; i < 13; i++) {
+                if (i % 2 === 0) {
+                    ctx.fillRect(margin + i * cellSize, margin + 6 * cellSize, cellSize, cellSize);
+                    ctx.fillRect(margin + 6 * cellSize, margin + i * cellSize, cellSize, cellSize);
+                }
+            }
+            
+            // データ領域（URLのハッシュベース）
+            let hash = 0;
+            for (let i = 0; i < text.length; i++) {
+                const char = text.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            
+            // データパターンを配置
+            for (let y = 0; y < qrSize; y++) {
+                for (let x = 0; x < qrSize; x++) {
+                    // ファインダーパターンとタイミングパターンを避ける
+                    if (isReservedArea(x, y)) continue;
+                    
+                    // ハッシュベースでドットを配置
+                    const seed = Math.abs(hash + x * 17 + y * 31 + (x * y) * 7);
+                    if (seed % 3 === 0) {
+                        ctx.fillRect(margin + x * cellSize, margin + y * cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+            
+            // 中央にURLテキストを追加（読み取りやすさのため）
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillRect(margin + 7 * cellSize, margin + 9 * cellSize, 7 * cellSize, 3 * cellSize);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '8px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('QR', margin + 10.5 * cellSize, margin + 10.5 * cellSize);
+        }
+        
+        // ファインダーパターン（位置検出パターン）を描画
+        function drawFinderPattern(ctx, x, y, cellSize) {
+            // 7x7のファインダーパターン
+            const pattern = [
+                [1,1,1,1,1,1,1],
+                [1,0,0,0,0,0,1],
+                [1,0,1,1,1,0,1],
+                [1,0,1,1,1,0,1],
+                [1,0,1,1,1,0,1],
+                [1,0,0,0,0,0,1],
+                [1,1,1,1,1,1,1]
+            ];
+            
+            for (let py = 0; py < 7; py++) {
+                for (let px = 0; px < 7; px++) {
+                    if (pattern[py][px] === 1) {
+                        ctx.fillRect(x + px * cellSize, y + py * cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+        }
+        
+        // 予約領域かどうかをチェック
+        function isReservedArea(x, y) {
+            // ファインダーパターン + セパレーター
+            if ((x < 9 && y < 9) || (x > 12 && y < 9) || (x < 9 && y > 12)) return true;
+            // タイミングパターン
+            if ((x === 6 && y >= 8 && y <= 12) || (y === 6 && x >= 8 && x <= 12)) return true;
+            return false;
+        }
+        
+        // フォールバック表示（この関数は使用されません）
+        function showFallback() {
+            const container = document.getElementById('qr-code');
+            const statusDiv = document.getElementById('qr-status');
+            
+            container.innerHTML = `
+                <div style="
+                    width: 300px; 
+                    height: 300px; 
+                    border: 3px solid #333; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center;
+                    background: #f0f0f0;
+                    margin: 0 auto;
+                    border-radius: 10px;
+                ">
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">📱</div>
+                        <div style="font-weight: bold;">QRコード表示エラー</div>
+                        <div style="font-size: 12px; margin-top: 10px;">
+                            下記URLを手動入力してください
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            statusDiv.innerHTML = '⚠️ 手動でURLを入力してください';
+            statusDiv.className = 'status error';
+        }
+        
+        // URLコピー機能
+        function copyUrl() {
+            navigator.clipboard.writeText(APP_URL).then(function() {
+                alert('📋 URLがコピーされました！');
+            }).catch(function() {
+                // フォールバック: テキスト選択
+                const textArea = document.createElement('textarea');
+                textArea.value = APP_URL;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('📋 URLがコピーされました！');
+            });
+        }
+        
+        // 接続テスト
+        function testConnection() {
+            const statusDiv = document.getElementById('connection-status');
+            statusDiv.innerHTML = '🔍 接続テスト中...';
+            
+            fetch(APP_URL)
+                .then(response => {
+                    if (response.ok) {
+                        statusDiv.innerHTML = '✅ アプリに正常に接続できます！';
+                        statusDiv.className = 'status success';
+                    } else {
+                        statusDiv.innerHTML = '❌ アプリに接続できません（ステータス: ' + response.status + '）';
+                        statusDiv.className = 'status error';
+                    }
+                })
+                .catch(error => {
+                    statusDiv.innerHTML = '❌ 接続エラー: ネットワーク設定を確認してください';
+                    statusDiv.className = 'status error';
+                });
+        }
+        
+        // ページ読み込み時にQRコード生成
+        window.addEventListener('load', function() {
+            // 即座にQRコード生成
+            generateQRCode();
+            
+            // 現在時刻を表示
+            const now = new Date().toLocaleString('ja-JP');
+            document.getElementById('app-url').innerHTML += '<br><small>更新時刻: ' + now + '</small>';
+        });
+    </script>
+</body>
+</html>

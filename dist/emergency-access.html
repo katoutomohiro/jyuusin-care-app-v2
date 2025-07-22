@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>緊急アクセス - 重心ケアアプリ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background: #f0f8ff;
+        }
+        .emergency {
+            background: #ff6b6b;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .qr-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px auto;
+            max-width: 400px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .url-box {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 18px;
+            word-break: break-all;
+        }
+        .instructions {
+            background: #fffacd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        canvas {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="emergency">
+        🚨 緊急アクセス用QRコード 🚨
+    </div>
+
+    <div class="qr-container">
+        <h2>📱 携帯でスキャンしてください</h2>
+        <canvas id="qrcode" width="256" height="256"></canvas>
+        
+        <div class="url-box" id="currentUrl">
+            http://192.168.2.7:3003
+        </div>
+        
+        <p><strong>QRコードが表示されない場合は、上記URLを直接入力してください</strong></p>
+    </div>
+
+    <div class="instructions">
+        <h3>📋 アクセス手順</h3>
+        <ol>
+            <li><strong>QRコードをスキャン</strong> または URLを携帯のブラウザに入力</li>
+            <li><strong>同じWi-Fi</strong>に接続されている必要があります</li>
+            <li>アクセスできない場合は下記を確認：
+                <ul>
+                    <li>PCとスマホが同じWi-Fiに接続されているか</li>
+                    <li>Windowsファイアウォールの設定</li>
+                    <li>PCのIPアドレスが変わっていないか</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <script>
+        // 外部QRコードライブラリを使用
+        function generateQRWithLibrary(text, canvasId) {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+            script.onload = function() {
+                const canvas = document.getElementById(canvasId);
+                QRCode.toCanvas(canvas, text, {
+                    width: 256,
+                    margin: 2,
+                    color: {
+                        dark: '#000000',
+                        light: '#FFFFFF'
+                    }
+                }, function (error) {
+                    if (error) {
+                        console.error('QRコード生成エラー:', error);
+                        // フォールバック: シンプルなテキスト表示
+                        fallbackQR(text, canvasId);
+                    }
+                });
+            };
+            script.onerror = function() {
+                // ライブラリ読み込み失敗時のフォールバック
+                fallbackQR(text, canvasId);
+            };
+            document.head.appendChild(script);
+        }
+
+        // フォールバック用シンプルQRコード
+        function fallbackQR(text, canvasId) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const size = canvas.width;
+            
+            // 背景を白で塗りつぶし
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, size, size);
+            
+            // 黒枠を描画
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, size, 20);
+            ctx.fillRect(0, size-20, size, 20);
+            ctx.fillRect(0, 0, 20, size);
+            ctx.fillRect(size-20, 0, 20, size);
+            
+            // テキストを中央に表示
+            ctx.fillStyle = '#000000';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('QRコード生成中...', size/2, size/2 - 10);
+            ctx.fillText('下記URLを手動入力:', size/2, size/2 + 10);
+            ctx.font = '10px Arial';
+            ctx.fillText(text, size/2, size/2 + 30);
+        }
+
+        // シンプルなQRコード生成（ドット行列方式）
+        function generateQR(text, canvas) {
+            const ctx = canvas.getContext('2d');
+            const size = canvas.width;
+            const qrSize = 25; // 25x25のマトリックス
+            const cellSize = size / qrSize;
+            
+            // 背景を白で塗りつぶし
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, size, size);
+            
+            // 簡易QRコードパターン生成
+            ctx.fillStyle = '#000000';
+            
+            // 位置検出パターン（左上、右上、左下）
+            drawPositionPattern(ctx, 0, 0, cellSize);
+            drawPositionPattern(ctx, 18, 0, cellSize);
+            drawPositionPattern(ctx, 0, 18, cellSize);
+            
+            // データ部分（テキストのハッシュベース）
+            let hash = 0;
+            for (let i = 0; i < text.length; i++) {
+                const char = text.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            
+            // データパターン描画
+            for (let y = 0; y < qrSize; y++) {
+                for (let x = 0; x < qrSize; x++) {
+                    // 位置検出パターンを避ける
+                    if (isPositionPattern(x, y)) continue;
+                    
+                    // ハッシュベースでドットを配置
+                    const seed = hash + x * 31 + y * 17;
+                    if (Math.abs(seed) % 3 === 0) {
+                        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+        }
+        
+        function drawPositionPattern(ctx, startX, startY, cellSize) {
+            // 7x7の位置検出パターン
+            const pattern = [
+                [1,1,1,1,1,1,1],
+                [1,0,0,0,0,0,1],
+                [1,0,1,1,1,0,1],
+                [1,0,1,1,1,0,1],
+                [1,0,1,1,1,0,1],
+                [1,0,0,0,0,0,1],
+                [1,1,1,1,1,1,1]
+            ];
+            
+            for (let y = 0; y < 7; y++) {
+                for (let x = 0; x < 7; x++) {
+                    if (pattern[y][x] === 1) {
+                        ctx.fillRect((startX + x) * cellSize, (startY + y) * cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+        }
+        
+        function isPositionPattern(x, y) {
+            return (x < 9 && y < 9) || (x > 15 && y < 9) || (x < 9 && y > 15);
+        }
+        
+        // QRコード生成実行
+        window.onload = function() {
+            const url = 'http://192.168.2.7:3003';
+            
+            // まず外部ライブラリで試行
+            generateQRWithLibrary(url, 'qrcode');
+            
+            // 現在時刻を表示
+            const now = new Date().toLocaleString('ja-JP');
+            document.getElementById('currentUrl').innerHTML += '<br><small>生成時刻: ' + now + '</small>';
+        };
+    </script>
+</body>
+</html>

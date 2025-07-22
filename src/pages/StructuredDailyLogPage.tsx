@@ -11,6 +11,8 @@ import CareInput from '../components/forms/CareInput';
 import MedicationInput from '../components/forms/MedicationInput';
 import OtherInput from '../components/forms/OtherInput';
 import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
+import InlineEditText from '../components/InlineEditText';
+import InlineEditableList from '../components/InlineEditableList';
 import { useData } from '../contexts/DataContext';
 import { useAdmin } from '../contexts/AdminContext';
 import { useConfigurableComponent } from '../../services/DynamicConfigSystem';
@@ -21,7 +23,7 @@ interface TodayEventCounts {
 
 const StructuredDailyLogPage: React.FC = () => {
   const navigate = useNavigate();
-  const { users, addDailyLog } = useData();
+  const { users, addDailyLog, updateUser } = useData();
   const { isAdminMode, isAuthenticated, autoSaveEnabled } = useAdmin();
   const { eventTypes, systemSettings, facilityName } = useConfigurableComponent('structuredDailyLog');
   const [activeEventType, setActiveEventType] = useState<string | null>(null);
@@ -30,6 +32,9 @@ const StructuredDailyLogPage: React.FC = () => {
   const [todayEventCounts, setTodayEventCounts] = useState<TodayEventCounts>({});
   const [showAdminWarning, setShowAdminWarning] = useState(false);
   const [showAIAnalysis, setShowAIAnalysis] = useState(false);
+  const [editableEventTypes, setEditableEventTypes] = useState(eventTypes || []);
+  const [showEventEditor, setShowEventEditor] = useState(false);
+  const [editingEventType, setEditingEventType] = useState<string | null>(null);
 
   // 今日の日付を取得
   const today = new Date().toISOString().split('T')[0];
@@ -272,9 +277,28 @@ const StructuredDailyLogPage: React.FC = () => {
                 </div>
 
                 <div className="text-center mb-4 sm:mb-6">
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
-                    📝 {users.find(u => u.id === selectedUserId)?.name}さんの記録
-                  </h2>
+                  <div className="flex items-center justify-center space-x-2 mb-2">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+                      📝 
+                    </h2>
+                    {/* ②利用者名をインライン編集可能に */}
+                    <InlineEditText
+                      value={users.find(u => u.id === selectedUserId)?.name || ''}
+                      onSave={(newName) => {
+                        const user = users.find(u => u.id === selectedUserId);
+                        if (user) {
+                          updateUser(user.id, { ...user, name: newName });
+                        }
+                      }}
+                      className="text-xl sm:text-2xl font-bold text-gray-800"
+                      placeholder="利用者名"
+                      adminOnly={true}
+                      showEditIcon={isAdminMode}
+                    />
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+                      さんの記録
+                    </h2>
+                  </div>
                   <div className="text-xs sm:text-sm text-gray-600">
                     <span className="bg-blue-100 text-blue-800 px-2 sm:px-3 py-1 rounded-full">
                       今日の記録: {Object.values(todayEventCounts).reduce((total, count) => total + count, 0)}件
@@ -297,13 +321,56 @@ const StructuredDailyLogPage: React.FC = () => {
                   </button>
                 </div>
 
-                <h3 className="text-lg font-semibold text-gray-700 mb-4">記録する項目を選択してください</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-700">記録する項目を選択してください</h3>
+                  {/* ③④管理者向け項目編集機能 */}
+                  {isAdminMode && (
+                    <button
+                      onClick={() => setShowEventEditor(!showEventEditor)}
+                      className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded"
+                    >
+                      {showEventEditor ? '編集完了' : '項目編集'}
+                    </button>
+                  )}
+                </div>
+
+                {/* 管理者向け項目編集パネル */}
+                {isAdminMode && showEventEditor && (
+                  <div className="mb-6">
+                    <InlineEditableList
+                      items={editableEventTypes.map(type => ({
+                        id: type.id,
+                        label: type.name,
+                        value: type.icon,
+                        type: 'text' as const,
+                        required: false
+                      }))}
+                      onItemsChange={(items) => {
+                        const updatedTypes = items.map((item, index) => ({
+                          id: item.id,
+                          name: item.label,
+                          icon: item.value || '📝',
+                          color: defaultEventTypes[index % defaultEventTypes.length]?.color || 'bg-gray-500'
+                        }));
+                        setEditableEventTypes(updatedTypes);
+                        // TODO: 設定をローカルストレージに保存
+                        localStorage.setItem('customEventTypes', JSON.stringify(updatedTypes));
+                      }}
+                      title="記録項目管理"
+                      adminOnly={true}
+                      allowAdd={true}
+                      allowDelete={true}
+                      allowReorder={true}
+                    />
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                   {currentEventTypes.map((eventType) => (
                     <button
                       key={eventType.id}
                       onClick={() => setActiveEventType(eventType.id)}
-                      className={`relative p-3 sm:p-4 rounded-lg border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 ${eventType.color} bg-opacity-10 min-h-[80px] sm:min-h-[100px]`}
+                      className={`relative p-3 sm:p-4 rounded-lg border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 ${eventType.color} bg-opacity-10 min-h-[80px] sm:min-h-[100px] group`}
                     >
                       <div className="text-center">
                         <div className="text-xl sm:text-2xl mb-1 sm:mb-2">{eventType.icon}</div>
@@ -312,6 +379,19 @@ const StructuredDailyLogPage: React.FC = () => {
                           <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
                             {todayEventCounts[eventType.id]}
                           </div>
+                        )}
+                        {/* ④項目クリックでの詳細編集ボタン */}
+                        {isAdminMode && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingEventType(eventType.id);
+                            }}
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full p-1 shadow"
+                            title="詳細項目を編集"
+                          >
+                            ⚙️
+                          </button>
                         )}
                       </div>
                     </button>
