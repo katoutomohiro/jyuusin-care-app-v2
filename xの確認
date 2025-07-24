@@ -357,8 +357,42 @@ const DailyLogNewPage: React.FC = () => {
 
   // 食事記録の保存
   const saveMealRecord = () => {
+    // バリデーション: 記録者必須
     if (!formData.recorder.trim()) {
       showNotification('記録者名を入力してください', NotificationType.ERROR);
+      return;
+    }
+    // バリデーション: 摂取方法必須
+    if (!formData.intakeMethod) {
+      showNotification('摂取方法を選択してください', NotificationType.ERROR);
+      return;
+    }
+    // バリデーション: 摂取量必須
+    if (!formData.mealIntake) {
+      showNotification('食事摂取量を選択してください', NotificationType.ERROR);
+      return;
+    }
+    // バリデーション: 経管栄養の場合は食事内容（栄養剤）必須
+    if (formData.intakeMethod === '経管栄養') {
+      // 栄養剤リスト例（エンシュア・リキッド等）
+      const tubeFeedingProducts = [
+        'エンシュア・リキッド', 'ラコールNF', 'イノラス', 'グルノール', 'ペプチサポート', 'メイバランス', 'ハイネイーゲル', 'アクトレート', 'ファイバーエイド'
+      ];
+      // 摂取量または食事内容に栄養剤が含まれているか
+      const hasProduct = tubeFeedingProducts.some(p => formData.mealIntake.includes(p) || formData.mealSituation.includes(p) || formData.mealFreeText.includes(p));
+      if (!hasProduct) {
+        showNotification('経管栄養の場合は栄養剤名を記録してください', NotificationType.ERROR);
+        return;
+      }
+    }
+    // バリデーション: 水分種類必須
+    if (!formData.waterType) {
+      showNotification('水分の種類を選択してください', NotificationType.ERROR);
+      return;
+    }
+    // バリデーション: 水分量必須
+    if (!formData.waterAmount || isNaN(formData.waterAmount)) {
+      showNotification('水分量を選択してください', NotificationType.ERROR);
       return;
     }
 
