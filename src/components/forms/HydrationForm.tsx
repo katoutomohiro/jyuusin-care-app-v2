@@ -571,25 +571,23 @@ export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitti
         <div className="flex items-center space-x-2">
           <button
             type="button"
-            onClick={() => {
-              if (!startTime) {
-                setStartTime(new Date());
-                setDuration(null);
-              } else {
-                const end = new Date();
-                const diff = Math.round((end.getTime() - startTime.getTime()) / 1000);
-                setDuration(diff);
-                setFormData({ ...formData, duration: `${diff}秒` });
-                setStartTime(null);
-              }
-            }}
+            onClick={handleStart}
             className={`px-4 py-2 rounded font-semibold text-white ${!startTime ? 'bg-blue-500' : 'bg-green-500'}`}
+            disabled={!!startTime}
           >
-            {!startTime ? '食事開始' : '食事終了'}
+            計測開始
           </button>
-          <span className="ml-4 text-lg font-bold">
-            {duration !== null ? `所要時間: ${duration}秒` : ''}
-          </span>
+          <button
+            type="button"
+            onClick={handleStop}
+            className="px-4 py-2 rounded font-semibold text-white bg-red-500"
+            disabled={!startTime}
+          >
+            計測終了
+          </button>
+          {duration !== null && (
+            <span className="ml-4 text-lg font-bold text-blue-700">{duration}秒</span>
+          )}
         </div>
       </div>
 
@@ -611,20 +609,11 @@ export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitti
       <div className="sticky bottom-0 bg-gray-50 p-4 -mx-4">
         <button
           type="submit"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold py-4 rounded-lg shadow-lg transition-colors duration-150"
           disabled={isSubmitting}
-          className="w-full bg-blue-500 text-white py-4 rounded-xl font-semibold text-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          aria-label="水分・食事摂取記録を保存"
         >
-          {isSubmitting ? (
-            <>
-              <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" strokeOpacity="0.25" />
-                <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              保存中...
-            </>
-          ) : (
-            '食事・水分摂取記録を保存'
-          )}
+          {isSubmitting ? '保存中...' : '記録を保存する'}
         </button>
       </div>
     </form>
