@@ -34,13 +34,14 @@ const UserEditPage: React.FC = () => {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    // medicalCare, serviceTypeをenum値配列に変換
     updateUser(user.id, {
       name,
       age,
       disabilityLevel,
       careLevel,
-      medicalCare: medicalCare.split(',').map(s => s.trim()),
-      serviceType: serviceType.split(',').map(s => s.trim()),
+      medicalCare: medicalCare.split(',').map(s => s.trim()).filter(Boolean) as import('../types').MedicalCare[],
+      serviceType: serviceType.split(',').map(s => s.trim()).filter(Boolean) as import('../types').ServiceType[],
     });
     navigate('/users');
   };

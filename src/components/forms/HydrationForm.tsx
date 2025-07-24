@@ -9,111 +9,199 @@ export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitti
   // 正確な現在時刻を取得する関数
   const getCurrentDateTime = () => {
     const now = new Date();
-    // タイムゾーンを考慮した正確な現在時刻
     const offset = now.getTimezoneOffset() * 60000;
     const localISOTime = (new Date(now.getTime() - offset)).toISOString().slice(0, 16);
     return localISOTime;
   };
 
+  // 所要時間計測用
+  const [startTime, setStartTime] = useState<Date | null>(null);
+  const [duration, setDuration] = useState<number | null>(null);
+
+  // フォームデータ
   const [formData, setFormData] = useState({
     event_timestamp: getCurrentDateTime(),
-    fluid_type: 'water' as 'water' | 'tea' | 'juice' | 'milk' | 'supplement' | 'medication' | 'other',
-    amount_ml: 100,
-    intake_method: 'cup' as 'cup' | 'straw' | 'spoon' | 'syringe' | 'tube' | 'iv',
-    assistance_level: 'independent' as 'independent' | 'verbal_cue' | 'physical_assist' | 'full_assist',
-    completion_percentage: 100,
-    refusal_reason: '',
-    temperature: 'room' as 'cold' | 'room' | 'warm' | 'hot',
+    intake_type: '',
+    meal_content: '',
+    texture: '',
+    temperature: '',
+    position: '',
+    intake_method: [], // 複数選択
+    assistance_level: '',
+    appetite: '',
+    swallowing: [], // 複数選択
+    special_care: [], // 複数選択
+    adverse_reaction: [], // 複数選択
+    intervention: [], // 複数選択
+    amount: [], // 複数選択
+    duration: '',
     notes: ''
   });
 
-  const fluidTypes = [
-    { value: 'water', label: '水', emoji: '💧', color: 'blue' },
-    { value: 'tea', label: 'お茶', emoji: '🍵', color: 'green' },
-    { value: 'juice', label: 'ジュース', emoji: '🧃', color: 'orange' },
-    { value: 'milk', label: '牛乳', emoji: '🥛', color: 'gray' },
-    { value: 'supplement', label: '栄養補助食品', emoji: '🥤', color: 'purple' },
-    { value: 'medication', label: '薬用水分', emoji: '💊', color: 'red' },
-    { value: 'other', label: 'その他', emoji: '🥤', color: 'gray' }
+  // 選択肢リスト
+  const intakeTypes = [
+    { value: '', label: '選択してください' },
+    { value: 'oral', label: '🍽️ 経口摂取' },
+    { value: 'tube', label: '🧴 経管栄養' },
+    { value: 'iv', label: '💉 点滴' },
+    { value: 'other', label: '📝 その他' }
   ];
-
-  const intakeMethods = [
-    { value: 'cup', label: 'コップ', emoji: '☕', description: '自分で持って飲む' },
-    { value: 'straw', label: 'ストロー', emoji: '🥤', description: 'ストローで吸って飲む' },
-    { value: 'spoon', label: 'スプーン', emoji: '🥄', description: 'スプーンで少しずつ' },
-    { value: 'syringe', label: '注射器', emoji: '💉', description: 'シリンジで口腔内に' },
-    { value: 'tube', label: '経管', emoji: '🩺', description: '経鼻胃管・胃瘻' },
-    { value: 'iv', label: '点滴', emoji: '💉', description: '静脈内投与' }
+  const mealContents = [
+    { value: '', label: '選択してください' },
+    { value: 'normal', label: '🍚 通常食' },
+    { value: 'allergy', label: '⚠️ アレルギー対応' },
+    { value: 'high_calorie', label: '🔥 高カロリー' },
+    { value: 'low_salt', label: '🧂 減塩' },
+    { value: 'liquid', label: '💧 流動食' },
+    { value: 'supplement', label: '🥤 栄養補助' },
+    { value: 'snack', label: '🍪 間食' },
+    { value: 'other', label: '📝 その他' }
   ];
-
-  const assistanceLevels = [
-    { value: 'independent', label: '自立', description: '一人で飲める', color: 'green' },
-    { value: 'verbal_cue', label: '声かけ', description: '声かけで飲める', color: 'blue' },
-    { value: 'physical_assist', label: '部分介助', description: '手を添える程度', color: 'yellow' },
-    { value: 'full_assist', label: '全介助', description: '完全に介助が必要', color: 'red' }
+  const textures = [
+    { value: '', label: '選択してください' },
+    { value: 'normal', label: '🍚 普通' },
+    { value: 'soft', label: '🥣 軟菜' },
+    { value: 'minced', label: '🔪 刻み' },
+    { value: 'paste', label: '🍮 ペースト' },
+    { value: 'gel', label: '🟣 ゼリー' },
+    { value: 'liquid', label: '💧 液体' },
+    { value: 'thickened', label: '🧊 トロミ' },
+    { value: 'other', label: '📝 その他' }
   ];
-
   const temperatures = [
-    { value: 'cold', label: '冷たい', emoji: '🧊', color: 'blue' },
-    { value: 'room', label: '常温', emoji: '🌡️', color: 'gray' },
-    { value: 'warm', label: 'ぬるま湯', emoji: '♨️', color: 'orange' },
-    { value: 'hot', label: '温かい', emoji: '🔥', color: 'red' }
+    { value: '', label: '選択してください' },
+    { value: 'cold', label: '🧊 冷たい' },
+    { value: 'room', label: '🌡️ 常温' },
+    { value: 'warm', label: '♨️ ぬるい' },
+    { value: 'hot', label: '🔥 温かい' }
+  ];
+  const positions = [
+    { value: '', label: '選択してください' },
+    { value: 'sitting', label: '🪑 坐位' },
+    { value: 'semi_fowler', label: '🛏️ セミファウラー' },
+    { value: 'fowler', label: '🛏️ ファウラー' },
+    { value: 'lying', label: '🛌 仰臥位' },
+    { value: 'side', label: '↔️ 側臥位' },
+    { value: 'wheelchair', label: '🦽 車椅子' },
+    { value: 'other', label: '📝 その他' }
+  ];
+  const intakeMethods = [
+    { value: '', label: '選択してください' },
+    { value: 'cup', label: '☕ コップ' },
+    { value: 'straw', label: '🥤 ストロー' },
+    { value: 'spoon', label: '🥄 スプーン' },
+    { value: 'syringe', label: '💉 シリンジ' },
+    { value: 'tube', label: '🧴 経管' },
+    { value: 'hand', label: '✋ 手づかみ' },
+    { value: 'other', label: '📝 その他' }
+  ];
+  const assistanceLevels = [
+    { value: '', label: '選択してください' },
+    { value: 'independent', label: '🟢 自立' },
+    { value: 'verbal_cue', label: '🗣️ 声かけ' },
+    { value: 'partial_assist', label: '🤝 部分介助' },
+    { value: 'full_assist', label: '🟥 全介助' }
+  ];
+  const appetites = [
+    { value: '', label: '選択してください' },
+    { value: 'good', label: '😋 良好' },
+    { value: 'normal', label: '🙂 普通' },
+    { value: 'poor', label: '😑 不良' },
+    { value: 'refusal', label: '🙅 拒否' }
+  ];
+  const swallowingStates = [
+    { value: '', label: '選択してください' },
+    { value: 'good', label: '👌 良好' },
+    { value: 'slow', label: '🐢 ゆっくり' },
+    { value: 'cough', label: '😮‍💨 咳・むせ' },
+    { value: 'residue', label: '🍚 残留感' },
+    { value: 'aspiration', label: '💧 誤嚥疑い' },
+    { value: 'other', label: '📝 その他' }
+  ];
+  const specialCares = [
+    { value: '', label: '選択してください' },
+    { value: 'posture', label: '🛏️ 姿勢保持' },
+    { value: 'slow_feed', label: '🐢 ゆっくり摂取' },
+    { value: 'small_amount', label: '🥄 少量ずつ' },
+    { value: 'thickener', label: '🧊 トロミ追加' },
+    { value: 'oral_care', label: '🦷 口腔ケア' },
+    { value: 'monitoring', label: '👀 観察強化' },
+    { value: 'other', label: '📝 その他' }
+  ];
+  const adverseReactions = [
+    { value: '', label: '選択してください' },
+    { value: 'cough', label: '😮‍💨 咳・むせ' },
+    { value: 'vomit', label: '🤮 嘔吐' },
+    { value: 'cyanosis', label: '💙 チアノーゼ' },
+    { value: 'fever', label: '🌡️ 発熱' },
+    { value: 'pain', label: '😣 痛み' },
+    { value: 'rash', label: '🌺 発疹' },
+    { value: 'other', label: '📝 その他' }
+  ];
+  const interventions = [
+    { value: '', label: '選択してください' },
+    { value: 'none', label: '👌 介入不要' },
+    { value: 'observation', label: '👀 経過観察' },
+    { value: 'oral_care', label: '🦷 口腔ケア' },
+    { value: 'suction', label: '🧹 吸引' },
+    { value: 'oxygen', label: '🫁 酸素投与' },
+    { value: 'doctor', label: '📞 医師連絡' },
+    { value: 'emergency', label: '🚑 緊急対応' },
+    { value: 'other', label: '📝 その他' }
+  ];
+  // 重症心身障害児者向け摂取量15項目
+  const intakeAmounts = [
+    { value: '', label: '選択してください' },
+    { value: '5', label: '5ml' },
+    { value: '10', label: '10ml' },
+    { value: '15', label: '15ml' },
+    { value: '20', label: '20ml' },
+    { value: '25', label: '25ml' },
+    { value: '30', label: '30ml' },
+    { value: '40', label: '40ml' },
+    { value: '50', label: '50ml' },
+    { value: '60', label: '60ml' },
+    { value: '75', label: '75ml' },
+    { value: '100', label: '100ml' },
+    { value: '120', label: '120ml' },
+    { value: '150', label: '150ml' },
+    { value: '200', label: '200ml' },
+    { value: 'other', label: '📝 その他' }
   ];
 
-  const commonAmounts = [50, 100, 150, 200, 250, 300, 500];
-  const refusalReasons = [
-    '眠気', '口の中が痛い', '飲み込みにくい', '味が嫌', 
-    '満腹感', '体調不良', '機嫌が悪い', 'むせる心配',
-    '温度が嫌', '集中できない', 'その他'
-  ];
+  // 所要時間計測
+  const handleStart = () => {
+    setStartTime(new Date());
+    setDuration(null);
+  };
+  const handleStop = () => {
+    if (startTime) {
+      const end = new Date();
+      const diff = Math.round((end.getTime() - startTime.getTime()) / 1000);
+      setDuration(diff);
+      setFormData({ ...formData, duration: `${diff}秒` });
+    }
+  };
+
+  const handleToggle = (field: string, value: string) => {
+    setFormData(prev => {
+      const arr = Array.isArray(prev[field]) ? prev[field] : [];
+      if (arr.includes(value)) {
+        return { ...prev, [field]: arr.filter((v: string) => v !== value) };
+      } else {
+        return { ...prev, [field]: [...arr, value] };
+      }
+    });
+  };
+
+  const handleSingle = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // amount, intake_method, swallowing, special_care, adverse_reaction, interventionは配列で保存
     onSave(formData);
-  };
-
-  const setCurrentTime = () => {
-    const exactNow = getCurrentDateTime();
-    setFormData({ ...formData, event_timestamp: exactNow });
-    console.log('現在時刻を設定:', new Date().toLocaleString('ja-JP'));
-  };
-
-  const getCompletionColor = (percentage: number) => {
-    if (percentage >= 80) return 'text-green-600 bg-green-100';
-    if (percentage >= 50) return 'text-yellow-600 bg-yellow-100';
-    return 'text-red-600 bg-red-100';
-  };
-
-  const getFluidSelectedStyle = (color: string) => {
-    switch (color) {
-      case 'blue': return 'border-blue-500 bg-blue-50 shadow-md';
-      case 'green': return 'border-green-500 bg-green-50 shadow-md';
-      case 'orange': return 'border-orange-500 bg-orange-50 shadow-md';
-      case 'gray': return 'border-gray-500 bg-gray-50 shadow-md';
-      case 'purple': return 'border-purple-500 bg-purple-50 shadow-md';
-      case 'red': return 'border-red-500 bg-red-50 shadow-md';
-      default: return 'border-gray-500 bg-gray-50 shadow-md';
-    }
-  };
-
-  const getAssistanceSelectedStyle = (color: string) => {
-    switch (color) {
-      case 'green': return 'border-green-500 bg-green-50';
-      case 'blue': return 'border-blue-500 bg-blue-50';
-      case 'yellow': return 'border-yellow-500 bg-yellow-50';
-      case 'red': return 'border-red-500 bg-red-50';
-      default: return 'border-gray-500 bg-gray-50';
-    }
-  };
-
-  const getTemperatureSelectedStyle = (color: string) => {
-    switch (color) {
-      case 'blue': return 'border-blue-500 bg-blue-50';
-      case 'gray': return 'border-gray-500 bg-gray-50';
-      case 'orange': return 'border-orange-500 bg-orange-50';
-      case 'red': return 'border-red-500 bg-red-50';
-      default: return 'border-gray-500 bg-gray-50';
-    }
   };
 
   return (
@@ -121,7 +209,7 @@ export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitti
       {/* 摂取時刻 */}
       <div className="bg-white rounded-xl p-4 shadow-sm">
         <label className="block text-sm font-semibold text-gray-700 mb-2">
-          ⏰ 水分摂取時刻 *
+          ⏰ 摂取時刻 *
         </label>
         <div className="flex space-x-2">
           <input
@@ -131,217 +219,263 @@ export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitti
             className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
             required
           />
+        </div>
+      </div>
+
+      {/* 🍽️ 摂取タイプ（トグルボタン単一選択） */}
+      <div className="bg-white rounded-xl p-4 shadow-sm">
+        <label className="block font-semibold mb-2">🍽️ 摂取タイプ *</label>
+        <div className="flex flex-wrap gap-2">
+          {intakeTypes.filter(opt => opt.value !== '').map(opt => (
+            <button
+              type="button"
+              key={opt.value}
+              className={`px-3 py-2 rounded-lg border font-semibold text-base ${formData.intake_type === opt.value ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => setFormData(prev => ({ ...prev, intake_type: opt.value }))}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 🥄 食事内容（トグルボタン単一選択） */}
+      <div className="bg-white rounded-xl p-4 shadow-sm">
+        <label className="block font-semibold mb-2">🥄 食事内容</label>
+        <div className="flex flex-wrap gap-2">
+          {mealContents.filter(opt => opt.value !== '').map(opt => (
+            <button
+              type="button"
+              key={opt.value}
+              className={`px-3 py-2 rounded-lg border font-semibold text-base ${formData.meal_content === opt.value ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => setFormData(prev => ({ ...prev, meal_content: opt.value }))}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 🥣 食事形態・テクスチャー（トグルボタン単一選択） */}
+      <div className="bg-white rounded-xl p-4 shadow-sm">
+        <label className="block font-semibold mb-2">🥣 食事形態・テクスチャー</label>
+        <div className="flex flex-wrap gap-2">
+          {textures.filter(opt => opt.value !== '').map(opt => (
+            <button
+              type="button"
+              key={opt.value}
+              className={`px-3 py-2 rounded-lg border font-semibold text-base ${formData.texture === opt.value ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => setFormData(prev => ({ ...prev, texture: opt.value }))}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 🌡️ 摂取温度（トグルボタン単一選択） */}
+      <div className="bg-white rounded-xl p-4 shadow-sm">
+        <label className="block font-semibold mb-2">🌡️ 摂取温度</label>
+        <div className="flex flex-wrap gap-2">
+          {temperatures.filter(opt => opt.value !== '').map(opt => (
+            <button
+              type="button"
+              key={opt.value}
+              className={`px-3 py-2 rounded-lg border font-semibold text-base ${formData.temperature === opt.value ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => setFormData(prev => ({ ...prev, temperature: opt.value }))}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 🛏️ 摂取時の体位（トグルボタン単一選択） */}
+      <div className="bg-white rounded-xl p-4 shadow-sm">
+        <label className="block font-semibold mb-2">🛏️ 摂取時の体位</label>
+        <div className="flex flex-wrap gap-2">
+          {positions.filter(opt => opt.value !== '').map(opt => (
+            <button
+              type="button"
+              key={opt.value}
+              className={`px-3 py-2 rounded-lg border font-semibold text-base ${formData.position === opt.value ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => setFormData(prev => ({ ...prev, position: opt.value }))}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 🥄 摂取方法（複数選択・selectタグ） */}
+      <div className="bg-white rounded-xl p-4 shadow-sm">
+        <label className="block font-semibold mb-2">🥄 摂取方法（複数選択可）</label>
+        <select
+          multiple
+          value={formData.intake_method}
+          onChange={e => {
+            const selected = Array.from(e.target.selectedOptions, option => option.value);
+            setFormData(prev => ({ ...prev, intake_method: selected }));
+          }}
+          className="w-full border rounded p-2 text-base h-32"
+        >
+          {intakeMethods.filter(opt => opt.value !== '').map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* 🤝 介助レベル（トグルボタン単一選択） */}
+      <div className="bg-white rounded-xl p-4 shadow-sm">
+        <label className="block font-semibold mb-2">🤝 介助レベル</label>
+        <div className="flex flex-wrap gap-2">
+          {assistanceLevels.filter(opt => opt.value !== '').map(opt => (
+            <button
+              type="button"
+              key={opt.value}
+              className={`px-3 py-2 rounded-lg border font-semibold text-base ${formData.assistance_level === opt.value ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => setFormData(prev => ({ ...prev, assistance_level: opt.value }))}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 😋 食欲状態（トグルボタン単一選択） */}
+      <div className="bg-white rounded-xl p-4 shadow-sm">
+        <label className="block font-semibold mb-2">😋 食欲状態</label>
+        <div className="flex flex-wrap gap-2">
+          {appetites.filter(opt => opt.value !== '').map(opt => (
+            <button
+              type="button"
+              key={opt.value}
+              className={`px-3 py-2 rounded-lg border font-semibold text-base ${formData.appetite === opt.value ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => setFormData(prev => ({ ...prev, appetite: opt.value }))}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 👄 嚥下状態（複数選択・selectタグ） */}
+      <div className="bg-white rounded-xl p-4 shadow-sm">
+        <label className="block font-semibold mb-2">👄 嚥下状態（複数選択可）</label>
+        <select
+          multiple
+          value={formData.swallowing}
+          onChange={e => {
+            const selected = Array.from(e.target.selectedOptions, option => option.value);
+            setFormData(prev => ({ ...prev, swallowing: selected }));
+          }}
+          className="w-full border rounded p-2 text-base h-32"
+        >
+          {swallowingStates.filter(opt => opt.value !== '').map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* ⚠️ 特別な配慮（複数選択・selectタグ） */}
+      <div className="bg-white rounded-xl p-4 shadow-sm">
+        <label className="block font-semibold mb-2">⚠️ 特別な配慮（複数選択可）</label>
+        <select
+          multiple
+          value={formData.special_care}
+          onChange={e => {
+            const selected = Array.from(e.target.selectedOptions, option => option.value);
+            setFormData(prev => ({ ...prev, special_care: selected }));
+          }}
+          className="w-full border rounded p-2 text-base h-32"
+        >
+          {specialCares.filter(opt => opt.value !== '').map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* 🚨 有害反応（複数選択・selectタグ） */}
+      <div className="bg-white rounded-xl p-4 shadow-sm">
+        <label className="block font-semibold mb-2">🚨 有害反応（複数選択可）</label>
+        <select
+          multiple
+          value={formData.adverse_reaction}
+          onChange={e => {
+            const selected = Array.from(e.target.selectedOptions, option => option.value);
+            setFormData(prev => ({ ...prev, adverse_reaction: selected }));
+          }}
+          className="w-full border rounded p-2 text-base h-32"
+        >
+          {adverseReactions.filter(opt => opt.value !== '').map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* 🛠️ 介入の必要性（複数選択・selectタグ） */}
+      <div className="bg-white rounded-xl p-4 shadow-sm">
+        <label className="block font-semibold mb-2">🛠️ 介入の必要性（複数選択可）</label>
+        <select
+          multiple
+          value={formData.intervention}
+          onChange={e => {
+            const selected = Array.from(e.target.selectedOptions, option => option.value);
+            setFormData(prev => ({ ...prev, intervention: selected }));
+          }}
+          className="w-full border rounded p-2 text-base h-32"
+        >
+          {interventions.filter(opt => opt.value !== '').map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* 📏 摂取量（複数選択・selectタグ） */}
+      <div className="bg-white rounded-xl p-4 shadow-sm">
+        <label className="block font-semibold mb-2">📏 摂取量（複数選択可）</label>
+        <select
+          multiple
+          value={formData.amount}
+          onChange={e => {
+            const selected = Array.from(e.target.selectedOptions, option => option.value);
+            setFormData(prev => ({ ...prev, amount: selected }));
+          }}
+          className="w-full border rounded p-2 text-base h-32"
+        >
+          {intakeAmounts.filter(opt => opt.value !== '').map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* ⏱️ 所要時間（ワンクリック計測） */}
+      <div className="bg-white rounded-xl p-4 shadow-sm">
+        <label className="block font-semibold mb-2">⏱️ 所要時間</label>
+        <div className="flex items-center space-x-2">
           <button
             type="button"
-            onClick={setCurrentTime}
-            className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 whitespace-nowrap font-semibold shadow-md hover:shadow-lg transform hover:scale-105"
+            onClick={() => {
+              if (!startTime) {
+                setStartTime(new Date());
+                setDuration(null);
+              } else {
+                const end = new Date();
+                const diff = Math.round((end.getTime() - startTime.getTime()) / 1000);
+                setDuration(diff);
+                setFormData({ ...formData, duration: `${diff}秒` });
+                setStartTime(null);
+              }
+            }}
+            className={`px-4 py-2 rounded font-semibold text-white ${!startTime ? 'bg-blue-500' : 'bg-green-500'}`}
           >
-            🕐 今すぐ
+            {!startTime ? '食事開始' : '食事終了'}
           </button>
-        </div>
-        <p className="text-xs text-gray-500 mt-1">
-          💡 「今すぐ」ボタンで正確な現在時刻を自動入力
-        </p>
-      </div>
-
-      {/* 水分の種類 */}
-      <div className="bg-white rounded-xl p-4 shadow-sm">
-        <label className="block text-sm font-semibold text-gray-700 mb-3">
-          🥤 水分の種類
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          {fluidTypes.map(fluid => (
-            <button
-              key={fluid.value}
-              type="button"
-              onClick={() => setFormData({ ...formData, fluid_type: fluid.value as any })}
-              className={`p-3 rounded-xl border-2 transition-all ${
-                formData.fluid_type === fluid.value
-                  ? getFluidSelectedStyle(fluid.color)
-                  : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
-            >
-              <div className="text-xl mb-1">{fluid.emoji}</div>
-              <div className="text-sm font-medium text-gray-800">{fluid.label}</div>
-            </button>
-          ))}
+          <span className="ml-4 text-lg font-bold">
+            {duration !== null ? `所要時間: ${duration}秒` : ''}
+          </span>
         </div>
       </div>
-
-      {/* 摂取量 */}
-      <div className="bg-white rounded-xl p-4 shadow-sm">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          📏 摂取量
-        </label>
-        <div className="flex items-center space-x-3 mb-3">
-          <button
-            type="button"
-            onClick={() => setFormData({ ...formData, amount_ml: Math.max(0, formData.amount_ml - 10) })}
-            className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-lg font-bold hover:bg-gray-300"
-          >
-            −
-          </button>
-          <div className="flex-1 text-center">
-            <div className="text-2xl font-bold text-gray-800">{formData.amount_ml}</div>
-            <div className="text-sm text-gray-600">ml</div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setFormData({ ...formData, amount_ml: formData.amount_ml + 10 })}
-            className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-lg font-bold hover:bg-gray-300"
-          >
-            ＋
-          </button>
-        </div>
-        <div className="flex space-x-2 flex-wrap gap-2">
-          {commonAmounts.map(amount => (
-            <button
-              key={amount}
-              type="button"
-              onClick={() => setFormData({ ...formData, amount_ml: amount })}
-              className={`px-3 py-1 rounded text-sm ${
-                formData.amount_ml === amount 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              {amount}ml
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 摂取方法 */}
-      <div className="bg-white rounded-xl p-4 shadow-sm">
-        <label className="block text-sm font-semibold text-gray-700 mb-3">
-          🥄 摂取方法
-        </label>
-        <div className="space-y-2">
-          {intakeMethods.map(method => (
-            <button
-              key={method.value}
-              type="button"
-              onClick={() => setFormData({ ...formData, intake_method: method.value as any })}
-              className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                formData.intake_method === method.value
-                  ? 'border-blue-500 bg-blue-50 text-blue-800'
-                  : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <div className="flex items-center">
-                <span className="text-lg mr-3">{method.emoji}</span>
-                <div>
-                  <div className="font-medium">{method.label}</div>
-                  <div className="text-sm opacity-75">{method.description}</div>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 介助レベル */}
-      <div className="bg-white rounded-xl p-4 shadow-sm">
-        <label className="block text-sm font-semibold text-gray-700 mb-3">
-          🤝 介助レベル
-        </label>
-        <div className="grid grid-cols-2 gap-2">
-          {assistanceLevels.map(level => (
-            <button
-              key={level.value}
-              type="button"
-              onClick={() => setFormData({ ...formData, assistance_level: level.value as any })}
-              className={`p-3 rounded-lg border transition-colors ${
-                formData.assistance_level === level.value
-                  ? getAssistanceSelectedStyle(level.color)
-                  : 'border-gray-300 bg-white hover:bg-gray-50'
-              }`}
-            >
-              <div className="font-medium text-sm">{level.label}</div>
-              <div className="text-xs text-gray-600 mt-1">{level.description}</div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 完了率 */}
-      <div className="bg-white rounded-xl p-4 shadow-sm">
-        <label className="block text-sm font-semibold text-gray-700 mb-3">
-          📊 完了率
-        </label>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">0%</span>
-            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getCompletionColor(formData.completion_percentage)}`}>
-              {formData.completion_percentage}%
-            </span>
-            <span className="text-sm text-gray-600">100%</span>
-          </div>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            step="10"
-            value={formData.completion_percentage}
-            onChange={(e) => setFormData({ ...formData, completion_percentage: parseInt(e.target.value) })}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-          />
-          <div className="flex justify-between text-xs text-gray-500">
-            <span>拒否</span>
-            <span>半分</span>
-            <span>完飲</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 温度 */}
-      <div className="bg-white rounded-xl p-4 shadow-sm">
-        <label className="block text-sm font-semibold text-gray-700 mb-3">
-          🌡️ 温度
-        </label>
-        <div className="grid grid-cols-4 gap-2">
-          {temperatures.map(temp => (
-            <button
-              key={temp.value}
-              type="button"
-              onClick={() => setFormData({ ...formData, temperature: temp.value as any })}
-              className={`p-3 rounded-lg border transition-colors ${
-                formData.temperature === temp.value
-                  ? getTemperatureSelectedStyle(temp.color)
-                  : 'border-gray-300 bg-white hover:bg-gray-50'
-              }`}
-            >
-              <div className="text-lg mb-1">{temp.emoji}</div>
-              <div className="text-xs font-medium">{temp.label}</div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 拒否理由（完了率が低い場合） */}
-      {formData.completion_percentage < 80 && (
-        <div className="bg-white rounded-xl p-4 shadow-sm">
-          <label className="block text-sm font-semibold text-gray-700 mb-3">
-            ❌ 拒否・困難の理由
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {refusalReasons.map(reason => (
-              <button
-                key={reason}
-                type="button"
-                onClick={() => setFormData({ ...formData, refusal_reason: reason })}
-                className={`p-2 text-sm rounded-lg border transition-colors ${
-                  formData.refusal_reason === reason
-                    ? 'border-red-500 bg-red-50 text-red-800'
-                    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                {reason}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* メモ */}
       <div className="bg-white rounded-xl p-4 shadow-sm">
@@ -350,8 +484,8 @@ export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitti
         </label>
         <textarea
           value={formData.notes}
-          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          placeholder="水分摂取の詳細な様子、むせの有無、好みの変化など..."
+          onChange={e => setFormData({ ...formData, notes: e.target.value })}
+          placeholder="食事・水分摂取の詳細な様子、むせの有無、好みの変化など..."
           className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
           rows={3}
         />
@@ -373,7 +507,7 @@ export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitti
               保存中...
             </>
           ) : (
-            '水分摂取記録を保存'
+            '食事・水分摂取記録を保存'
           )}
         </button>
       </div>

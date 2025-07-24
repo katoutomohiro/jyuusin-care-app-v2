@@ -417,7 +417,7 @@ const StructuredDailyLogPage: React.FC = () => {
 
                 {/* フォームコンポーネント */}
                 {activeEventType === 'seizure' && (
-                  <SeizureForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+                  <SeizureForm onSave={handleSaveEvent} />
                 )}
                 {activeEventType === 'expression' && (
                   <ExpressionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
