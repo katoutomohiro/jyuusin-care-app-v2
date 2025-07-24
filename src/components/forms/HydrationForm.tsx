@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Fragment } from 'react';
 
 interface HydrationFormProps {
@@ -7,6 +7,8 @@ interface HydrationFormProps {
 }
 
 export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitting }) => {
+  // バリデーション用エラー状態
+  const [errorMsg, setErrorMsg] = React.useState<string>('');
   // 正確な現在時刻を取得する関数
   const getCurrentDateTime = () => {
     const now = new Date();
@@ -16,11 +18,11 @@ export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitti
   };
 
   // 所要時間計測用
-  const [startTime, setStartTime] = useState<Date | null>(null);
-  const [duration, setDuration] = useState<number | null>(null);
+  const [startTime, setStartTime] = React.useState<Date | null>(null);
+  const [duration, setDuration] = React.useState<number | null>(null);
 
   // フォームデータ
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = React.useState({
     event_timestamp: getCurrentDateTime(),
     intake_type: '',
     meal_content: '',
@@ -40,7 +42,7 @@ export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitti
   });
 
   // ドロップダウン表示制御
-  const [dropdown, setDropdown] = useState({
+  const [dropdown, setDropdown] = React.useState({
     intake_type: false,
     meal_content: false,
     texture: false,
@@ -234,12 +236,46 @@ export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitti
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // amount, intake_method, swallowing, special_care, adverse_reaction, interventionは配列で保存
+    setErrorMsg('');
+    // 必須項目チェック
+    if (!formData.event_timestamp) {
+      setErrorMsg('摂取時刻を入力してください');
+      return;
+    }
+    if (!formData.intake_type) {
+      setErrorMsg('摂取タイプを選択してください');
+      return;
+    }
+    if (!formData.meal_content) {
+      setErrorMsg('食事内容を選択してください');
+      return;
+    }
+    if (!formData.amount || formData.amount.length === 0) {
+      setErrorMsg('摂取量を選択してください');
+      return;
+    }
+    // 経管栄養系選択時は食事内容に栄養剤必須
+    const tubeTypes = ['tube_nasal','tube_gastrostomy','tube_jejunostomy','tube_peg','tube_ivh'];
+    const tubeProducts = [
+      'ensure_liquid','racol_nf','inoras','glunol','peptisupport','meibalance','hine_e_gel','actreat','fiberaid'
+    ];
+    if (tubeTypes.includes(formData.intake_type)) {
+      if (!tubeProducts.includes(formData.meal_content)) {
+        setErrorMsg('経管栄養の場合は食事内容に栄養剤を選択してください');
+        return;
+      }
+    }
+    // 問題なければ保存
     onSave(formData);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {errorMsg && (
+        <div className="bg-red-100 text-red-700 p-3 rounded mb-2 text-center font-bold">
+          {errorMsg}
+        </div>
+      )}
       {/* 摂取時刻 */}
       <div className="bg-white rounded-xl p-4 shadow-sm">
         <label className="block text-sm font-semibold text-gray-700 mb-2">
