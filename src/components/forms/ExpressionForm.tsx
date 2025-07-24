@@ -65,15 +65,7 @@ const CONTEXT_OPTIONS = [
   { value: 'other', label: '📝 その他' },
 ];
 
-const getCurrentDateTime = () => {
-  const now = new Date();
-  const offset = now.getTimezoneOffset() * 60000;
-  const localISOTime = new Date(now.getTime() - offset).toISOString().slice(0, 16);
-  return localISOTime;
-};
-
 const ExpressionForm: React.FC<ExpressionFormProps> = ({ onSave, isSubmitting }) => {
-  const [eventTime, setEventTime] = useState(getCurrentDateTime());
   const [selected, setSelected] = useState('');
   const [otherText, setOtherText] = useState('');
   const [intensity, setIntensity] = useState(3);
@@ -95,14 +87,9 @@ const ExpressionForm: React.FC<ExpressionFormProps> = ({ onSave, isSubmitting })
     setContext(e.target.value);
   };
 
-  const handleNowClick = () => {
-    setEventTime(getCurrentDateTime());
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({
-      eventTime,
       expression: selected,
       otherText: selected === 'other' ? otherText : '',
       intensity,
@@ -112,7 +99,6 @@ const ExpressionForm: React.FC<ExpressionFormProps> = ({ onSave, isSubmitting })
       contextOther: context === 'other' ? contextOther : '',
       notes,
     });
-    setEventTime(getCurrentDateTime());
     setSelected('');
     setOtherText('');
     setIntensity(3);
@@ -125,31 +111,6 @@ const ExpressionForm: React.FC<ExpressionFormProps> = ({ onSave, isSubmitting })
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* 観察時刻 */}
-      <div>
-        <label className="block font-semibold mb-2">
-          ⏰ 観察時刻
-        </label>
-        <div className="flex space-x-2">
-          <input
-            type="datetime-local"
-            value={eventTime}
-            onChange={e => setEventTime(e.target.value)}
-            className="border rounded p-2"
-            required
-          />
-          <button
-            type="button"
-            onClick={handleNowClick}
-            className="bg-blue-500 text-white px-4 py-2 rounded font-semibold"
-          >
-            今すぐ
-          </button>
-        </div>
-        <div className="text-xs text-gray-500 mt-1">
-          「今すぐ」ボタンで正確な現在時刻を自動入力
-        </div>
-      </div>
       {/* 表情・感情の種類 */}
       <div>
         <label className="block font-semibold mb-2">
