@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import SeizureForm from '../components/forms/SeizureForm';
 import ExpressionForm from '../components/forms/ExpressionForm';
 import VitalSignsInput from '../components/forms/VitalSignsInput';
-import IntakeInput from '../components/forms/IntakeInput';
+import { HydrationForm } from '../components/forms/HydrationForm';
 import ExcretionInput from '../components/forms/ExcretionInput';
 import SleepInput from '../components/forms/SleepInput';
 import ActivityInput from '../components/forms/ActivityInput';
@@ -426,7 +426,7 @@ const StructuredDailyLogPage: React.FC = () => {
                   <VitalSignsInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
                 )}
                 {activeEventType === 'meal' && (
-                  <IntakeInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+                  <HydrationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
                 )}
                 {activeEventType === 'excretion' && (
                   <ExcretionInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
