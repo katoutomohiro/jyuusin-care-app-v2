@@ -24,6 +24,7 @@ import InlineEditableNavigation from './components/InlineEditableNavigation';
 import AdminAuthComponent from './components/AdminAuthComponent';
 import QRAccessPage from './pages/QRAccessPage';
 import ErrorBoundary from './components/ErrorBoundary';
+import DailyReportPage from './pages/DailyReportPage';
 import { DailyLog } from './types';
 
 const App: React.FC = () => {
@@ -42,8 +43,8 @@ const App: React.FC = () => {
     { path: '/supplies', label: '備品管理', subtitle: '備品チェックリスト', visible: true, order: 11, adminOnly: false, icon: '📦' },
     { path: '/reports', label: '多職種連携レポート', subtitle: '魂の翻訳機', visible: true, order: 12, adminOnly: false, icon: '📊' },
     { path: '/settings', label: '設定', subtitle: '理想郷の調律', visible: true, order: 13, adminOnly: false, icon: '⚙️' },
+    { path: '/daily-reports', label: '日次レポート', subtitle: 'サービス提供実績表', visible: true, order: 14, adminOnly: false, icon: '📄' },
   ]);
-
   // ローカルストレージからナビゲーション設定を読み込み
   useEffect(() => {
     const savedNavItems = localStorage.getItem('customNavItems');
@@ -173,6 +174,8 @@ const App: React.FC = () => {
                     <Route path="/supplies" element={<SuppliesStatusPage />} />
                     <Route path="/reports" element={<ReportEnginePage />} />
                     <Route path="/settings" element={<SettingsPage />} />
+                                       <Route path="/daily-reports" element={<DailyReportPage />} />
+ 
                   </Routes>
                 </main>
               </div>
