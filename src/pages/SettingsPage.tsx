@@ -1,6 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { useAdmin } from '../contexts/AdminContext';
+import OfflineSyncService from '../services/OfflineSyncService';
 
+/**
+ * 設定・システム管理ページ。管理者モードの切り替えや管理者認証、
+ * 自動保存設定、データのエクスポート／インポート／リセットに加え、
+ * オフライン編集したデータをオンラインへ同期する機能を提供します。
+ */
 const SettingsPage: React.FC = () => {
   const {
     isAdminMode,
@@ -28,7 +34,6 @@ const SettingsPage: React.FC = () => {
     } else {
       setNotification('❌ パスワードが正しくありません。');
     }
-    
     setTimeout(() => setNotification(''), 3000);
   };
 
@@ -40,7 +45,7 @@ const SettingsPage: React.FC = () => {
         try {
           const data = JSON.parse(e.target?.result as string);
           importData(data);
-          setNotification('📥 データインポート完了！ページを再読み込みします...');
+          setNotification('✅ データインポート完了！ページを再読み込みします...');
           setTimeout(() => setNotification(''), 3000);
         } catch (error) {
           setNotification('❌ ファイル読み込みエラー: 正しいJSONファイルを選択してください。');
@@ -51,28 +56,32 @@ const SettingsPage: React.FC = () => {
     }
   };
 
+  // オフライン編集データをサーバーへ同期するハンドラー
+  const handleSyncEditedData = async () => {
+    const result = await OfflineSyncService.syncEditedDataToServer();
+    setNotification(result.message);
+    // 通知を自動で消す
+    setTimeout(() => setNotification(''), 5000);
+  };
+
   return (
     <div className="min-h-screen bg-[#FAFAF5] p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-2 text-gray-800">
           設定・システム管理 <span className="text-sm text-gray-400 font-normal">(作業場の調律)</span>
         </h1>
-        
         {/* 通知エリア */}
         {notification && (
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-blue-800 font-medium">{notification}</p>
           </div>
         )}
-
         <div className="grid gap-6 mt-8">
-          
           {/* 管理者モード設定 */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-              👑 管理者モード設定
+              管理者モード設定
             </h2>
-            
             {/* 管理者モード有効/無効 */}
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -100,21 +109,17 @@ const SettingsPage: React.FC = () => {
                   </button>
                 </div>
               </div>
-
               {/* 管理者認証 */}
               {isAdminMode && (
                 <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-semibold text-yellow-800">管理者認証</h4>
                     <span className={`text-sm px-2 py-1 rounded ${
-                      isAuthenticated 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
+                      isAuthenticated ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                     }`}>
                       {isAuthenticated ? '認証済み' : '未認証'}
                     </span>
                   </div>
-                  
                   {!isAuthenticated && (
                     <div className="space-y-3">
                       {!showPasswordInput ? (
@@ -122,7 +127,7 @@ const SettingsPage: React.FC = () => {
                           onClick={() => setShowPasswordInput(true)}
                           className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
                         >
-                          🔐 認証を行う
+                          認証を行う
                         </button>
                       ) : (
                         <div className="flex space-x-2">
@@ -151,63 +156,55 @@ const SettingsPage: React.FC = () => {
                           </button>
                         </div>
                       )}
-                      <p className="text-xs text-yellow-700">
-                        💡 デフォルトパスワード: jyushin2025
-                      </p>
+                      <p className="text-xs text-yellow-700">デフォルトパスワード: jyushin2025</p>
                     </div>
                   )}
                 </div>
               )}
             </div>
           </div>
-
           {/* 自動保存設定 */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-              💾 自動保存設定
+              自動保存設定
             </h2>
-            
-            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-              <div>
-                <h3 className="font-semibold text-gray-700">自動保存機能</h3>
-                <p className="text-sm text-gray-500">
-                  記録入力時に自動的にローカルストレージに保存します
-                </p>
-              </div>
-              <div className="flex items-center space-x-3">
-                <span className={`text-sm font-medium ${autoSaveEnabled ? 'text-green-600' : 'text-gray-500'}`}>
-                  {autoSaveEnabled ? '有効' : '無効'}
-                </span>
-                <button
-                  onClick={() => setAutoSave(!autoSaveEnabled)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    autoSaveEnabled ? 'bg-green-600' : 'bg-gray-200'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                      autoSaveEnabled ? 'translate-x-6' : 'translate-x-1'
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div>
+                  <h3 className="font-semibold text-gray-700">自動保存</h3>
+                  <p className="text-sm text-gray-500">有効にすると入力データが定期的に自動保存されます</p>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <span className={`text-sm font-medium ${autoSaveEnabled ? 'text-green-600' : 'text-gray-500'}`}>
+                    {autoSaveEnabled ? '有効' : '無効'}
+                  </span>
+                  <button
+                    onClick={() => setAutoSave(!autoSaveEnabled)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      autoSaveEnabled ? 'bg-green-600' : 'bg-gray-200'
                     }`}
-                  />
-                </button>
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                        autoSaveEnabled ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-
           {/* データ管理機能（管理者認証時のみ表示） */}
           {isAdminMode && isAuthenticated && (
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                🗂️ データ管理機能
+                データ管理機能
               </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* データエクスポート */}
                 <div className="p-4 border border-green-200 rounded-lg">
-                  <h3 className="font-semibold text-green-700 mb-2">📤 データエクスポート</h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    全ての記録データをJSONファイルとしてダウンロード
-                  </p>
+                  <h3 className="font-semibold text-green-700 mb-2">データエクスポート</h3>
+                  <p className="text-sm text-gray-600 mb-3">全ての記録データをJSONファイルとしてダウンロード</p>
                   <button
                     onClick={exportData}
                     className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -215,13 +212,10 @@ const SettingsPage: React.FC = () => {
                     エクスポート実行
                   </button>
                 </div>
-
                 {/* データインポート */}
                 <div className="p-4 border border-blue-200 rounded-lg">
-                  <h3 className="font-semibold text-blue-700 mb-2">📥 データインポート</h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    エクスポートしたJSONファイルから記録データを復元
-                  </p>
+                  <h3 className="font-semibold text-blue-700 mb-2">データインポート</h3>
+                  <p className="text-sm text-gray-600 mb-3">エクスポートしたJSONファイルから記録データを復元</p>
                   <input
                     type="file"
                     accept=".json"
@@ -236,13 +230,10 @@ const SettingsPage: React.FC = () => {
                     ファイル選択
                   </button>
                 </div>
-
                 {/* データリセット */}
                 <div className="p-4 border border-red-200 rounded-lg">
-                  <h3 className="font-semibold text-red-700 mb-2">🗑️ データリセット</h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    全ての記録データを削除（設定は保持）
-                  </p>
+                  <h3 className="font-semibold text-red-700 mb-2">データリセット</h3>
+                  <p className="text-sm text-gray-600 mb-3">全ての記録データを削除（設定は保持）</p>
                   <button
                     onClick={resetAllData}
                     className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -250,16 +241,27 @@ const SettingsPage: React.FC = () => {
                     全データ削除
                   </button>
                 </div>
+                {/* 編集データ同期 */}
+                <div className="p-4 border border-purple-200 rounded-lg">
+                  <h3 className="font-semibold text-purple-700 mb-2">編集データ同期</h3>
+                  <p className="text-sm text-gray-600 mb-3">
+                    オフラインで編集した利用者情報や設定をクラウド環境に同期します
+                  </p>
+                  <button
+                    onClick={handleSyncEditedData}
+                    className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    同期実行
+                  </button>
+                </div>
               </div>
             </div>
           )}
-
           {/* システム情報 */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
               ℹ️ システム情報
             </h2>
-            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="p-3 bg-gray-50 rounded-lg">
                 <div className="font-semibold text-gray-700">アプリケーション名</div>
@@ -279,7 +281,6 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
           </div>
-
           {/* 従来の設定項目 */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
@@ -306,4 +307,4 @@ const SettingsPage: React.FC = () => {
   );
 };
 
-export default SettingsPage; 
+export default SettingsPage;

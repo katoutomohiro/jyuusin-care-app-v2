@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
-import type { User } from '../types';
+import type { User, MedicalCare, ServiceType } from '../types';
 
+/**
+ * 利用者の基本情報を編集するページです。利用者一覧から「編集」をクリックすると
+ * このページに遷移し、氏名や年齢などの情報を更新できます。
+ */
 const UserEditPage: React.FC = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const { getUserById, updateUser } = useData();
 
-  // getUserByIdは引数1つだけ
+  // 選択された利用者を取得。存在しない場合はエラー表示。
   const user = getUserById(userId ?? '');
-
   if (!user) {
     return (
       <div className="p-8 text-center">
@@ -34,14 +37,14 @@ const UserEditPage: React.FC = () => {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    // medicalCare, serviceTypeをenum値配列に変換
+    // 文字列をカンマ区切りで配列に変換
     updateUser(user.id, {
       name,
       age,
       disabilityLevel,
       careLevel,
-      medicalCare: medicalCare.split(',').map(s => s.trim()).filter(Boolean) as import('../types').MedicalCare[],
-      serviceType: serviceType.split(',').map(s => s.trim()).filter(Boolean) as import('../types').ServiceType[],
+      medicalCare: medicalCare.split(',').map(s => s.trim()).filter(Boolean) as MedicalCare[],
+      serviceType: serviceType.split(',').map(s => s.trim()).filter(Boolean) as ServiceType[],
     });
     navigate('/users');
   };
