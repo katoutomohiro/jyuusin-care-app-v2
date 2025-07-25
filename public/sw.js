@@ -1,24 +1,31 @@
-// Service Worker を無効化
-self.addEventListener('install', function(event) {
-  self.skipWaiting();
-});
+const CACHE_NAME = 'jyushin-care-app-v2-cache-v1';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icon-192x192.png',
+  '/icon-512x512.svg',
+  // 必要に応じて追加
+];
 
-self.addEventListener('activate', function(event) {
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.keys().then(function(cacheNames) {
-      return Promise.all(
-        cacheNames.map(function(cacheName) {
-          return caches.delete(cacheName);
-        })
-      );
-    }).then(function() {
-      return self.clients.claim();
-    })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
   );
 });
 
-// 何もしない（キャッシュしない）
-self.addEventListener('fetch', function(event) {
-  // パスするだけ
-  return;
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
+  );
+});
+
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
+    })
+  );
 });
