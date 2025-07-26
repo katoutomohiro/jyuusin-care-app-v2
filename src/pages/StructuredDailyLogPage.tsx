@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useNavigate } from 'react-router-dom';
 import SeizureForm from '../components/forms/SeizureForm';
 import ExpressionForm from '../components/forms/ExpressionForm';
@@ -26,15 +27,15 @@ const StructuredDailyLogPage: React.FC = () => {
   const { users, addDailyLog, updateUser } = useData();
   const { isAdminMode, isAuthenticated, autoSaveEnabled } = useAdmin();
   const { eventTypes, systemSettings, facilityName } = useConfigurableComponent('structuredDailyLog');
-  const [activeEventType, setActiveEventType] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<string>('');
-  const [todayEventCounts, setTodayEventCounts] = useState<TodayEventCounts>({});
-  const [showAdminWarning, setShowAdminWarning] = useState(false);
-  const [showAIAnalysis, setShowAIAnalysis] = useState(false);
-  const [editableEventTypes, setEditableEventTypes] = useState(eventTypes || []);
-  const [showEventEditor, setShowEventEditor] = useState(false);
-  const [editingEventType, setEditingEventType] = useState<string | null>(null);
+  const [activeEventType, setActiveEventType] = useLocalStorage<string | null>('activeEventType', null);
+  const [isSubmitting, setIsSubmitting] = useLocalStorage<boolean>('isSubmitting', false);
+  const [selectedUserId, setSelectedUserId] = useLocalStorage<string>('selectedUserId', '');
+  const [todayEventCounts, setTodayEventCounts] = useLocalStorage<TodayEventCounts>('todayEventCounts', {});
+  const [showAdminWarning, setShowAdminWarning] = useLocalStorage<boolean>('showAdminWarning', false);
+  const [showAIAnalysis, setShowAIAnalysis] = useLocalStorage<boolean>('showAIAnalysis', false);
+  const [editableEventTypes, setEditableEventTypes] = useLocalStorage<any[]>('editableEventTypes', eventTypes || []);
+  const [showEventEditor, setShowEventEditor] = useLocalStorage<boolean>('showEventEditor', false);
+  const [editingEventType, setEditingEventType] = useLocalStorage<string | null>('editingEventType', null);
 
   // 今日の日付を取得
   const today = new Date().toISOString().split('T')[0];
@@ -62,7 +63,7 @@ const StructuredDailyLogPage: React.FC = () => {
       counts[type.id] = 0;
     });
 
-    // 実際の記録がある場合は、ここでlocalStorageから取得して集計
+    // 実際の記録がある場合は、localStorageから取得して集計（useLocalStorageで統一）
     try {
       users.forEach(user => {
         const userRecords = JSON.parse(localStorage.getItem(`dailyLogs_${user.id}`) || '[]');
