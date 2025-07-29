@@ -25,6 +25,24 @@ interface TodayEventCounts {
 }
 
 const StructuredDailyLogPage: React.FC = () => {
+  // ...existing code...
+  const Chart = React.useMemo(() => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      return require('react-chartjs-2').Bar;
+    } catch {
+      return null;
+    }
+  }, []);
+  const chartJs = React.useMemo(() => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      return require('chart.js/auto');
+    } catch {
+      return null;
+    }
+  }, []);
+
   const navigate = useNavigate();
   const { users, addDailyLog, updateUser } = useData();
   const { isAdminMode, isAuthenticated, autoSaveEnabled } = useAdmin();
@@ -42,14 +60,26 @@ const StructuredDailyLogPage: React.FC = () => {
   // 管理者向け: 全日誌データ表示モーダル
   const [showLogsModal, setShowLogsModal] = React.useState(false);
   const [logsJson, setLogsJson] = React.useState('');
+  const [lastSaved, setLastSaved] = React.useState<string>('');
+  const [showSaveToast, setShowSaveToast] = React.useState(false);
   const handleShowLogs = () => {
     try {
       const logs = localStorage.getItem('daily_logs');
       setLogsJson(logs ? JSON.stringify(JSON.parse(logs), null, 2) : 'データなし');
+      // 保存日時取得
+      const savedAt = localStorage.getItem('daily_logs_saved_at');
+      setLastSaved(savedAt ? new Date(savedAt).toLocaleString('ja-JP') : '未保存');
     } catch (e) {
       setLogsJson('取得エラー');
+      setLastSaved('取得エラー');
     }
     setShowLogsModal(true);
+  };
+
+  // 保存完了通知を表示する関数
+  const showSaveCompleteToast = () => {
+    setShowSaveToast(true);
+    setTimeout(() => setShowSaveToast(false), 3000);
   };
 
   // 今日の日付を取得
@@ -70,6 +100,25 @@ const StructuredDailyLogPage: React.FC = () => {
   ];
 
   const currentEventTypes = eventTypes.length > 0 ? eventTypes : defaultEventTypes;
+  // グラフ用変数宣言（currentEventTypes直後に1箇所のみ）
+  const eventTypeLabels = currentEventTypes.map(t => t.name);
+  const eventTypeIds = currentEventTypes.map(t => t.id);
+  const eventTypeColors = currentEventTypes.map(t => t.color.replace('bg-', '').replace('-500', ''));
+  const eventCounts = React.useMemo(() => {
+    try {
+      const logs = JSON.parse(localStorage.getItem('daily_logs') || '[]');
+      const counts: { [key: string]: number } = {};
+      eventTypeIds.forEach(id => { counts[id] = 0; });
+      logs.forEach((log: any) => {
+        if (log.event_type && counts[log.event_type] !== undefined) {
+          counts[log.event_type]++;
+        }
+      });
+      return eventTypeIds.map(id => counts[id]);
+    } catch {
+      return eventTypeIds.map(() => 0);
+    }
+  }, [showLogsModal]);
 
   // 今日の記録数を取得
   useEffect(() => {
@@ -150,7 +199,6 @@ const StructuredDailyLogPage: React.FC = () => {
       };
 
       await addDailyLog(logData);
-      
       // localStorageにも個別イベントとして保存（既存のシステムとの互換性のため）
       const eventKey = `${activeEventType}_records_${today}`;
       const existingRecords = JSON.parse(localStorage.getItem(eventKey) || '[]');
@@ -168,15 +216,21 @@ const StructuredDailyLogPage: React.FC = () => {
       existingRecords.push(newRecord);
       localStorage.setItem(eventKey, JSON.stringify(existingRecords));
 
+      // 全日誌データ保存（履歴用）
+      // 既存の全日誌データ（配列）を取得
+      const allLogs = JSON.parse(localStorage.getItem('daily_logs') || '[]');
+      // 新しい記録を追加
+      allLogs.push(newRecord);
+      localStorage.setItem('daily_logs', JSON.stringify(allLogs));
+      localStorage.setItem('daily_logs_saved_at', new Date().toISOString());
+      showSaveCompleteToast();
+
       setActiveEventType(null);
-      
       // 今日の記録数を更新
       setTodayEventCounts({
         ...todayEventCounts,
         [activeEventType!]: (todayEventCounts[activeEventType!] || 0) + 1
       });
-
-      alert('✅ 記録を保存しました');
 
     } catch (error) {
       console.error('記録の保存でエラー:', error);
@@ -188,6 +242,12 @@ const StructuredDailyLogPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-2 sm:p-4">
+      {/* 保存完了トースト通知 */}
+      {showSaveToast && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white px-6 py-3 rounded-lg shadow-lg z-50 text-lg font-semibold print:hidden">
+          ✅ 全日誌データをローカルストレージに保存しました
+        </div>
+      )}
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-4 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">📋 構造化日誌入力</h1>
@@ -360,15 +420,95 @@ const StructuredDailyLogPage: React.FC = () => {
                   </div>
                 </div>
         {/* 管理者向け: 全日誌データ表示モーダル */}
-        {showLogsModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
-              <h2 className="text-lg font-bold mb-2">全利用者・全日誌データ（daily_logs）</h2>
-              <pre className="bg-gray-100 p-3 rounded text-xs overflow-auto max-h-[60vh] mb-4" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{logsJson}</pre>
-              <button
-                onClick={() => setShowLogsModal(false)}
-                className="absolute top-2 right-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded"
-              >閉じる</button>
+        {showLogsModal && selectedUserId && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 print:bg-transparent print:static print:p-0">
+            <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative print:shadow-none print:max-w-full print:w-full print:p-4 print:bg-white">
+              <div className="flex items-center justify-between mb-2 print:mb-0">
+                <h2 className="text-lg font-bold print:text-2xl print:mb-2">{users.find(u => u.id === selectedUserId)?.name}さんの記録（{today}）</h2>
+                <span className="text-xs text-gray-500 print:text-base">最終保存日時: {lastSaved}</span>
+              </div>
+              {/* ▼▼▼ イベント件数グラフ ▼▼▼ */}
+              <div className="mb-6 print:mb-4 print:bg-white print:p-2">
+                {Chart && (
+                  <Chart
+                    data={{
+                      labels: eventTypeLabels,
+                      datasets: [
+                        {
+                          label: '記録件数',
+                          data: (() => {
+                            // 選択利用者のみの件数集計
+                            const logs = JSON.parse(logsJson || '[]').filter((log: any) => log.user_id === selectedUserId);
+                            const counts: { [key: string]: number } = {};
+                            eventTypeIds.forEach(id => { counts[id] = 0; });
+                            logs.forEach((log: any) => {
+                              if (log.event_type && counts[log.event_type] !== undefined) {
+                                counts[log.event_type]++;
+                              }
+                            });
+                            return eventTypeIds.map(id => counts[id]);
+                          })(),
+                          backgroundColor: eventTypeColors.map(c => `rgba(${c === 'red' ? '239,68,68' : c === 'blue' ? '59,130,246' : c === 'green' ? '34,197,94' : c === 'orange' ? '251,146,60' : c === 'purple' ? '168,85,247' : c === 'indigo' ? '99,102,241' : c === 'teal' ? '20,184,166' : c === 'pink' ? '236,72,153' : c === 'cyan' ? '6,182,212' : c === 'gray' ? '107,114,128' : '59,130,246'},0.7)`),
+                        },
+                      ],
+                    }}
+                    options={{
+                      responsive: true,
+                      plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'イベント別記録件数グラフ', font: { size: 18 } },
+                      },
+                      scales: {
+                        x: { title: { display: true, text: 'イベント', font: { size: 14 } } },
+                        y: { title: { display: true, text: '件数', font: { size: 14 } }, beginAtZero: true, stepSize: 1 },
+                      },
+                    }}
+                    height={180}
+                  />
+                )}
+              </div>
+              {/* ▲▲▲ イベント件数グラフ ▲▲▲ */}
+              {/* ▼▼▼ 日誌データテーブル ▼▼▼ */}
+              <div className="overflow-x-auto print:overflow-visible mb-6 print:mb-4">
+                <table className="min-w-full border border-gray-300 print:w-full print:text-xs print:border print:border-gray-400">
+                  <thead className="bg-gray-100 print:bg-gray-200">
+                    <tr>
+                      <th className="border px-2 py-1 print:px-1 print:py-1">日付</th>
+                      <th className="border px-2 py-1 print:px-1 print:py-1">イベント</th>
+                      <th className="border px-2 py-1 print:px-1 print:py-1">記録内容</th>
+                      <th className="border px-2 py-1 print:px-1 print:py-1">記録者</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(JSON.parse(logsJson || '[]') as any[]).filter(log => log.user_id === selectedUserId).map((log, idx) => (
+                      <tr key={log.id || idx} className="print:bg-white">
+                        <td className="border px-2 py-1 print:px-1 print:py-1">{log.created_at ? log.created_at.split('T')[0] : ''}</td>
+                        <td className="border px-2 py-1 print:px-1 print:py-1">{currentEventTypes.find(t => t.id === log.event_type)?.name || log.event_type}</td>
+                        <td className="border px-2 py-1 print:px-1 print:py-1">{typeof log.data === 'object' ? JSON.stringify(log.data, null, 1) : log.data}</td>
+                        <td className="border px-2 py-1 print:px-1 print:py-1">{log.author || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* ▲▲▲ 日誌データテーブル ▲▲▲ */}
+              {/* ▼▼▼ 署名欄 ▼▼▼ */}
+              <div className="mt-6 mb-2 print:mt-8 print:mb-2 border-t pt-4 print:pt-2">
+                <div className="text-base font-semibold mb-2 print:text-lg">ご家族署名欄</div>
+                <div className="h-12 border-b border-gray-400 mb-2 print:h-10 print:mb-1"></div>
+                <div className="text-xs text-gray-500 print:text-xs">（ご確認のうえご署名ください）</div>
+              </div>
+              {/* ▲▲▲ 署名欄 ▲▲▲ */}
+              <div className="flex gap-2 print:hidden">
+                <button
+                  onClick={() => window.print()}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow"
+                >A4印刷</button>
+                <button
+                  onClick={() => setShowLogsModal(false)}
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded"
+                >閉じる</button>
+              </div>
             </div>
           </div>
         )}
@@ -408,7 +548,7 @@ const StructuredDailyLogPage: React.FC = () => {
                 <div className="my-6 flex justify-center">
                   {/* Excelエクスポート時のエラー抑制ラッパー */}
                   <ErrorBoundary>
-                    <DailyLogExcelExporter />
+                    <DailyLogExcelExporter selectedUserId={selectedUserId} />
                   </ErrorBoundary>
                 </div>
                 {/* ▲▲▲ Excel全出力機能 ▲▲▲ */}
@@ -509,6 +649,25 @@ const StructuredDailyLogPage: React.FC = () => {
           onClose={() => setShowAIAnalysis(false)}
         />
       )}
+      {/* 印刷用CSS */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          .print\:static, .print\:p-0, .print\:shadow-none, .print\:max-w-full, .print\:w-full, .print\:rounded-none, .print\:overflow-visible, .print\:text-xs, .print\:bg-white {
+            visibility: visible !important;
+            position: static !important;
+            box-shadow: none !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            border-radius: 0 !important;
+            overflow: visible !important;
+            font-size: 12px !important;
+            background: #fff !important;
+            color: #222 !important;
+          }
+          .print\:hidden { display: none !important; }
+        }
+      `}</style>
     </div>
   );
 };
