@@ -12,6 +12,8 @@ import CareInput from '../components/forms/CareInput';
 import MedicationInput from '../components/forms/MedicationInput';
 import OtherInput from '../components/forms/OtherInput';
 import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
+import DailyLogExcelExporter from '../components/DailyLogExcelExporter';
+import ErrorBoundary from '../components/ErrorBoundary';
 import InlineEditText from '../components/InlineEditText';
 import InlineEditableList from '../components/InlineEditableList';
 import { useData } from '../contexts/DataContext';
@@ -36,6 +38,19 @@ const StructuredDailyLogPage: React.FC = () => {
   const [editableEventTypes, setEditableEventTypes] = useLocalStorage<any[]>('editableEventTypes', eventTypes || []);
   const [showEventEditor, setShowEventEditor] = useLocalStorage<boolean>('showEventEditor', false);
   const [editingEventType, setEditingEventType] = useLocalStorage<string | null>('editingEventType', null);
+
+  // 管理者向け: 全日誌データ表示モーダル
+  const [showLogsModal, setShowLogsModal] = React.useState(false);
+  const [logsJson, setLogsJson] = React.useState('');
+  const handleShowLogs = () => {
+    try {
+      const logs = localStorage.getItem('daily_logs');
+      setLogsJson(logs ? JSON.stringify(JSON.parse(logs), null, 2) : 'データなし');
+    } catch (e) {
+      setLogsJson('取得エラー');
+    }
+    setShowLogsModal(true);
+  };
 
   // 今日の日付を取得
   const today = new Date().toISOString().split('T')[0];
@@ -156,10 +171,10 @@ const StructuredDailyLogPage: React.FC = () => {
       setActiveEventType(null);
       
       // 今日の記録数を更新
-      setTodayEventCounts(prev => ({
-        ...prev,
-        [activeEventType!]: (prev[activeEventType!] || 0) + 1
-      }));
+      setTodayEventCounts({
+        ...todayEventCounts,
+        [activeEventType!]: (todayEventCounts[activeEventType!] || 0) + 1
+      });
 
       alert('✅ 記録を保存しました');
 
@@ -324,16 +339,39 @@ const StructuredDailyLogPage: React.FC = () => {
 
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-700">記録する項目を選択してください</h3>
-                  {/* ③④管理者向け項目編集機能 */}
-                  {isAdminMode && (
-                    <button
-                      onClick={() => setShowEventEditor(!showEventEditor)}
-                      className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded"
-                    >
-                      {showEventEditor ? '編集完了' : '項目編集'}
-                    </button>
-                  )}
+                  <div className="flex gap-2">
+                    {/* ③④管理者向け項目編集機能 */}
+                    {isAdminMode && (
+                      <>
+                        <button
+                          onClick={() => setShowEventEditor(!showEventEditor)}
+                          className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded"
+                        >
+                          {showEventEditor ? '編集完了' : '項目編集'}
+                        </button>
+                        <button
+                          onClick={handleShowLogs}
+                          className="text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded border border-blue-300"
+                        >
+                          全日誌データ表示
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
+        {/* 管理者向け: 全日誌データ表示モーダル */}
+        {showLogsModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
+              <h2 className="text-lg font-bold mb-2">全利用者・全日誌データ（daily_logs）</h2>
+              <pre className="bg-gray-100 p-3 rounded text-xs overflow-auto max-h-[60vh] mb-4" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{logsJson}</pre>
+              <button
+                onClick={() => setShowLogsModal(false)}
+                className="absolute top-2 right-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded"
+              >閉じる</button>
+            </div>
+          </div>
+        )}
 
                 {/* 管理者向け項目編集パネル */}
                 {isAdminMode && showEventEditor && (
@@ -366,36 +404,45 @@ const StructuredDailyLogPage: React.FC = () => {
                   </div>
                 )}
                 
+                {/* ▼▼▼ Excel全出力機能 ▼▼▼ */}
+                <div className="my-6 flex justify-center">
+                  {/* Excelエクスポート時のエラー抑制ラッパー */}
+                  <ErrorBoundary>
+                    <DailyLogExcelExporter />
+                  </ErrorBoundary>
+                </div>
+                {/* ▲▲▲ Excel全出力機能 ▲▲▲ */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                   {currentEventTypes.map((eventType) => (
-                    <button
-                      key={eventType.id}
-                      onClick={() => setActiveEventType(eventType.id)}
-                      className={`relative p-3 sm:p-4 rounded-lg border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 ${eventType.color} bg-opacity-10 min-h-[80px] sm:min-h-[100px] group`}
-                    >
-                      <div className="text-center">
-                        <div className="text-xl sm:text-2xl mb-1 sm:mb-2">{eventType.icon}</div>
-                        <div className="font-medium text-gray-800 text-xs sm:text-sm leading-tight">{eventType.name}</div>
-                        {todayEventCounts[eventType.id] > 0 && (
-                          <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
-                            {todayEventCounts[eventType.id]}
-                          </div>
-                        )}
-                        {/* ④項目クリックでの詳細編集ボタン */}
-                        {isAdminMode && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingEventType(eventType.id);
-                            }}
-                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full p-1 shadow"
-                            title="詳細項目を編集"
-                          >
-                            ⚙️
-                          </button>
-                        )}
-                      </div>
-                    </button>
+                    <div key={eventType.id} className="relative">
+                      <button
+                        onClick={() => setActiveEventType(eventType.id)}
+                        className={`flex flex-col justify-center items-center p-3 sm:p-4 rounded-lg border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 ${eventType.color} bg-opacity-10 min-h-[80px] sm:min-h-[100px] h-full w-full`}
+                      >
+                        <div className="text-center w-full">
+                          <div className="text-xl sm:text-2xl mb-1 sm:mb-2">{eventType.icon}</div>
+                          <div className="font-medium text-gray-800 text-xs sm:text-sm leading-tight">{eventType.name}</div>
+                          {todayEventCounts[eventType.id] > 0 && (
+                            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
+                              {todayEventCounts[eventType.id]}
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                      {/* ④項目クリックでの詳細編集ボタン（button外に移動） */}
+                      {isAdminMode && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingEventType(eventType.id);
+                          }}
+                          className="absolute top-2 right-2 bg-white rounded-full p-1 shadow border border-gray-300 hover:bg-gray-100 z-10"
+                          title="詳細項目を編集"
+                        >
+                          ⚙️
+                        </button>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>

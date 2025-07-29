@@ -26,19 +26,8 @@ export default class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
-          <div className="bg-white p-8 rounded-lg shadow-md text-center">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">エラーが発生しました</h1>
-            <p className="text-gray-700 mb-4">
-              申し訳ありませんが、アプリケーションでエラーが発生しました。
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
-            >
-              ページを再読み込み
-            </button>
-          </div>
+        <div className="bg-red-100 text-red-700 p-4 rounded-lg text-center">
+          Excelエクスポートでエラーが発生しました。データが空の場合は記録を追加してください。
         </div>
       );
     }
