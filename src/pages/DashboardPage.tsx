@@ -278,26 +278,30 @@ const DashboardPage: React.FC = () => {
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {users.slice(0, 6).map((user) => (
-                <Link
-                  key={user.id}
-                  to={`/daily-log`}
-                  className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all duration-200 flex items-center space-x-3"
-                >
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
-                    {user.initials || user.name.charAt(0)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-semibold text-gray-800">{user.name}</div>
-                    <div className="text-sm text-gray-500">{user.age}歳 {user.gender}</div>
-                  </div>
-                  <div className="text-blue-500">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </Link>
-              ))}
+              {(Array.isArray(users) && users.length > 0) ? (
+                users.slice(0, 6).map((user) => (
+                  <Link
+                    key={user.id}
+                    to={`/daily-log`}
+                    className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all duration-200 flex items-center space-x-3"
+                  >
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
+                      {user.initials || user.name.charAt(0)}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-800">{user.name}</div>
+                      <div className="text-sm text-gray-500">{user.age}歳 {user.gender}</div>
+                    </div>
+                    <div className="text-blue-500">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="col-span-3 text-center text-gray-400 py-8">利用者データがありません</div>
+              )}
             </div>
             <div className="mt-4 text-center">
               <p className="text-sm text-gray-600">
@@ -433,7 +437,7 @@ const DashboardPage: React.FC = () => {
             ) : (
               <div className="text-center py-8">
                 <p className="text-gray-500">記録が蓄積されると、成長の変化が表示されます</p>
-                <Line data={growthChartData} />
+                {/* <Line data={growthChartData} />  // react@19未対応のため一時コメントアウト */}
               </div>
             )}
           </div>
