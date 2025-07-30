@@ -5,6 +5,8 @@ import { DataProvider } from './contexts/DataContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { AdminProvider } from './contexts/AdminContext';
 import StructuredDailyLogPage from './pages/StructuredDailyLogPage';
+import DailyLogInputPage from './pages/DailyLogInputPage';
+import DailyLogListPage from './pages/DailyLogListPage';
 import DashboardPage from './pages/DashboardPage';
 import UserListPage from './pages/UserListPage';
 import UserDetailPage from './pages/UserDetailPage';
@@ -78,7 +80,7 @@ const App: React.FC = () => {
                   {/* 管理者認証コンポーネント */}
                   <AdminAuthComponent />
                   {navItems
-                    .filter(item => item.visible && (!item.adminOnly || true))
+                    .filter(item => item.visible && (!item.adminOnly))
                     .sort((a, b) => a.order - b.order)
                     .map(item => (
                       <Link key={item.path} to={item.path} className="py-2 px-4 rounded hover:bg-yellow-100 font-semibold flex flex-col">
@@ -93,6 +95,7 @@ const App: React.FC = () => {
                 {/* メインコンテンツ */}
                 <main className="flex-1 bg-gray-50 overflow-y-auto">
                   <Routes>
+                    {/* {console.log('DashboardPage route loaded')} */}
                     <Route path="/" element={<DashboardPage />} />
                     <Route path="/users" element={<UserListPage />} />
                     {/* 利用者詳細ページ */}
@@ -100,6 +103,8 @@ const App: React.FC = () => {
                     {/* 利用者編集ページ */}
                     <Route path="/users/edit/:userId" element={<UserEditPage />} />
                     <Route path="/daily-log" element={<StructuredDailyLogPage />} />
+                    <Route path="/daily-log/input" element={<DailyLogInputPage />} />
+                    <Route path="/daily-log/list" element={<DailyLogListPage />} />
                     <Route path="/daily-log/:userId" element={<StructuredDailyLogPage />} />
                     <Route path="/qr-access" element={<QRAccessPage />} />
                     <Route path="/ai-analysis" element={<AIAnalysisDashboard />} />
@@ -110,7 +115,7 @@ const App: React.FC = () => {
                     <Route path="/kaizen" element={<KaizenPage />} />
                     <Route path="/learning" element={<LearningHubPage />} />
                     <Route path="/supplies" element={<SuppliesStatusPage />} />
-                    <Route path="/reports" element={<ReportEnginePage />} />
+                    {/* <Route path="/reports" element={<ReportEnginePage />} />  一時的にコメントアウト */}
                     <Route path="/settings" element={<SettingsPage />} />
                     {/* 設定ページ内のサブルートとしてアプリ設定管理ページを追加 */}
                     <Route path="/settings/app-config" element={<AdminAppConfigPage />} />

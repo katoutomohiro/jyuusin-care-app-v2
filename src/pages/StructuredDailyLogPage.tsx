@@ -206,12 +206,53 @@ const StructuredDailyLogPage: React.FC = () => {
           ✅ 全日誌データをローカルストレージに保存しました
         </div>
       )}
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <div className="text-center mb-4 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">📋 構造化日誌入力</h1>
           <p className="text-gray-600 text-sm sm:text-base">{facilityName} - 利用者の日常記録を構造化して記録します</p>
         </div>
-        {/* ここから下は元のreturn JSXをそのまま使用してください（return部は既存のまま） */}
+        {/* 利用者一覧 */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-8">
+          {users.map(u => (
+            <button
+              key={u.id}
+              className={`border rounded-lg p-4 text-center shadow hover:bg-blue-100 transition-all ${selectedUserId === u.id ? 'bg-blue-200 border-blue-500' : 'bg-white'}`}
+              onClick={() => setSelectedUserId(u.id)}
+            >
+              <div className="font-bold text-lg mb-1">{u.name}</div>
+              <div className="text-xs text-gray-500">{u.serviceType?.join(', ')}</div>
+              <div className="mt-2 text-xs text-gray-400">{u.medicalCare?.join(', ')}</div>
+            </button>
+          ))}
+        </div>
+        {/* 本日のイベント集計 */}
+        {selectedUserId && (
+          <div className="mb-6">
+            <h2 className="font-semibold text-base mb-2">本日の記録件数</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {currentEventTypes.map((type, idx) => (
+                <div key={type.id} className={`rounded px-2 py-1 text-xs font-bold text-white ${type.color}`}>
+                  {type.icon} {type.name}: {todayEventCounts[type.id] || 0}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {/* イベントフォーム群 */}
+        {selectedUserId && (
+          <div className="space-y-4">
+            <SeizureForm onSave={handleSaveEvent} />
+            <ExpressionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+            <VitalSignsInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+            <HydrationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+            <ExcretionInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+            <SleepInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+            <ActivityInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+            <CareInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+            <MedicationInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+            <OtherInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+          </div>
+        )}
       </div>
       {/* AI分析表示 */}
       {showAIAnalysis && selectedUserId && (

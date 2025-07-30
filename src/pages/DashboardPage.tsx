@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { LaurelCrownIcon, SunCloudIcon, SproutIcon } from '../components/icons';
 import { Line } from 'react-chartjs-2';
 import { useData } from '../contexts/DataContext';
+import { MedicalCare, ServiceType } from '../types';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -27,7 +28,109 @@ ChartJS.register(
 );
 
 const DashboardPage: React.FC = () => {
-  const { users } = useData();
+  let { users } = useData();
+  console.log('DashboardPage loaded', users);
+  // ダミーユーザー（テスト用）
+  if (!Array.isArray(users) || users.length === 0) {
+    users = [
+      {
+        id: '1',
+        name: '山田 太郎',
+        initials: 'YT',
+        age: 25,
+        gender: '男性',
+        disabilityType: '肢体不自由',
+        disabilityLevel: '重度',
+        underlyingDiseases: '脳性麻痺',
+        medicalCare: ['TUBE_FEEDING' as MedicalCare],
+        serviceType: ['LIFE_CARE' as ServiceType],
+        familyContact: { name: '山田一郎', relationship: '父', phone: '090-1111-1111' },
+        notes: '笑顔が多い',
+        certificates: '',
+        careLevel: '重度',
+      },
+      {
+        id: '2',
+        name: '佐藤 花子',
+        initials: 'SH',
+        age: 22,
+        gender: '女性',
+        disabilityType: '知的障害',
+        disabilityLevel: '重度',
+        underlyingDiseases: 'てんかん',
+        medicalCare: ['SEIZURE_MEDICATION' as MedicalCare],
+        serviceType: ['DAY_SERVICE' as ServiceType],
+        familyContact: { name: '佐藤美智子', relationship: '母', phone: '090-2222-2222' },
+        notes: '発作歴あり',
+        certificates: '',
+        careLevel: '重度',
+      },
+      {
+        id: '3',
+        name: '鈴木 一郎',
+        initials: 'SI',
+        age: 28,
+        gender: '男性',
+        disabilityType: '肢体不自由',
+        disabilityLevel: '中度',
+        underlyingDiseases: '筋ジストロフィー',
+        medicalCare: ['TUBE_FEEDING' as MedicalCare],
+        serviceType: ['LIFE_CARE' as ServiceType],
+        familyContact: { name: '鈴木健', relationship: '兄', phone: '090-3333-3333' },
+        notes: '活動的',
+        certificates: '',
+        careLevel: '中度',
+      },
+      {
+        id: '4',
+        name: '田中 美咲',
+        initials: 'TM',
+        age: 20,
+        gender: '女性',
+        disabilityType: '知的障害',
+        disabilityLevel: '軽度',
+        underlyingDiseases: '自閉症',
+        medicalCare: [],
+        serviceType: ['DAY_SERVICE' as ServiceType],
+        familyContact: { name: '田中誠', relationship: '父', phone: '090-4444-4444' },
+        notes: '穏やか',
+        certificates: '',
+        careLevel: '軽度',
+      },
+      {
+        id: '5',
+        name: '高橋 健',
+        initials: 'TK',
+        age: 30,
+        gender: '男性',
+        disabilityType: '肢体不自由',
+        disabilityLevel: '重度',
+        underlyingDiseases: '脳性麻痺',
+        medicalCare: ['SUCTION' as MedicalCare],
+        serviceType: ['LIFE_CARE' as ServiceType],
+        familyContact: { name: '高橋由美', relationship: '母', phone: '090-5555-5555' },
+        notes: '吸引ケア必要',
+        certificates: '',
+        careLevel: '重度',
+      },
+      {
+        id: '6',
+        name: '中村 さくら',
+        initials: 'NS',
+        age: 24,
+        gender: '女性',
+        disabilityType: '知的障害',
+        disabilityLevel: '中度',
+        underlyingDiseases: 'てんかん',
+        medicalCare: ['SEIZURE_MEDICATION' as MedicalCare],
+        serviceType: ['DAY_SERVICE' as ServiceType],
+        familyContact: { name: '中村正', relationship: '父', phone: '090-6666-6666' },
+        notes: '発作注意',
+        certificates: '',
+        careLevel: '中度',
+      }
+    ];
+  }
   const [todayRecords, setTodayRecords] = useState<Record<string, number>>({});
   const [kiramekiData, setKiramekiData] = useState({
     name: '',

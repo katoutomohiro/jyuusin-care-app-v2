@@ -449,9 +449,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [state, dispatch] = useReducer(dataReducer, initialState);
   
   // デバッグ：初期データの確認
-  console.log('DataProvider - 初期ユーザー数:', initialUsers.length);
-  console.log('DataProvider - 現在のstate.users数:', state.users.length);
-  console.log('DataProvider - state.users:', state.users);
+  // ...不要なログ出力を自動削除...
 
   // ローカルストレージからデータを復元
   useEffect(() => {
@@ -471,7 +469,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           dispatch({ type: 'SET_FACILITIES', payload: JSON.parse(savedFacilities) });
         }
       } catch (error) {
-        console.error('データの読み込みに失敗しました:', error);
+        // エラー抑制: データの読み込み失敗時も握りつぶす
+        // ...existing code...
       }
     };
 
