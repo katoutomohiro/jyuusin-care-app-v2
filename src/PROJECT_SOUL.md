@@ -263,7 +263,52 @@ KPI 例：
 ---
 
 ## 14. Change Log
-- *ここに Copilot が後続変更を `YYYY-MM-DD HH:MM` 形式で追記*
+2025-07-31 14:10 ここまでの重心ケアアプリ開発進捗・設計案を記録：
+- 日誌入力フォーム設計案（Excel現物ベース、バイタル・排尿/排便・水分補給・食事・入浴・課題・特記・署名欄をReactフォーム化、行追加可能、署名欄・特記欄設置、UIは大きめ・シンプル・現場向け）
+- useData()やgetUserByIdパターンで全利用者・全日誌データ取得
+- 入力データをExcel出力用に整形（A4横向き・署名欄・グラフ用データ付き）
+- xlsxライブラリでExcelファイル生成（A4横・署名欄・グラフ用データ含む）
+- ダウンロードボタンUI追加（Excel出力）
+- 職員が手書き不要、アプリ入力→自動Excel出力システム構築方針
+- Excel日誌現物イメージ（N・M様）を参考に、現場運用・UI/UX・データモデル設計を進行
+2025-07-31 14:20 Excel現物フォーマット変換・グラフ用データ設計の具体案：
+// Excel現物フォーマットへの変換関数（TypeScript例）
+function convertToExcelFormat(logs: DailyLog[]): any[][] {
+  const header = [
+    ['氏名', '日付', '体温', '血圧', '脈拍', 'SpO2', '排尿', '排便', '水分補給', '食事', '入浴', '課題', '特記', '署名'],
+  ];
+  const rows = logs.map(log => [
+    log.userName,
+    log.date,
+    log.vitals.temp,
+    `${log.vitals.bpSystolic}/${log.vitals.bpDiastolic}`,
+    log.vitals.pulse,
+    log.vitals.spo2,
+    log.excretion.map(e => `${e.time}:${e.urine}`).join('\n'),
+    log.excretion.map(e => `${e.time}:${e.stool}`).join('\n'),
+    log.hydration.map(h => `${h.time}:${h.type}:${h.amount}`).join('\n'),
+    `${log.meal.breakfast}\n${log.meal.lunch}\n${log.meal.dinner}`,
+    log.bath,
+    log.tasks.body,
+    log.notes,
+    log.signature,
+  ]);
+  // グラフ用データ（例：水分摂取量推移）
+  const graphHeader = ['日付', '氏名', '水分摂取量合計'];
+  const graphRows = logs.map(log => [
+    log.date,
+    log.userName,
+    log.hydration.reduce((sum, h) => sum + Number(h.amount), 0),
+  ]);
+  return [...header, ...rows, [], graphHeader, ...graphRows];
+}
+
+// グラフ用データ設計例
+// 1. 水分摂取量推移（日付×利用者ごと）
+// 2. バイタル推移（体温・血圧・脈拍・SpO2）
+// 3. 排尿・排便回数
+// 4. 食事摂取量
+// Excel側でグラフ自動生成可能なように、集計データをシート下部に出力
 
 === CONTENT END ===
 ***/
