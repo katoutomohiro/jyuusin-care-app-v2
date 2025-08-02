@@ -32,7 +32,7 @@ export enum NotificationType {
 /**
  * 利用者情報
  */
-export type User = {
+export interface User {
   id: string;
   name: string;
   initials?: string;
@@ -53,7 +53,7 @@ export type User = {
   familyContact?: { name: string; relationship: string; phone: string };
   admissionDate?: string;
   status?: 'active' | 'inactive' | 'pending';
-};
+}
 
 /**
  * スタッフの役職
