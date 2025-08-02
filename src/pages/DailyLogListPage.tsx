@@ -1,6 +1,6 @@
 import React from 'react';
 import { useData } from '../contexts/DataContext';
-import { User } from '../types';
+import { User } from '../../types';
 
 // ステータス色分け用
 const statusColor = {
