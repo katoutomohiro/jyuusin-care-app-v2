@@ -32,32 +32,32 @@ export function exportUserCareExcelTemplate(user: User, dailyLogs: AnyEvent[], d
     ''
   ]);
 
-  // 発作（全項目を網羅的に出力・未入力も空文字で）
+  // 発作（全項目を網羅的に出力）
   const seizure = dailyLogs.find(e => e.event_type === 'seizure');
   sheet.push([
     '発作',
-    seizure?.data?.seizure_type ?? '', // 発作の種類
-    seizure?.data?.trigger ?? '',      // きっかけ・状況
-    seizure?.data?.expression ?? '',   // 発作時の表情
-    seizure?.data?.gaze ?? '',         // 発作時の視線
-    seizure?.data?.duration_seconds !== undefined ? `${seizure.data.duration_seconds}秒` : '', // 継続時間
-    seizure?.data?.severity !== undefined ? `重症度:${seizure.data.severity}` : '',           // 重症度
-    Array.isArray(seizure?.data?.pre_seizure_signs) ? seizure.data.pre_seizure_signs.join(',') : '', // 前兆
-    seizure?.data?.post_seizure_condition ?? '',    // 発作後の状態
-    seizure?.data?.emergency_level ?? '',           // 緊急度
-    seizure?.data?.medical_action ?? '',            // 医療対応
-    seizure?.data?.notes ?? '',                     // 詳細メモ
-    seizure?.data?.timestamp ?? '',                 // 発作発生日時
-    seizure?.data?.staff ?? '',                     // 記録担当
-    seizure?.data?.recorder ?? ''                   // 記録者
+    seizure?.data?.seizure_type ?? '記録なし', // 発作の種類
+    seizure?.data?.trigger ?? '',              // きっかけ・状況
+    seizure?.data?.expression ?? '',           // 発作時の表情
+    seizure?.data?.gaze ?? '',                 // 発作時の視線
+    seizure?.data?.duration_seconds ? `${seizure.data.duration_seconds}秒` : '', // 継続時間
+    seizure?.data?.severity ? `重症度:${seizure.data.severity}` : '',           // 重症度
+    seizure?.data?.pre_seizure_signs?.join(',') ?? '',                          // 前兆
+    seizure?.data?.post_seizure_condition ?? '',                                // 発作後の状態
+    seizure?.data?.emergency_level ?? '',                                        // 緊急度
+    seizure?.data?.medical_action ?? '',                                         // 医療対応
+    seizure?.data?.notes ?? '',                                                  // 詳細メモ
+    seizure?.data?.timestamp ?? '',                                              // 発作発生日時
+    seizure?.data?.staff ?? '',                                                  // 記録担当
+    seizure?.data?.recorder ?? ''                                                // 記録者
   ]);
 
-  // 表情・反応（全項目を網羅的に出力・未入力も空文字で）
+  // 表情・反応（全項目を網羅的に出力）
   const expression = dailyLogs.find(e => e.event_type === 'expression');
   sheet.push([
     '表情・反応',
     expression?.data?.specific_expression ?? '', // 具体的な表情
-    expression?.data?.expression_score !== undefined ? `スコア:${expression.data.expression_score}` : '', // スコア
+    expression?.data?.expression_score ? `スコア:${expression.data.expression_score}` : '', // スコア
     expression?.data?.context ?? '', // 状況
     expression?.data?.trigger ?? '', // きっかけ
     expression?.data?.gaze ?? '', // 視線

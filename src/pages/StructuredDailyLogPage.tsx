@@ -12,14 +12,14 @@ import CareInput from '../components/forms/CareInput';
 import MedicationInput from '../components/forms/MedicationInput';
 import OtherInput from '../components/forms/OtherInput';
 import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
-import DailyLogExcelExporter from '../components/DailyLogExcelExporter';
+import DailyLogA4Print from '../components/DailyLogA4Print';
 import ErrorBoundary from '../components/ErrorBoundary';
 import InlineEditText from '../components/InlineEditText';
 import InlineEditableList from '../components/InlineEditableList';
 import { useData } from '../contexts/DataContext';
 import { useAdmin } from '../contexts/AdminContext';
 import { useConfigurableComponent } from '../../services/DynamicConfigSystem';
-import UserCareExcelTemplateExporter from '../components/UserCareExcelTemplateExporter.tsx';
+import UserCareExcelTemplateExporter from '../components/UserCareExcelTemplateExporter';
 
 interface TodayEventCounts {
   [key: string]: number;
@@ -27,7 +27,7 @@ interface TodayEventCounts {
 
 const StructuredDailyLogPage: React.FC = () => {
   const navigate = useNavigate();
-  const { users, addDailyLog, updateUser, getFrequentTags } = useData();
+  const { users, addDailyLog, updateUser: _updateUser, updateUser: updateUserRaw, updateDailyLog, getFrequentTags } = useData();
   const { isAdminMode, isAuthenticated, autoSaveEnabled } = useAdmin();
   const { eventTypes, systemSettings, facilityName } = useConfigurableComponent('structuredDailyLog');
   const [activeEventType, setActiveEventType] = useLocalStorage<string | null>('activeEventType', null);
@@ -137,7 +137,7 @@ const StructuredDailyLogPage: React.FC = () => {
     setIsSubmitting(true);
     try {
       // DailyLog型に合わせてデータを構築
-      const logData = {
+      const logData: any = {
         userId: selectedUserId,
         staff_id: 'current-staff',
         author: '記録者',
@@ -170,6 +170,61 @@ const StructuredDailyLogPage: React.FC = () => {
           })
         }]
       };
+
+      // イベント種別ごとに該当フィールドへ格納
+      switch (activeEventType) {
+        case 'seizure':
+          logData.seizures = [eventData];
+          break;
+        case 'expression':
+          logData.expression = eventData;
+          break;
+        case 'hydration':
+          logData.hydration = eventData.amount || 0;
+          break;
+        case 'positioning':
+          logData.positioning = eventData;
+          break;
+        case 'activity':
+          logData.activity = eventData;
+          break;
+        case 'excretion':
+          logData.excretion = eventData;
+          break;
+        case 'skin_oral_care':
+          logData.skin_oral_care = eventData;
+          break;
+        case 'illness':
+          logData.illness = eventData;
+          break;
+        case 'sleep':
+          logData.sleep = eventData;
+          break;
+        case 'cough_choke':
+          logData.cough_choke = eventData;
+          break;
+        case 'tube_feeding':
+          logData.tube_feeding = eventData;
+          break;
+        case 'medication':
+          logData.medication = eventData;
+          break;
+        case 'vitals':
+          logData.vitals = eventData;
+          break;
+        case 'behavioral':
+          logData.behavioral = eventData;
+          break;
+        case 'communication':
+          logData.communication = eventData;
+          break;
+        case 'other':
+          logData.other = eventData;
+          break;
+        default:
+          // 何もしない
+          break;
+      }
 
       await addDailyLog(logData);
 
@@ -211,8 +266,24 @@ const StructuredDailyLogPage: React.FC = () => {
     }
   };
 
+  // 印刷用A4出力表示切替
+  const [showA4Print, setShowA4Print] = React.useState(false);
+  const selectedUser: import('../types').User | undefined = users.find(u => u.id === selectedUserId);
+  const todayLog = null; // 実際は当日分のlogを取得するロジックに置換
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-2 sm:p-4">
+      {/* ▼▼▼ A4印刷用日誌出力ボタン ▼▼▼ */}
+      {selectedUserId && (
+        <div className="mb-4 flex justify-end">
+          <button className="bg-green-600 text-white px-4 py-2 rounded" onClick={() => setShowA4Print(v => !v)}>
+            {showA4Print ? '日誌入力画面に戻る' : 'A4印刷用日誌プレビュー'}
+          </button>
+        </div>
+      )}
+      {showA4Print && selectedUser && todayLog && (
+        <DailyLogA4Print user={selectedUser} log={todayLog} />
+      )}
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-4 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">📋 構造化日誌入力</h1>
@@ -328,7 +399,13 @@ const StructuredDailyLogPage: React.FC = () => {
                       onSave={(newName) => {
                         const user = users.find(u => u.id === selectedUserId);
                         if (user) {
-                          updateUser(user.id, { ...user, name: newName });
+                          // DataContextTypeのupdateUserはUser型全体を受け取る
+                          const updatedUser = { ...user, name: newName };
+                          if (typeof updateUserRaw === 'function') {
+                            updateUserRaw(updatedUser);
+                          } else if (typeof _updateUser === 'function') {
+                            _updateUser(updatedUser);
+                          }
                         }
                       }}
                       className="text-xl sm:text-2xl font-bold text-gray-800"
@@ -432,9 +509,7 @@ const StructuredDailyLogPage: React.FC = () => {
                 {/* ▼▼▼ Excel全出力機能 ▼▼▼ */}
                 <div className="my-6 flex justify-center">
                   {/* Excelエクスポート時のエラー抑制ラッパー（このページだけでエラー表示） */}
-                  <ErrorBoundary excelOnly>
-                    <DailyLogExcelExporter />
-                  </ErrorBoundary>
+                  <ErrorBoundary excelOnly>{null}</ErrorBoundary>
                 </div>
                 {/* ▲▲▲ Excel全出力機能 ▲▲▲ */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -545,7 +620,7 @@ const StructuredDailyLogPage: React.FC = () => {
             {/* ▼▼▼ 利用者ごとの帳票型Excel出力ボタン ▼▼▼ */}
             <div className="my-6 flex justify-center">
               <ErrorBoundary excelOnly>
-                <UserCareExcelTemplateExporter userId={selectedUserId} />
+                <UserCareExcelTemplateExporter userId={selectedUserId || null} />
               </ErrorBoundary>
             </div>
             {/* ▲▲▲ 利用者ごとの帳票型Excel出力ボタン ▲▲▲ */}

@@ -4,9 +4,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { SEVERE_DISABILITY_USERS } from '../../constants';
 const initialUsers = SEVERE_DISABILITY_USERS;
 
-import type { SevereDisabilityUser } from '../../types';
-
-type User = SevereDisabilityUser;
+import type { User } from '../../types';
 
 type DataContextType = {
   users: User[];

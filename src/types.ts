@@ -119,6 +119,17 @@ export type DailyLog = {
   sleep?: SleepRecord;
   seizures?: SeizureRecord[];
   care_provided?: CareRecord;
+  // 拡張: 各イベントフィールド
+  expression?: any;
+  positioning?: any;
+  skin_oral_care?: any;
+  illness?: any;
+  cough_choke?: any;
+  tube_feeding?: any;
+  medication?: any;
+  behavioral?: any;
+  communication?: any;
+  other?: any;
 };
 
 /**

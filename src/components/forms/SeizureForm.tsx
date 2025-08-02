@@ -73,6 +73,12 @@ const SeizureForm: React.FC<SeizureFormProps> = ({ onSave, isSubmitting, draftDa
   const [selectedNote, setSelectedNote] = useState(draftData?.selectedNote || '');
   const [freeNote, setFreeNote] = useState(draftData?.freeNote || '');
   const [elapsed, setElapsed] = useState(draftData?.elapsed || 0);
+  // 追加: 視線・重症度・前兆・発作後の状態・緊急度
+  const [gaze, setGaze] = useState(draftData?.gaze || '');
+  const [severity, setSeverity] = useState(draftData?.severity || '');
+  const [preSeizureSigns, setPreSeizureSigns] = useState<string[]>(draftData?.pre_seizure_signs || []);
+  const [postSeizureCondition, setPostSeizureCondition] = useState(draftData?.post_seizure_condition || '');
+  const [emergencyLevel, setEmergencyLevel] = useState(draftData?.emergency_level || '');
 
   // 発作時間計測用
   const [isTiming, setIsTiming] = useState(false);
@@ -115,16 +121,84 @@ const SeizureForm: React.FC<SeizureFormProps> = ({ onSave, isSubmitting, draftDa
     if (timerId) clearInterval(timerId);
     setIsTiming(false);
     setTimerId(null);
+    // Excel出力仕様に合わせてキー名を揃える
     onSave({
-      seizureTime,
-      seizureDuration: elapsed > 0 ? elapsed : undefined,
-      selectedType,
-      selectedTrigger,
-      selectedExpression,
-      selectedNote,
-      freeNote,
-      elapsed
+      seizure_type: selectedType, // 発作の種類
+      trigger: selectedTrigger,   // きっかけ・状況
+      expression: selectedExpression, // 発作時の表情
+      gaze, // 視線
+      duration_seconds: elapsed > 0 ? elapsed : undefined, // 継続時間
+      severity, // 重症度
+      pre_seizure_signs: preSeizureSigns, // 前兆
+      post_seizure_condition: postSeizureCondition, // 発作後の状態
+      emergency_level: emergencyLevel, // 緊急度
+      medical_action: selectedNote, // 医療対応・特記事項
+      notes: freeNote, // 詳細メモ
+      timestamp: seizureTime, // 発作発生時刻
+      staff: '', // 記録担当（必要なら追加UI/状態を用意）
+      recorder: '' // 記録者（必要なら追加UI/状態を用意）
     });
+      {/* 視線 */}
+      <div>
+        <label className="block font-semibold mb-2">発作時の視線</label>
+        <select className="w-full border rounded-lg p-2" value={gaze} onChange={e => setGaze(e.target.value)}>
+          <option value="">選択してください</option>
+          <option value="正面">正面</option>
+          <option value="上転">上転</option>
+          <option value="下転">下転</option>
+          <option value="右偏位">右偏位</option>
+          <option value="左偏位">左偏位</option>
+          <option value="その他">その他</option>
+        </select>
+      </div>
+
+      {/* 重症度 */}
+      <div>
+        <label className="block font-semibold mb-2">重症度</label>
+        <select className="w-full border rounded-lg p-2" value={severity} onChange={e => setSeverity(e.target.value)}>
+          <option value="">選択してください</option>
+          <option value="軽度">軽度</option>
+          <option value="中等度">中等度</option>
+          <option value="重度">重度</option>
+        </select>
+      </div>
+
+      {/* 前兆（複数選択可） */}
+      <div>
+        <label className="block font-semibold mb-2">発作前の前兆（複数選択可）</label>
+        <div className="flex flex-wrap gap-2">
+          {['あくび','不機嫌','笑う','泣く','顔色変化','手足の動き','呼吸変化','その他'].map(sign => (
+            <label key={sign} className="flex items-center gap-1">
+              <input type="checkbox" checked={preSeizureSigns.includes(sign)} onChange={() => setPreSeizureSigns(preSeizureSigns.includes(sign) ? preSeizureSigns.filter(s => s !== sign) : [...preSeizureSigns, sign])} />
+              <span>{sign}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* 発作後の状態 */}
+      <div>
+        <label className="block font-semibold mb-2">発作後の状態</label>
+        <select className="w-full border rounded-lg p-2" value={postSeizureCondition} onChange={e => setPostSeizureCondition(e.target.value)}>
+          <option value="">選択してください</option>
+          <option value="眠気">眠気</option>
+          <option value="混乱">混乱</option>
+          <option value="脱力">脱力</option>
+          <option value="正常">正常</option>
+          <option value="その他">その他</option>
+        </select>
+      </div>
+
+      {/* 緊急度 */}
+      <div>
+        <label className="block font-semibold mb-2">緊急度</label>
+        <select className="w-full border rounded-lg p-2" value={emergencyLevel} onChange={e => setEmergencyLevel(e.target.value)}>
+          <option value="">選択してください</option>
+          <option value="通常">通常</option>
+          <option value="要注意">要注意</option>
+          <option value="緊急">緊急</option>
+        </select>
+      </div>
     setElapsed(0);
   };
 
