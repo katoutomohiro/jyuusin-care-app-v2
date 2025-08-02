@@ -1,3 +1,5 @@
+// types.ts の内容に完全同期（一本化）。
+// --- types.ts の内容ここから ---
 /**
  * サービス種別
  */
@@ -57,6 +59,7 @@ export type User = {
  * スタッフの役職
  */
 export type StaffRole = 'admin' | 'manager' | 'nurse' | 'caregiver' | 'therapist' | 'coordinator';
+// --- types.ts の内容ここまで ---
 
 /**
  * スタッフのステータス
@@ -70,27 +73,30 @@ export interface Staff {
   id: string;
   username: string;
   password?: string;
-  name: string;
-  role: string;
-  isFullTime: boolean;
-  permissions: string[];
-  avatarUrl?: string;
-  templateId: string;
-  templateName: string;
-}
-
-/**
- * 日々の記録（デイリーログ）
- */
-export type DailyLog = {
   id: string;
-  log_id?: string;
-  userId: string;
-  user_id?: string;
-  staff_id: string;
-  author: string;
-  authorId: string;
-  record_date: string;
+  name: string;
+  initials?: string;
+  age?: number;
+  gender: Gender | '男性' | '女性' | '男児' | '女児' | '不明';
+  serviceType?: ServiceType[];
+  disabilityLevel?: DisabilityLevel | string;
+  disabilityType?: string;
+  underlyingDiseases: string;
+  certificates: string;
+  careLevel: string;
+  underlyingConditions?: string[];
+  medicalCare?: MedicalCare[] | string[];
+  handbooks?: HandbookType[] | string[];
+  assistanceLevel?: AssistanceLevel | string;
+  school?: School | string;
+  notes?: string;
+  familyContact?: { name: string; relationship: string; phone: string };
+  admissionDate?: string;
+  status?: 'active' | 'inactive' | 'pending';
+  email?: string;
+  role?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
   date?: string;
   recorder_name: string;
   weather: string;

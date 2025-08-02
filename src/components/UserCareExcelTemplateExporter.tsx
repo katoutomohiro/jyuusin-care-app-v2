@@ -1,5 +1,6 @@
 
 import React from 'react';
+import type { User as UserType } from '../../types';
 import ExcelJS from 'exceljs';
 import { useData } from '../contexts/DataContext';
 

@@ -1,23 +1,5 @@
-  // ▼▼▼ 本日分logデータ表示用 state
-  const [showTodayLogModal, setShowTodayLogModal] = React.useState(false);
-  const [todayLogJson, setTodayLogJson] = React.useState('');
-  // 本日分logデータ取得関数
-  const handleShowTodayLog = () => {
-    if (!selectedUserId) return;
-    try {
-      const logs = JSON.parse(localStorage.getItem(`dailyLogs_${selectedUserId}`) || '[]');
-      const today = new Date().toISOString().split('T')[0];
-      const todayLogs = logs.filter((log) => {
-        const dateStr = (log.date || log.record_date || log.timestamp || '').split('T')[0];
-        return dateStr === today;
-      });
-      setTodayLogJson(todayLogs.length > 0 ? JSON.stringify(todayLogs, null, 2) : '本日分の記録なし');
-    } catch (e) {
-      setTodayLogJson('取得エラー');
-    }
-    setShowTodayLogModal(true);
-  };
 import React, { useEffect } from 'react';
+// ...existing code...
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useNavigate } from 'react-router-dom';
 import SeizureForm from '../components/forms/SeizureForm';
@@ -49,6 +31,25 @@ interface TodayEventCounts {
 }
 
 const StructuredDailyLogPage: React.FC = () => {
+  // ▼▼▼ 本日分logデータ表示用 state
+  const [showTodayLogModal, setShowTodayLogModal] = React.useState(false);
+  const [todayLogJson, setTodayLogJson] = React.useState('');
+  // 本日分logデータ取得関数
+  const handleShowTodayLog = () => {
+    if (!selectedUserId) return;
+    try {
+      const logs = JSON.parse(localStorage.getItem(`dailyLogs_${selectedUserId}`) || '[]');
+      const today = new Date().toISOString().split('T')[0];
+      const todayLogs = logs.filter((log) => {
+        const dateStr = (log.date || log.record_date || log.timestamp || '').split('T')[0];
+        return dateStr === today;
+      });
+      setTodayLogJson(todayLogs.length > 0 ? JSON.stringify(todayLogs, null, 2) : '本日分の記録なし');
+    } catch (e) {
+      setTodayLogJson('取得エラー');
+    }
+    setShowTodayLogModal(true);
+  };
   const navigate = useNavigate();
   const { users, addDailyLog, getFrequentTags } = useData();
   const { isAdminMode, isAuthenticated, autoSaveEnabled } = useAdmin();
@@ -294,7 +295,7 @@ const StructuredDailyLogPage: React.FC = () => {
   const selectedUser: User | undefined = users.find((u: any) => u.id === selectedUserId);
   // PDF出力用にUser型の不足プロパティを補完
   const selectedUserForPdf = selectedUser
-    ? {
+    ? ({
         ...selectedUser,
         gender:
           selectedUser.gender === '男性' ? Gender.MALE :
@@ -305,7 +306,7 @@ const StructuredDailyLogPage: React.FC = () => {
         underlyingDiseases: selectedUser.underlyingDiseases ?? '',
         certificates: selectedUser.certificates ?? '',
         careLevel: selectedUser.careLevel ?? ''
-      }
+      } as User)
     : undefined;
 
   // PDF出力用: 当日分のlogをlocalStorageから柔軟に取得

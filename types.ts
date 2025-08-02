@@ -10,8 +10,15 @@ export enum ServiceType {
 export const safeParseFloat = (value: string | number | undefined | null, defaultValue: number = 0): number => {
   if (typeof value === 'number') return value;
   if (typeof value === 'string') return parseFloat(value) || defaultValue;
-  return defaultValue;
-};
+// src/types.ts の内容をここに完全コピーしてください（一本化のため）。
+// --- src/types.ts の内容ここから ---
+/**
+ * サービス種別
+ */
+export enum ServiceType {
+  LIFE_CARE = '生活介護',
+  DAY_SERVICE = '放課後等デイサービス',
+}
 
 /**
  * 性別
@@ -37,17 +44,20 @@ export enum NotificationType {
 /**
  * 利用者情報
  */
-export type User = {
+export interface User {
   id: string;
   name: string;
-  initials?: string;  // AuthContextでは省略される場合があるためオプション
-  age?: number;       // AuthContextでは省略される場合があるためオプション
-  gender?: Gender;    // AuthContextでは省略される場合があるためオプション
-  serviceType?: ServiceType[];  // AuthContextでは省略される場合があるためオプション
-  disabilityLevel?: DisabilityLevel | string;
-  disabilityType?: string;
+  initials?: string;
+  age: number;
+  gender: '男性' | '女性' | '男児' | '女児' | '不明';
+  disabilityType: string;
+  disabilityLevel: string;
+  underlyingDiseases: string;
+  medicalCare: MedicalCare[];
+  certificates: string;
+  careLevel: string;
+  serviceType: ServiceType[];
   underlyingConditions?: string[];
-  medicalCare?: MedicalCare[] | string[];
   handbooks?: HandbookType[] | string[];
   assistanceLevel?: AssistanceLevel | string;
   school?: School | string;
@@ -55,22 +65,13 @@ export type User = {
   familyContact?: { name: string; relationship: string; phone: string };
   admissionDate?: string;
   status?: 'active' | 'inactive' | 'pending';
-  email?: string;  // AuthContextで使用される場合があるため追加
-  role?: string;   // AuthContextで使用される場合があるため追加
-  createdAt?: Date;  // AuthContextで使用される場合があるため追加
-  updatedAt?: Date;  // AuthContextで使用される場合があるため追加
-};
+}
 
 /**
- * 運動・リハビリテーション
+ * スタッフの役職
  */
-export type Exercise = {
-  id: string;
-  type: string;
-  title: string;
-  description: string;
-  duration?: number;
-  frequency?: string;
+export type StaffRole = 'admin' | 'manager' | 'nurse' | 'caregiver' | 'therapist' | 'coordinator';
+// --- src/types.ts の内容ここまで ---
   targetDate?: string;
   status?: 'active' | 'completed' | 'paused';
   notes?: string[];
