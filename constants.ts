@@ -165,7 +165,7 @@ export const MEDICAL_CARE_PROVIDED = ["吸引", "吸入", "経管栄養", "導�
 export const SPECIAL_NOTE_CATEGORIES = ["家族への連絡", "ヒヤリハット", "職員からの気づき", "要観察事項"];
 
 // とんさんの事業所情報に基づく利用者データ
-export const SEVERE_DISABILITY_USERS: SevereDisabilityUser[] = [
+export const SEVERE_DISABILITY_USERS: User[] = [
   // 生活介護利用者（14名）
   {
     id: '1',
@@ -188,7 +188,10 @@ export const SEVERE_DISABILITY_USERS: SevereDisabilityUser[] = [
       phone: '090-0000-0001',
       emergencyPhone: '090-0000-0001'
     },
-    status: 'active'
+    status: 'active',
+    underlyingDiseases: '',
+    certificates: '',
+    careLevel: ''
   },
   {
     id: '2',
@@ -211,7 +214,10 @@ export const SEVERE_DISABILITY_USERS: SevereDisabilityUser[] = [
       phone: '090-0000-0002',
       emergencyPhone: '090-0000-0002'
     },
-    status: 'active'
+    status: 'active',
+    underlyingDiseases: '',
+    certificates: '',
+    careLevel: ''
   },
   {
     id: '3',
@@ -234,7 +240,10 @@ export const SEVERE_DISABILITY_USERS: SevereDisabilityUser[] = [
       phone: '090-0000-0003',
       emergencyPhone: '090-0000-0003'
     },
-    status: 'active'
+    status: 'active',
+    underlyingDiseases: '',
+    certificates: '',
+    careLevel: ''
   },
   {
     id: '4',
@@ -262,7 +271,10 @@ export const SEVERE_DISABILITY_USERS: SevereDisabilityUser[] = [
       suctionFrequency: '必要時',
       specialCare: '腸瘻バルーン管理'
     },
-    status: 'active'
+    status: 'active',
+    underlyingDiseases: '',
+    certificates: '',
+    careLevel: ''
   },
   {
     id: '5',
