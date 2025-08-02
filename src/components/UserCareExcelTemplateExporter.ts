@@ -1,7 +1,7 @@
 
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { User } from '../types';
+import type { User } from '../../types';
 
 // 日誌イベント型（柔軟対応）
 type AnyEvent = { event_type: string; data: any };
@@ -237,4 +237,38 @@ export function exportUserCareExcelTemplate(user: User, dailyLogs: AnyEvent[], d
   saveAs(new Blob([wbout], { type: 'application/octet-stream' }), fileName);
 }
 
-// 利用例: exportUserCareExcelTemplate(user, dailyLogs, '2025-08-02')
+
+// React用: userIdを受けてボタンを表示し、クリックでエクスポート実行
+import React from 'react';
+import { useData } from '../contexts/DataContext';
+
+type Props = { userId: string | null };
+
+
+const UserCareExcelTemplateExporter: React.FC<Props> = ({ userId }) => {
+  const { users } = useData();
+  if (!userId) return null;
+  const user = users.find((u: User) => u.id === userId);
+  if (!user) return null;
+  // 日誌データ取得（localStorageから）
+  const today = new Date().toISOString().split('T')[0];
+  const dailyLogs = JSON.parse(localStorage.getItem(`dailyLogs_${userId}`) || '[]');
+
+  const handleExport = () => {
+    exportUserCareExcelTemplate(user, dailyLogs, today);
+  };
+
+  return (
+    React.createElement(
+      'button',
+      {
+        onClick: handleExport,
+        className: 'bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded shadow font-bold',
+        'aria-label': 'Excelエクスポート'
+      },
+      '📤 Excelエクスポート'
+    )
+  );
+};
+
+export default UserCareExcelTemplateExporter;
