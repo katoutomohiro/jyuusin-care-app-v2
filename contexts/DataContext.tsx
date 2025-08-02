@@ -5,8 +5,38 @@ import { v4 as uuidv4 } from 'uuid';
 import { useNotification } from './NotificationContext';
 import { useAuth } from './AuthContext';
 import { StorageService } from '../services/StorageService';
+import { SupabaseService } from '../services/SupabaseService';
 
 const storageService = new StorageService();
+const supabaseService = new SupabaseService();
+
+// 自動同期・リトライ用ユーティリティ
+const RETRY_LIMIT = 3;
+const RETRY_DELAY = 2000; // ms
+function sleep(ms: number) { return new Promise(res => setTimeout(res, ms)); }
+
+// 権限制御: staff/管理者のみ書き込み可
+function canEdit(user: any) {
+  return user?.permissions?.includes('admin') || user?.permissions?.includes('staff');
+}
+  // Supabaseから全ユーザー取得（例）
+  const fetchUsersFromBackend = useCallback(async () => {
+    try {
+      const users = await supabaseService.fetchUsers();
+      setUsers(users);
+    } catch (e) {
+      console.error('Supabase fetchUsers error:', e);
+    }
+  }, []);
+
+  // Supabaseに日誌データ保存（例）
+  const saveDailyLogToBackend = useCallback(async (log: DailyLog) => {
+    try {
+      await supabaseService.saveDailyLog(log);
+    } catch (e) {
+      console.error('Supabase saveDailyLog error:', e);
+    }
+  }, []);
 
 const getSampleLogs = (): DailyLog[] => {
   if (SAMPLE_USERS.length < 2 || SAMPLE_STAFF.length < 2) return [];
@@ -30,7 +60,10 @@ export const DataContext = createContext<DataContextType | undefined>(undefined)
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<User[]>([]);
+  // 日誌データにisSynced/updatedAtを付与
   const [dailyLogs, setDailyLogs] = useState<DailyLog[]>([]);
+  // UI用: 同期状況（"idle"|"syncing"|"success"|"error"）
+  const [syncStatus, setSyncStatus] = useState<'idle'|'syncing'|'success'|'error'>('idle');
   const [staff, setStaff] = useState<Staff[]>([]);
   const [facilityInfo, setFacilityInfo] = useState<FacilityInfo | null>(null);
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -155,9 +188,69 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   }, [showNotification]);
   
   const addDailyLog = useCallback(async (log: DailyLog) => {
-    const newLog = { ...log, id: uuidv4(), log_id: uuidv4() };
+    const now = new Date().toISOString();
+    const newLog = { ...log, id: uuidv4(), log_id: uuidv4(), isSynced: false, updatedAt: now };
     setDailyLogs(prev => [...prev, newLog]);
-  }, []);
+    // 権限制御: 認証ユーザーが編集権限を持つ場合のみクラウド同期
+    if (canEdit(authUser)) {
+      setSyncStatus('syncing');
+      let attempt = 0;
+      while (attempt < RETRY_LIMIT) {
+        try {
+          await saveDailyLogToBackend({ ...newLog, isSynced: true });
+          setDailyLogs(prev => prev.map(l => l.log_id === newLog.log_id ? { ...l, isSynced: true } : l));
+          setSyncStatus('success');
+          break;
+        } catch (e) {
+          attempt++;
+          if (attempt >= RETRY_LIMIT) {
+            setSyncStatus('error');
+            console.warn('Backend unreachable after retries, saved locally.');
+            showNotification('クラウド同期に失敗（ローカル保存のみ）', NotificationType.WARNING);
+          } else {
+            await sleep(RETRY_DELAY);
+          }
+        }
+      }
+    } else {
+      setSyncStatus('idle');
+      showNotification('権限がありません（ローカル保存のみ）', NotificationType.ERROR);
+    }
+  }, [saveDailyLogToBackend, authUser, showNotification]);
+  // ローカル→クラウド自動同期（オンライン時のみ）
+  // 差分同期: isSynced=falseのみ同期
+  const syncLocalToCloud = useCallback(async () => {
+    if (!canEdit(authUser)) return;
+    setSyncStatus('syncing');
+    const unsynced = dailyLogs.filter(l => !l.isSynced);
+    for (const log of unsynced) {
+      let attempt = 0;
+      while (attempt < RETRY_LIMIT) {
+        try {
+          await saveDailyLogToBackend({ ...log, isSynced: true });
+          setDailyLogs(prev => prev.map(l => l.log_id === log.log_id ? { ...l, isSynced: true } : l));
+          setSyncStatus('success');
+          break;
+        } catch (e) {
+          attempt++;
+          if (attempt >= RETRY_LIMIT) {
+            setSyncStatus('error');
+            console.warn('同期失敗:', log, e);
+          } else {
+            await sleep(RETRY_DELAY);
+          }
+        }
+      }
+    }
+    if (unsynced.length === 0) setSyncStatus('idle');
+  }, [dailyLogs, authUser, saveDailyLogToBackend]);
+
+  // オンライン復帰時に自動同期
+  useEffect(() => {
+    const handleOnline = () => { syncLocalToCloud(); };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [syncLocalToCloud]);
   
   const updateDailyLog = useCallback(async (logId: string, updates: Partial<DailyLog>) => {
     setDailyLogs(prev => prev.map(log => 
@@ -210,7 +303,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     addNotice, markNoticeAsRead, updateFacilityInfo
   ]);
 
-  return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
+  // UIで同期状況を参照できるようvalueに追加
+  return <DataContext.Provider value={{ ...value, syncStatus }}>{children}</DataContext.Provider>;
 };
 
 export const useData = () => {

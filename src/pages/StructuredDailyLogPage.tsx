@@ -19,6 +19,7 @@ import InlineEditableList from '../components/InlineEditableList';
 import { useData } from '../contexts/DataContext';
 import { useAdmin } from '../contexts/AdminContext';
 import { useConfigurableComponent } from '../../services/DynamicConfigSystem';
+import UserCareExcelTemplateExporter from '../components/UserCareExcelTemplateExporter.tsx';
 
 interface TodayEventCounts {
   [key: string]: number;
@@ -26,7 +27,7 @@ interface TodayEventCounts {
 
 const StructuredDailyLogPage: React.FC = () => {
   const navigate = useNavigate();
-  const { users, addDailyLog, updateUser } = useData();
+  const { users, addDailyLog, updateUser, getFrequentTags } = useData();
   const { isAdminMode, isAuthenticated, autoSaveEnabled } = useAdmin();
   const { eventTypes, systemSettings, facilityName } = useConfigurableComponent('structuredDailyLog');
   const [activeEventType, setActiveEventType] = useLocalStorage<string | null>('activeEventType', null);
@@ -108,6 +109,27 @@ const StructuredDailyLogPage: React.FC = () => {
     }
   }, [autoSaveEnabled, isAdminMode]);
 
+  // 下書き（自動一時保存）機能
+  const getDraftKey = () => `draft_${selectedUserId}_${activeEventType}`;
+
+  // フォーム入力内容の自動保存
+  const handleDraftChange = (draftData: any) => {
+    if (!selectedUserId || !activeEventType) return;
+    localStorage.setItem(getDraftKey(), JSON.stringify(draftData));
+  };
+
+  // フォーム初期値として下書きを復元
+  const getDraftData = () => {
+    if (!selectedUserId || !activeEventType) return undefined;
+    const raw = localStorage.getItem(getDraftKey());
+    if (!raw) return undefined;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return undefined;
+    }
+  };
+
   // イベント保存処理
   const handleSaveEvent = async (eventData: any) => {
     if (!selectedUserId) return;
@@ -150,7 +172,7 @@ const StructuredDailyLogPage: React.FC = () => {
       };
 
       await addDailyLog(logData);
-      
+
       // localStorageにも個別イベントとして保存（既存のシステムとの互換性のため）
       const eventKey = `${activeEventType}_records_${today}`;
       const existingRecords = JSON.parse(localStorage.getItem(eventKey) || '[]');
@@ -168,8 +190,11 @@ const StructuredDailyLogPage: React.FC = () => {
       existingRecords.push(newRecord);
       localStorage.setItem(eventKey, JSON.stringify(existingRecords));
 
+      // 保存成功時は下書きを削除
+      localStorage.removeItem(getDraftKey());
+
       setActiveEventType(null);
-      
+
       // 今日の記録数を更新
       setTodayEventCounts({
         ...todayEventCounts,
@@ -406,8 +431,8 @@ const StructuredDailyLogPage: React.FC = () => {
                 
                 {/* ▼▼▼ Excel全出力機能 ▼▼▼ */}
                 <div className="my-6 flex justify-center">
-                  {/* Excelエクスポート時のエラー抑制ラッパー */}
-                  <ErrorBoundary>
+                  {/* Excelエクスポート時のエラー抑制ラッパー（このページだけでエラー表示） */}
+                  <ErrorBoundary excelOnly>
                     <DailyLogExcelExporter />
                   </ErrorBoundary>
                 </div>
@@ -461,42 +486,69 @@ const StructuredDailyLogPage: React.FC = () => {
                   </h2>
                 </div>
 
-                <div className="w-full overflow-x-hidden">
+                <div className="w-full overflow-x-hidden pb-32">
+                  {/* フォームコンポーネント */}
+                  {activeEventType === 'seizure' && (
+                    <SeizureForm
+                      onSave={handleSaveEvent}
+                      isSubmitting={isSubmitting}
+                      suggestedTags={selectedUserId ? getFrequentTags(selectedUserId, 'seizure', 5) : []}
+                    />
+                  )}
+                  {activeEventType === 'expression' && (
+                    <ExpressionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+                  )}
+                  {activeEventType === 'vital' && (
+                    <VitalSignsInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+                  )}
+                  {activeEventType === 'meal' && (
+                    <HydrationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+                  )}
+                  {activeEventType === 'excretion' && (
+                    <ExcretionInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+                  )}
+                  {activeEventType === 'sleep' && (
+                    <SleepInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+                  )}
+                  {activeEventType === 'activity' && (
+                    <ActivityInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+                  )}
+                  {activeEventType === 'care' && (
+                    <CareInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+                  )}
+                  {activeEventType === 'medication' && (
+                    <MedicationInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+                  )}
+                  {activeEventType === 'other' && (
+                    <OtherInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+                  )}
+                </div>
 
-                {/* フォームコンポーネント */}
-                {activeEventType === 'seizure' && (
-                  <SeizureForm onSave={handleSaveEvent} />
-                )}
-                {activeEventType === 'expression' && (
-                  <ExpressionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-                )}
-                {activeEventType === 'vital' && (
-                  <VitalSignsInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-                )}
-                {activeEventType === 'meal' && (
-                  <HydrationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-                )}
-                {activeEventType === 'excretion' && (
-                  <ExcretionInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-                )}
-                {activeEventType === 'sleep' && (
-                  <SleepInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-                )}
-                {activeEventType === 'activity' && (
-                  <ActivityInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-                )}
-                {activeEventType === 'care' && (
-                  <CareInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-                )}
-                {activeEventType === 'medication' && (
-                  <MedicationInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-                )}
-                {activeEventType === 'other' && (
-                  <OtherInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-                )}
+                {/* 常時固定の保存ボタン（現場最適UI） */}
+                <div className="fixed bottom-0 left-0 w-full z-50 flex justify-center bg-gradient-to-t from-white/90 via-white/80 to-transparent p-4 pointer-events-none">
+                  <button
+                    type="button"
+                    className="pointer-events-auto bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold py-4 px-16 rounded-2xl shadow-xl min-w-[220px] min-h-[64px] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-300"
+                    onClick={() => {
+                      // 各フォームのonSaveを呼び出すため、フォーム側でhandleSaveEventをprops経由で呼ぶ設計を維持
+                      const saveBtn = document.querySelector('[data-save-btn]') as HTMLButtonElement;
+                      if (saveBtn) saveBtn.click();
+                    }}
+                    disabled={isSubmitting}
+                    aria-label="記録を保存"
+                  >
+                    {isSubmitting ? '保存中...' : '💾 記録を保存'}
+                  </button>
                 </div>
               </div>
             )}
+            {/* ▼▼▼ 利用者ごとの帳票型Excel出力ボタン ▼▼▼ */}
+            <div className="my-6 flex justify-center">
+              <ErrorBoundary excelOnly>
+                <UserCareExcelTemplateExporter userId={selectedUserId} />
+              </ErrorBoundary>
+            </div>
+            {/* ▲▲▲ 利用者ごとの帳票型Excel出力ボタン ▲▲▲ */}
           </div>
         )}
       </div>

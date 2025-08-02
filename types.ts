@@ -138,6 +138,7 @@ export type DailyLog = {
   special_notes_details?: string;
   createdAt?: string;
   updatedAt?: string;
+  isSynced?: boolean; // クラウド同期済みか
   vitals?: VitalSigns;
   vitalSigns?: VitalSigns;  // エイリアス
   intake?: IntakeRecord;
@@ -524,6 +525,7 @@ export type DataContextType = {
   getDraftByUser: (userId: string) => Promise<DailyLogDraft | null>;
   addNotice: (notice: Notice) => Promise<void>;
   markNoticeAsRead: (noticeId: string, userId: string) => Promise<void>;
+  syncStatus?: 'idle' | 'syncing' | 'success' | 'error';
 };
 
 export enum HandbookType {
@@ -1340,6 +1342,7 @@ export type FoodAllergy = {
 };
 
 // NotificationContextType の修正
+
 export type NotificationContextType = {
   notifications: Notification[];
   showNotification: (message: string, type?: NotificationType) => void;

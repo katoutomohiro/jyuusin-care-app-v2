@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 
 type SeizureFormProps = {
   onSave: (data: any) => void;
+  isSubmitting: boolean;
+  draftData?: any;
+  handleDraftChange?: (data: any) => void;
+  suggestedTags?: string[];
 };
 
 // 発作の種類（重症心身障害児者に特化・説明付き）
@@ -61,18 +65,33 @@ function getNowString() {
   return `${yyyy}/${MM}/${dd} ${hh}:${mm}`;
 }
 
-const SeizureForm: React.FC<SeizureFormProps> = ({ onSave }) => {
-  const [seizureTime, setSeizureTime] = useState(getNowString());
-  const [selectedType, setSelectedType] = useState('');
-  const [selectedTrigger, setSelectedTrigger] = useState('');
-  const [selectedExpression, setSelectedExpression] = useState('');
-  const [selectedNote, setSelectedNote] = useState('');
-  const [freeNote, setFreeNote] = useState('');
+const SeizureForm: React.FC<SeizureFormProps> = ({ onSave, isSubmitting, draftData, handleDraftChange, suggestedTags }) => {
+  const [seizureTime, setSeizureTime] = useState(draftData?.seizureTime || getNowString());
+  const [selectedType, setSelectedType] = useState(draftData?.selectedType || '');
+  const [selectedTrigger, setSelectedTrigger] = useState(draftData?.selectedTrigger || '');
+  const [selectedExpression, setSelectedExpression] = useState(draftData?.selectedExpression || '');
+  const [selectedNote, setSelectedNote] = useState(draftData?.selectedNote || '');
+  const [freeNote, setFreeNote] = useState(draftData?.freeNote || '');
+  const [elapsed, setElapsed] = useState(draftData?.elapsed || 0);
 
   // 発作時間計測用
   const [isTiming, setIsTiming] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
   const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
+  // 各入力変更時に下書き自動保存
+  React.useEffect(() => {
+    if (handleDraftChange) {
+      handleDraftChange({
+        seizureTime,
+        selectedType,
+        selectedTrigger,
+        selectedExpression,
+        selectedNote,
+        freeNote,
+        elapsed
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seizureTime, selectedType, selectedTrigger, selectedExpression, selectedNote, freeNote, elapsed]);
 
   // 計測開始・停止
   const handleTimerClick = () => {
@@ -99,11 +118,12 @@ const SeizureForm: React.FC<SeizureFormProps> = ({ onSave }) => {
     onSave({
       seizureTime,
       seizureDuration: elapsed > 0 ? elapsed : undefined,
-      type: selectedType,
-      trigger: selectedTrigger,
-      expression: selectedExpression,
-      note: selectedNote,
-      freeNote
+      selectedType,
+      selectedTrigger,
+      selectedExpression,
+      selectedNote,
+      freeNote,
+      elapsed
     });
     setElapsed(0);
   };
@@ -205,13 +225,15 @@ const SeizureForm: React.FC<SeizureFormProps> = ({ onSave }) => {
         </select>
       </div>
 
-      {/* 特記事項・詳細メモ */}
+
+      {/* 特記事項・詳細メモ + 備考タグ自動提案 */}
       <div>
-        <label className="block font-semibold mb-2">特記事項・詳細メモ</label>
+        <label className="block font-semibold mb-2 text-red-700">特記事項・詳細メモ <span className="ml-1 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded">緊急・医療</span></label>
         <select
-          className="w-full border rounded-lg p-2 mb-2"
+          className="w-full border-2 border-red-500 bg-red-50 rounded-lg p-2 mb-2 focus:ring-2 focus:ring-red-400"
           value={selectedNote}
           onChange={e => setSelectedNote(e.target.value)}
+          aria-label="緊急・特記事項選択"
         >
           {specialNotes.map(item => (
             <option key={item} value={item === '選択してください' ? '' : item}>
@@ -219,12 +241,34 @@ const SeizureForm: React.FC<SeizureFormProps> = ({ onSave }) => {
             </option>
           ))}
         </select>
+
+        {/* 備考タグ自動提案 */}
+        {Array.isArray(suggestedTags) && suggestedTags.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            <span className="text-xs text-gray-500 mr-2">よく使うタグ:</span>
+            {suggestedTags.map(tag => (
+              <button
+                key={tag}
+                type="button"
+                className="bg-blue-100 hover:bg-blue-300 text-blue-800 rounded-full px-3 py-1 text-xs font-semibold border border-blue-200 transition-all"
+                onClick={() => {
+                  // freeNoteに重複なく追記
+                  if (!freeNote.includes(tag)) setFreeNote(freeNote ? freeNote + ' ' + tag : tag);
+                }}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        )}
+
         <textarea
-          className="w-full border rounded-lg p-2"
+          className="w-full border-2 border-red-500 bg-red-50 rounded-lg p-2 focus:ring-2 focus:ring-red-400"
           rows={3}
-          placeholder="自由記述欄（例：発作時の詳細な状況や対応内容など）"
+          placeholder="緊急・医療特記事項（例：発作時の詳細な状況や対応内容など）"
           value={freeNote}
           onChange={e => setFreeNote(e.target.value)}
+          aria-label="緊急・医療特記事項入力"
         />
       </div>
 
@@ -232,8 +276,11 @@ const SeizureForm: React.FC<SeizureFormProps> = ({ onSave }) => {
       <button
         className="bg-red-500 text-white px-8 py-3 rounded-lg text-lg font-bold w-full"
         type="submit"
+        data-save-btn
+        disabled={isSubmitting}
+        aria-label="発作記録を保存"
       >
-        発作記録を保存
+        {isSubmitting ? '保存中...' : '発作記録を保存'}
       </button>
     </form>
   );

@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3003,
-    host: '0.0.0.0', // すべてのIPアドレスからアクセス可能にする
+    host: '0.0.0.0',
     hmr: false,
     watch: {
       usePolling: false,
@@ -13,6 +13,9 @@ export default defineConfig({
     }
   },
   build: {
+    minify: 'terser',
+    chunkSizeWarningLimit: 1000,
+    brotliSize: true,
     rollupOptions: {
       onwarn(warning, warn) {
         if (warning.code === 'MODULE_LEVEL_DIRECTIVE') {

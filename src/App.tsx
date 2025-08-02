@@ -5,6 +5,7 @@ import { DataProvider } from './contexts/DataContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { AdminProvider } from './contexts/AdminContext';
 import StructuredDailyLogPage from './pages/StructuredDailyLogPage';
+import DailyLogListPage from './pages/DailyLogListPage';
 import DashboardPage from './pages/DashboardPage';
 import UserListPage from './pages/UserListPage';
 import UserDetailPage from './pages/UserDetailPage';
@@ -34,6 +35,7 @@ const App: React.FC = () => {
     { path: '/', label: 'ダッシュボード', subtitle: 'Soul Story', visible: true, order: 1, adminOnly: false, icon: '' },
     { path: '/users', label: '利用者管理', subtitle: '大切な仲間たち', visible: true, order: 2, adminOnly: false, icon: '' },
     { path: '/daily-log', label: '日誌入力', subtitle: 'きらめきの記録', visible: true, order: 3, adminOnly: false, icon: '' },
+    { path: '/daily-log-list', label: '日誌一覧', subtitle: '提出・下書き状況', visible: true, order: 4, adminOnly: false, icon: '📝' },
     { path: '/qr-access', label: 'QRアクセス', subtitle: ' 携帯からアクセス', visible: true, order: 4, adminOnly: false, icon: '' },
     { path: '/ai-analysis', label: 'AI分析', subtitle: ' 重症心身障害専門AI分析', visible: true, order: 5, adminOnly: false, icon: '' },
     { path: '/admin-config', label: 'アプリ設定管理', subtitle: '⚙️ 管理者専用設定', visible: true, order: 6, adminOnly: true, icon: '⚙️' },
@@ -65,64 +67,63 @@ const App: React.FC = () => {
     localStorage.setItem('customNavItems', JSON.stringify(newNavItems));
   };
 
-  return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <DataProvider>
-          <NotificationProvider>
-            <AdminProvider>
-              <div className="flex min-h-screen">
-                {/* サイドナビ */}
-                <nav className="w-64 bg-white border-r p-6 flex flex-col gap-4 overflow-y-auto">
-                  <h2 className="text-xl font-bold mb-6">魂の器ナビゲーション</h2>
-                  {/* 管理者認証コンポーネント */}
-                  <AdminAuthComponent />
-                  {navItems
-                    .filter(item => item.visible && (!item.adminOnly || true))
-                    .sort((a, b) => a.order - b.order)
-                    .map(item => (
-                      <Link key={item.path} to={item.path} className="py-2 px-4 rounded hover:bg-yellow-100 font-semibold flex flex-col">
-                        <span className="flex items-center space-x-2">
-                          {item.icon && <span>{item.icon}</span>}
-                          <span>{item.label}</span>
-                        </span>
-                        <span style={{ fontSize: '0.85em', color: '#888888', fontWeight: 400 }}>{item.subtitle}</span>
-                      </Link>
-                    ))}
-                </nav>
-                {/* メインコンテンツ */}
-                <main className="flex-1 bg-gray-50 overflow-y-auto">
-                  <Routes>
-                    <Route path="/" element={<DashboardPage />} />
-                    <Route path="/users" element={<UserListPage />} />
-                    {/* 利用者詳細ページ */}
-                    <Route path="/users/:id" element={<UserDetailPage />} />
-                    {/* 利用者編集ページ */}
-                    <Route path="/users/edit/:userId" element={<UserEditPage />} />
-                    <Route path="/daily-log" element={<StructuredDailyLogPage />} />
-                    <Route path="/daily-log/:userId" element={<StructuredDailyLogPage />} />
-                    <Route path="/qr-access" element={<QRAccessPage />} />
-                    <Route path="/ai-analysis" element={<AIAnalysisDashboard />} />
-                    <Route path="/admin-config" element={<AdminAppConfigPage />} />
-                    <Route path="/navigation-editor" element={<NavigationEditorPage />} />
-                    <Route path="/staff-schedule" element={<StaffSchedulePage />} />
-                    <Route path="/transport-plan" element={<TransportPlanPage />} />
-                    <Route path="/kaizen" element={<KaizenPage />} />
-                    <Route path="/learning" element={<LearningHubPage />} />
-                    <Route path="/supplies" element={<SuppliesStatusPage />} />
-                    <Route path="/reports" element={<ReportEnginePage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
-                    {/* 設定ページ内のサブルートとしてアプリ設定管理ページを追加 */}
-                    <Route path="/settings/app-config" element={<AdminAppConfigPage />} />
-                    <Route path="/daily-reports" element={<DailyReportPage />} />
-                  </Routes>
-                </main>
-              </div>
-            </AdminProvider>
-          </NotificationProvider>
-        </DataProvider>
-      </AuthProvider>
-    </ErrorBoundary>
+return (
+    <AuthProvider>
+      <DataProvider>
+        <NotificationProvider>
+          <AdminProvider>
+            <div className="flex min-h-screen">
+              {/* サイドナビ */}
+              <nav className="w-64 bg-white border-r p-6 flex flex-col gap-4 overflow-y-auto">
+                <h2 className="text-xl font-bold mb-6">魂の器ナビゲーション</h2>
+                {/* 管理者認証コンポーネント */}
+                <AdminAuthComponent />
+                {navItems
+                  .filter(item => item.visible && (!item.adminOnly || true))
+                  .sort((a, b) => a.order - b.order)
+                  .map(item => (
+                    <Link key={item.path} to={item.path} className="py-2 px-4 rounded hover:bg-yellow-100 font-semibold flex flex-col">
+                      <span className="flex items-center space-x-2">
+                        {item.icon && <span>{item.icon}</span>}
+                        <span>{item.label}</span>
+                      </span>
+                      <span style={{ fontSize: '0.85em', color: '#888888', fontWeight: 400 }}>{item.subtitle}</span>
+                    </Link>
+                  ))}
+              </nav>
+              {/* メインコンテンツ */}
+              <main className="flex-1 bg-gray-50 overflow-y-auto">
+                <Routes>
+                  <Route path="/" element={<DashboardPage />} />
+                  <Route path="/users" element={<UserListPage />} />
+                  {/* 利用者詳細ページ */}
+                  <Route path="/users/:id" element={<UserDetailPage />} />
+                  {/* 利用者編集ページ */}
+                  <Route path="/users/edit/:userId" element={<UserEditPage />} />
+                  <Route path="/daily-log" element={<ErrorBoundary excelOnly><StructuredDailyLogPage /></ErrorBoundary>} />
+                  <Route path="/daily-log/:userId" element={<ErrorBoundary excelOnly><StructuredDailyLogPage /></ErrorBoundary>} />
+                  <Route path="/daily-log-list" element={<DailyLogListPage />} />
+                  <Route path="/qr-access" element={<QRAccessPage />} />
+                  <Route path="/ai-analysis" element={<AIAnalysisDashboard />} />
+                  <Route path="/admin-config" element={<AdminAppConfigPage />} />
+                  <Route path="/navigation-editor" element={<NavigationEditorPage />} />
+                  <Route path="/staff-schedule" element={<StaffSchedulePage />} />
+                  <Route path="/transport-plan" element={<TransportPlanPage />} />
+                  <Route path="/kaizen" element={<KaizenPage />} />
+                  <Route path="/learning" element={<LearningHubPage />} />
+                  <Route path="/supplies" element={<SuppliesStatusPage />} />
+                  <Route path="/reports" element={<ReportEnginePage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  {/* 設定ページ内のサブルートとしてアプリ設定管理ページを追加 */}
+                  <Route path="/settings/app-config" element={<AdminAppConfigPage />} />
+                  <Route path="/daily-reports" element={<DailyReportPage />} />
+                </Routes>
+              </main>
+            </div>
+          </AdminProvider>
+        </NotificationProvider>
+      </DataProvider>
+    </AuthProvider>
   );
 };
 
