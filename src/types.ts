@@ -6,7 +6,9 @@
 export enum ServiceType {
   LIFE_CARE = '生活介護',
   DAY_SERVICE = '放課後等デイサービス',
+
 }
+
 
 /**
  * 性別
@@ -884,7 +886,7 @@ export interface StructuredDailyLog {
  */
 export enum SeizureType {
   TONIC_CLONIC = 'tonic-clonic',
-  ABSENCE = 'absence', 
+  ABSENCE = 'absence',
   MYOCLONIC = 'myoclonic',
   ATONIC = 'atonic',
   FOCAL = 'focal',
