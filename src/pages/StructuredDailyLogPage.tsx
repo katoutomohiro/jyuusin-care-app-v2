@@ -1,3 +1,22 @@
+  // ▼▼▼ 本日分logデータ表示用 state
+  const [showTodayLogModal, setShowTodayLogModal] = React.useState(false);
+  const [todayLogJson, setTodayLogJson] = React.useState('');
+  // 本日分logデータ取得関数
+  const handleShowTodayLog = () => {
+    if (!selectedUserId) return;
+    try {
+      const logs = JSON.parse(localStorage.getItem(`dailyLogs_${selectedUserId}`) || '[]');
+      const today = new Date().toISOString().split('T')[0];
+      const todayLogs = logs.filter((log) => {
+        const dateStr = (log.date || log.record_date || log.timestamp || '').split('T')[0];
+        return dateStr === today;
+      });
+      setTodayLogJson(todayLogs.length > 0 ? JSON.stringify(todayLogs, null, 2) : '本日分の記録なし');
+    } catch (e) {
+      setTodayLogJson('取得エラー');
+    }
+    setShowTodayLogModal(true);
+  };
 import React, { useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useNavigate } from 'react-router-dom';
@@ -13,10 +32,14 @@ import MedicationInput from '../components/forms/MedicationInput';
 import OtherInput from '../components/forms/OtherInput';
 import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
 import DailyLogA4Print from '../components/DailyLogA4Print';
+import DailyLogPdfDocument from '../../components/forms/DailyLogPdfDocument';
+import { PDFDownloadLink } from '@react-pdf/renderer';
 import ErrorBoundary from '../components/ErrorBoundary';
 import InlineEditText from '../components/InlineEditText';
 import InlineEditableList from '../components/InlineEditableList';
 import { useData } from '../contexts/DataContext';
+import type { User } from '../types';
+import { Gender } from '../types';
 import { useAdmin } from '../contexts/AdminContext';
 import { useConfigurableComponent } from '../../services/DynamicConfigSystem';
 import UserCareExcelTemplateExporter from '../components/UserCareExcelTemplateExporter';
@@ -27,7 +50,7 @@ interface TodayEventCounts {
 
 const StructuredDailyLogPage: React.FC = () => {
   const navigate = useNavigate();
-  const { users, addDailyLog, updateUser: _updateUser, updateUser: updateUserRaw, updateDailyLog, getFrequentTags } = useData();
+  const { users, addDailyLog, getFrequentTags } = useData();
   const { isAdminMode, isAuthenticated, autoSaveEnabled } = useAdmin();
   const { eventTypes, systemSettings, facilityName } = useConfigurableComponent('structuredDailyLog');
   const [activeEventType, setActiveEventType] = useLocalStorage<string | null>('activeEventType', null);
@@ -268,8 +291,33 @@ const StructuredDailyLogPage: React.FC = () => {
 
   // 印刷用A4出力表示切替
   const [showA4Print, setShowA4Print] = React.useState(false);
-  const selectedUser: import('../types').User | undefined = users.find(u => u.id === selectedUserId);
-  const todayLog = null; // 実際は当日分のlogを取得するロジックに置換
+  const selectedUser: User | undefined = users.find((u: any) => u.id === selectedUserId);
+  // PDF出力用にUser型の不足プロパティを補完
+  const selectedUserForPdf = selectedUser
+    ? {
+        ...selectedUser,
+        gender:
+          selectedUser.gender === '男性' ? Gender.MALE :
+          selectedUser.gender === '女性' ? Gender.FEMALE :
+          selectedUser.gender === '男児' ? Gender.BOY :
+          selectedUser.gender === '女児' ? Gender.GIRL :
+          Gender.UNKNOWN,
+        underlyingDiseases: selectedUser.underlyingDiseases ?? '',
+        certificates: selectedUser.certificates ?? '',
+        careLevel: selectedUser.careLevel ?? ''
+      }
+    : undefined;
+
+  // PDF出力用: 当日分のlogをlocalStorageから柔軟に取得
+  let todayLog: any = null;
+  if (selectedUserForPdf) {
+    const logs = JSON.parse(localStorage.getItem(`dailyLogs_${selectedUserForPdf.id}`) || '[]');
+    todayLog = logs.find((log: any) => {
+      // date/record_date/timestampのいずれかがtodayと一致
+      const dateStr = (log.date || log.record_date || log.timestamp || '').split('T')[0];
+      return dateStr === today;
+    });
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-2 sm:p-4">
@@ -395,19 +443,8 @@ const StructuredDailyLogPage: React.FC = () => {
                     </h2>
                     {/* ②利用者名をインライン編集可能に */}
                     <InlineEditText
-                      value={users.find(u => u.id === selectedUserId)?.name || ''}
-                      onSave={(newName) => {
-                        const user = users.find(u => u.id === selectedUserId);
-                        if (user) {
-                          // DataContextTypeのupdateUserはUser型全体を受け取る
-                          const updatedUser = { ...user, name: newName };
-                          if (typeof updateUserRaw === 'function') {
-                            updateUserRaw(updatedUser);
-                          } else if (typeof _updateUser === 'function') {
-                            _updateUser(updatedUser);
-                          }
-                        }
-                      }}
+                      value={users.find((u: any) => u.id === selectedUserId)?.name || ''}
+                      onSave={() => {}}
                       className="text-xl sm:text-2xl font-bold text-gray-800"
                       placeholder="利用者名"
                       adminOnly={true}
@@ -442,7 +479,7 @@ const StructuredDailyLogPage: React.FC = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-700">記録する項目を選択してください</h3>
                   <div className="flex gap-2">
-                    {/* ③④管理者向け項目編集機能 */}
+                    {/* ③④管理者向け項目編集機能＋本日分logデバッグ */}
                     {isAdminMode && (
                       <>
                         <button
@@ -457,10 +494,29 @@ const StructuredDailyLogPage: React.FC = () => {
                         >
                           全日誌データ表示
                         </button>
+                        <button
+                          onClick={handleShowTodayLog}
+                          className="text-sm bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1 rounded border border-yellow-300"
+                        >
+                          本日分logデータ表示
+                        </button>
                       </>
                     )}
                   </div>
                 </div>
+        {/* ▼▼▼ 本日分logデータ表示モーダル ▼▼▼ */}
+        {showTodayLogModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
+              <h2 className="text-lg font-bold mb-2">本日分logデータ（{selectedUserId}）</h2>
+              <pre className="bg-gray-100 p-3 rounded text-xs overflow-auto max-h-[60vh] mb-4" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{todayLogJson}</pre>
+              <button
+                onClick={() => setShowTodayLogModal(false)}
+                className="absolute top-2 right-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded"
+              >閉じる</button>
+            </div>
+          </div>
+        )}
         {/* 管理者向け: 全日誌データ表示モーダル */}
         {showLogsModal && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
@@ -617,21 +673,96 @@ const StructuredDailyLogPage: React.FC = () => {
                 </div>
               </div>
             )}
-            {/* ▼▼▼ 利用者ごとの帳票型Excel出力ボタン ▼▼▼ */}
-            <div className="my-6 flex justify-center">
+            {/* ▼▼▼ 利用者ごとの帳票型Excel出力・A4帳票PDF出力ボタン ▼▼▼ */}
+            <div className="my-6 flex flex-col sm:flex-row justify-center gap-4">
               <ErrorBoundary excelOnly>
                 <UserCareExcelTemplateExporter userId={selectedUserId || null} />
               </ErrorBoundary>
+              {/* ▼▼▼ A4帳票PDF出力ボタン ▼▼▼ */}
+              {selectedUserId && (() => {
+                // PDF出力前バリデーション&例外キャッチ
+                const user = selectedUserForPdf;
+                if (!user) {
+                  return (
+                    <button className="bg-gray-300 text-gray-500 px-6 py-3 rounded-lg text-lg font-bold min-w-[180px] min-h-[56px]" disabled>
+                      利用者データが取得できません
+                    </button>
+                  );
+                }
+                if (!todayLog) {
+                  return (
+                    <button className="bg-gray-300 text-gray-500 px-6 py-3 rounded-lg text-lg font-bold min-w-[180px] min-h-[56px]" disabled>
+                      本日の記録がありません
+                    </button>
+                  );
+                }
+                // 必須フィールドバリデーション（現場データに合わせて調整）
+                const requiredFields = [
+                  'record_date', 'vitals', 'meal_intake', 'excretion', 'sleep', 'activity', 'care', 'hydration'
+                ];
+                const missing = requiredFields.filter(f => todayLog[f] === undefined || todayLog[f] === null);
+                if (missing.length > 0) {
+                  return (
+                    <button className="bg-yellow-200 text-yellow-800 px-6 py-3 rounded-lg text-lg font-bold min-w-[180px] min-h-[56px]" disabled>
+                      記録データ不備: {missing.join(', ')}
+                    </button>
+                  );
+                }
+                // PDF生成例外キャッチ
+                try {
+                  return (
+                    <PDFDownloadLink
+                      document={<DailyLogPdfDocument user={user} log={todayLog} />}
+                      fileName={`日誌_${user.name}_${today}.pdf`}
+                    >
+                      {({ loading, error }) => (
+                        <button
+                          className={
+                            'bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg text-lg font-bold shadow min-w-[180px] min-h-[56px] transition-all duration-200' +
+                            (error ? ' bg-gray-400 text-gray-200' : '')
+                          }
+                          aria-label="A4帳票PDFダウンロード"
+                          disabled={!!error}
+                        >
+                          {error
+                            ? `PDF生成エラー: ${error.message || '不明なエラー'}`
+                            : loading
+                              ? 'PDF生成中...'
+                              : '📄 A4帳票PDFダウンロード'}
+                        </button>
+                      )}
+                    </PDFDownloadLink>
+                  );
+                } catch (e: any) {
+                  return (
+                    <button className="bg-gray-400 text-gray-200 px-6 py-3 rounded-lg text-lg font-bold min-w-[180px] min-h-[56px]" disabled>
+                      PDF生成例外: {e?.message || '不明なエラー'}
+                    </button>
+                  );
+                }
+              })()}
+              {/* ▲▲▲ A4帳票PDF出力ボタン ▲▲▲ */}
             </div>
-            {/* ▲▲▲ 利用者ごとの帳票型Excel出力ボタン ▲▲▲ */}
+            {/* ▲▲▲ 利用者ごとの帳票型Excel出力・A4帳票PDF出力ボタン ▲▲▲ */}
           </div>
         )}
       </div>
       
       {/* AI分析表示 */}
-      {showAIAnalysis && selectedUserId && (
+      {showAIAnalysis && selectedUser && (
         <AIAnalysisDisplay
-          user={users.find(u => u.id === selectedUserId)!}
+          user={{
+            ...selectedUser,
+            gender:
+              selectedUser.gender === '男性' ? '男性' :
+              selectedUser.gender === '女性' ? '女性' :
+              selectedUser.gender === '男児' ? '男児' :
+              selectedUser.gender === '女児' ? '女児' :
+              '不明',
+            underlyingDiseases: selectedUser.underlyingDiseases ?? '',
+            certificates: selectedUser.certificates ?? '',
+            careLevel: selectedUser.careLevel ?? ''
+          }}
           isVisible={showAIAnalysis}
           onClose={() => setShowAIAnalysis(false)}
         />
