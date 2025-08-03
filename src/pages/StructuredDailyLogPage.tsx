@@ -250,6 +250,9 @@ const StructuredDailyLogPage: React.FC = () => {
         case 'communication':
           logData.communication = eventData;
           break;
+        case 'care':
+          logData.care = eventData;
+          break;
         case 'other':
           logData.other = eventData;
           break;
@@ -260,7 +263,7 @@ const StructuredDailyLogPage: React.FC = () => {
 
       await addDailyLog(logData);
 
-      // localStorageにも個別イベントとして保存（既存のシステムとの互換性のため）
+      // localStorage: 個別イベント型キーに保存
       const eventKey = `${activeEventType}_records_${today}`;
       const existingRecords = JSON.parse(localStorage.getItem(eventKey) || '[]');
       const newRecord = {
@@ -276,6 +279,16 @@ const StructuredDailyLogPage: React.FC = () => {
       };
       existingRecords.push(newRecord);
       localStorage.setItem(eventKey, JSON.stringify(existingRecords));
+
+      // localStorage: ユーザー別dailyLogs_${user.id}にも保存
+      const dailyLogsKey = `dailyLogs_${selectedUserId}`;
+      const dailyLogs = JSON.parse(localStorage.getItem(dailyLogsKey) || '[]');
+      dailyLogs.push({
+        ...newRecord,
+        event_type: activeEventType,
+        data: eventData
+      });
+      localStorage.setItem(dailyLogsKey, JSON.stringify(dailyLogs));
 
       // 保存成功時は下書きを削除
       localStorage.removeItem(getDraftKey());
@@ -638,7 +651,7 @@ const StructuredDailyLogPage: React.FC = () => {
                   {activeEventType === 'expression' && (
                     <ExpressionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
                   )}
-                  {activeEventType === 'vital' && (
+                  {activeEventType === 'vitals' && (
                     <VitalSignsInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
                   )}
                   {activeEventType === 'meal' && (
@@ -705,11 +718,17 @@ const StructuredDailyLogPage: React.FC = () => {
                     </button>
                   );
                 }
-                // 必須フィールドバリデーション（現場データに合わせて調整）
+                // 必須フィールドバリデーション（各イベントごとに1件でも記録があればOKに変更）
                 const requiredFields = [
-                  'record_date', 'vitals', 'meal_intake', 'excretion', 'sleep', 'activity', 'care', 'hydration'
+                  'vitals', 'excretion', 'sleep', 'care'
                 ];
-                const missing = requiredFields.filter(f => todayLog[f] === undefined || todayLog[f] === null);
+                // 各イベントごとにlocalStorageの該当キーに1件でも記録があればOK
+                const missing = requiredFields.filter(eventType => {
+                  const key = `${eventType}_records_${today}`;
+                  const records = JSON.parse(localStorage.getItem(key) || '[]');
+                  // 本日の該当利用者の記録が1件もなければ不備
+                  return !records.some((r: any) => r.user_id === selectedUserForPdf.id);
+                });
                 if (missing.length > 0) {
                   return (
                     <button className="bg-yellow-200 text-yellow-800 px-6 py-3 rounded-lg text-lg font-bold min-w-[180px] min-h-[56px]" disabled>
