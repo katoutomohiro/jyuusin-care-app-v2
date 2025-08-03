@@ -81,16 +81,24 @@ const StructuredDailyLogPage: React.FC = () => {
   const today = new Date().toISOString().split('T')[0];
 
   // 動的に読み込まれたイベントタイプを使用（フォールバック付き）
+  // PROJECT_SOUL.md仕様に厳密準拠
   const defaultEventTypes = [
     { id: 'seizure', name: '発作', icon: '⚡', color: 'bg-red-500' },
     { id: 'expression', name: '表情・反応', icon: '😊', color: 'bg-blue-500' },
-    { id: 'vital', name: 'バイタル', icon: '🌡️', color: 'bg-green-500' },
-    { id: 'meal', name: '食事・水分', icon: '🍽️', color: 'bg-orange-500' },
+    { id: 'vitals', name: 'バイタル', icon: '🌡️', color: 'bg-green-500' },
+    { id: 'hydration', name: '水分摂取', icon: '💧', color: 'bg-blue-300' },
     { id: 'excretion', name: '排泄', icon: '🚽', color: 'bg-purple-500' },
     { id: 'sleep', name: '睡眠', icon: '😴', color: 'bg-indigo-500' },
     { id: 'activity', name: '活動', icon: '🎯', color: 'bg-teal-500' },
     { id: 'care', name: 'ケア', icon: '🤲', color: 'bg-pink-500' },
     { id: 'medication', name: '服薬', icon: '💊', color: 'bg-cyan-500' },
+    { id: 'skin_oral_care', name: 'スキンケア', icon: '🧴', color: 'bg-yellow-400' },
+    { id: 'illness', name: '体調記録', icon: '🤒', color: 'bg-orange-400' },
+    { id: 'cough_choke', name: '咳・むせ', icon: '🤧', color: 'bg-gray-400' },
+    { id: 'tube_feeding', name: '栄養管理', icon: '🍼', color: 'bg-yellow-300' },
+    { id: 'medication', name: '薬剤投与', icon: '💊', color: 'bg-cyan-500' },
+    { id: 'behavioral', name: '行動記録', icon: '🦾', color: 'bg-indigo-300' },
+    { id: 'communication', name: 'その他記録', icon: '💬', color: 'bg-gray-500' },
     { id: 'other', name: 'その他', icon: '📝', color: 'bg-gray-500' }
   ];
 
