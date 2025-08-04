@@ -77,8 +77,20 @@ const StructuredDailyLogPage: React.FC = () => {
     setShowLogsModal(true);
   };
 
-  // 今日の日付を取得
-  const today = new Date().toISOString().split('T')[0];
+
+  // 本日の日付を常に "YYYY-MM-DD" 形式で取得
+  const getTodayString = () => {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const MM = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    return `${yyyy}-${MM}-${dd}`;
+  };
+  const today = getTodayString();
+
+  // localStorageキー生成を統一
+  const getEventStorageKey = (eventType: string, userId: string) =>
+    `${eventType}_records_${today}_${userId}`;
 
   // 動的に読み込まれたイベントタイプを使用（フォールバック付き）
   // PROJECT_SOUL.md仕様に厳密準拠
@@ -164,131 +176,69 @@ const StructuredDailyLogPage: React.FC = () => {
 
   // イベント保存処理
   const handleSaveEvent = async (eventData: any) => {
-    if (!selectedUserId) return;
-
+    if (!selectedUserId || !activeEventType) return;
     setIsSubmitting(true);
     try {
-      // DailyLog型に合わせてデータを構築
-      const logData: any = {
-        userId: selectedUserId,
-        staff_id: 'current-staff',
-        author: '記録者',
-        authorId: 'current-staff',
-        record_date: today,
-        recorder_name: '記録者',
-        weather: '記録なし',
-        mood: [],
-        meal_intake: {
-          breakfast: '記録なし',
-          lunch: '記録なし',
-          snack: '記録なし',
-          dinner: '記録なし'
-        },
-        hydration: 0,
-        toileting: [],
-        activity: {
-          participation: ['記録なし'],
-          mood: '記録なし',
-          notes: ''
-        },
-        special_notes: [{
-          category: activeEventType || 'general',
-          details: JSON.stringify({
-            event_type: activeEventType,
-            timestamp: new Date().toISOString(),
-            data: eventData,
-            notes: eventData.notes || '',
-            admin_created: isAdminMode && isAuthenticated
-          })
-        }]
-      };
-
-      // イベント種別ごとに該当フィールドへ格納
-      switch (activeEventType) {
-        case 'seizure':
-          logData.seizures = [eventData];
-          break;
-        case 'expression':
-          logData.expression = eventData;
-          break;
-        case 'hydration':
-          logData.hydration = eventData.amount || 0;
-          break;
-        case 'positioning':
-          logData.positioning = eventData;
-          break;
-        case 'activity':
-          logData.activity = eventData;
-          break;
-        case 'excretion':
-          logData.excretion = eventData;
-          break;
-        case 'skin_oral_care':
-          logData.skin_oral_care = eventData;
-          break;
-        case 'illness':
-          logData.illness = eventData;
-          break;
-        case 'sleep':
-          logData.sleep = eventData;
-          break;
-        case 'cough_choke':
-          logData.cough_choke = eventData;
-          break;
-        case 'tube_feeding':
-          logData.tube_feeding = eventData;
-          break;
-        case 'medication':
-          logData.medication = eventData;
-          break;
-        case 'vitals':
-          logData.vitals = eventData;
-          break;
-        case 'behavioral':
-          logData.behavioral = eventData;
-          break;
-        case 'communication':
-          logData.communication = eventData;
-          break;
-        case 'care':
-          logData.care = eventData;
-          break;
-        case 'other':
-          logData.other = eventData;
-          break;
-        default:
-          // 何もしない
-          break;
-      }
-
-      await addDailyLog(logData);
-
-      // localStorage: 個別イベント型キーに保存
-      const eventKey = `${activeEventType}_records_${today}`;
-      const existingRecords = JSON.parse(localStorage.getItem(eventKey) || '[]');
-      const newRecord = {
+      // 標準パターンでイベントデータを構築
+      const newEvent = {
         id: Date.now().toString(),
         user_id: selectedUserId,
         event_type: activeEventType,
         created_at: new Date().toISOString(),
-        timestamp: new Date().toISOString(),
-        data: eventData,
-        notes: eventData.notes || '',
-        admin_created: isAdminMode && isAuthenticated,
-        auto_saved: autoSaveEnabled && !isAdminMode
+        ...eventData
       };
-      existingRecords.push(newRecord);
+
+      // 1. イベント種別＋日付＋ユーザーIDで保存（PROJECT_SOUL.md厳密準拠）
+      const eventKey = getEventStorageKey(activeEventType, selectedUserId);
+      const existingRecords = JSON.parse(localStorage.getItem(eventKey) || '[]');
+      existingRecords.push(newEvent);
       localStorage.setItem(eventKey, JSON.stringify(existingRecords));
 
-      // localStorage: ユーザー別dailyLogs_${user.id}にも保存
+      // 2. ユーザー別dailyLogs_${user.id}にも保存（latestLog互換構造で保存）
       const dailyLogsKey = `dailyLogs_${selectedUserId}`;
-      const dailyLogs = JSON.parse(localStorage.getItem(dailyLogsKey) || '[]');
-      dailyLogs.push({
-        ...newRecord,
-        event_type: activeEventType,
-        data: eventData
-      });
+      let dailyLogs = JSON.parse(localStorage.getItem(dailyLogsKey) || '[]');
+      // 今日の日付で既存logがあれば更新、なければ新規
+      const today = new Date().toISOString().split('T')[0];
+      let log = dailyLogs.find((l: any) => (l.date || l.record_date || l.timestamp || '').split('T')[0] === today);
+      if (!log) {
+        log = { record_date: today };
+        dailyLogs.push(log);
+      }
+      // イベント種別ごとに配列で格納
+      const eventField =
+        activeEventType === 'vitals' ? 'vitals' :
+        activeEventType === 'seizure' ? 'seizure_events' :
+        activeEventType === 'expression' ? 'expression_events' :
+        activeEventType === 'hydration' ? 'hydration_events' :
+        activeEventType === 'activity' ? 'activity_events' :
+        activeEventType === 'tube_feeding' ? 'tube_feeding_events' :
+        activeEventType === 'positioning' ? 'positioning_events' :
+        activeEventType === 'excretion' ? 'toileting' :
+        activeEventType === 'skin_oral_care' ? 'skin_oral_care_events' :
+        activeEventType === 'cough_choke' ? 'cough_choke_events' :
+        activeEventType === 'sleep' ? 'sleep_events' :
+        activeEventType === 'illness' ? 'illness_events' :
+        activeEventType === 'medication' ? 'medication_events' :
+        activeEventType === 'behavioral' ? 'behavioral_events' :
+        activeEventType === 'communication' ? 'communication_events' :
+        'other_events';
+      if (eventField === 'vitals') {
+        log.vitals = newEvent;
+      } else {
+        if (!log[eventField]) log[eventField] = [];
+        log[eventField].push(newEvent);
+      }
       localStorage.setItem(dailyLogsKey, JSON.stringify(dailyLogs));
+
+      // 3. 全利用者・全日誌データ（daily_logs）にも保存（Excelエクスポート互換性のため）
+      let allLogs = {};
+      try {
+        allLogs = JSON.parse(localStorage.getItem('daily_logs') || '{}');
+      } catch {}
+      if (!allLogs[selectedUserId]) allLogs[selectedUserId] = {};
+      if (!allLogs[selectedUserId][activeEventType]) allLogs[selectedUserId][activeEventType] = [];
+      allLogs[selectedUserId][activeEventType].push(newEvent);
+      localStorage.setItem('daily_logs', JSON.stringify(allLogs));
 
       // 保存成功時は下書きを削除
       localStorage.removeItem(getDraftKey());
@@ -298,11 +248,10 @@ const StructuredDailyLogPage: React.FC = () => {
       // 今日の記録数を更新
       setTodayEventCounts({
         ...todayEventCounts,
-        [activeEventType!]: (todayEventCounts[activeEventType!] || 0) + 1
+        [activeEventType]: (todayEventCounts[activeEventType] || 0) + 1
       });
 
       alert('✅ 記録を保存しました');
-
     } catch (error) {
       console.error('記録の保存でエラー:', error);
       alert('記録の保存中にエラーが発生しました');
@@ -319,11 +268,11 @@ const StructuredDailyLogPage: React.FC = () => {
     ? ({
         ...selectedUser,
         gender:
-          selectedUser.gender === '男性' ? Gender.MALE :
-          selectedUser.gender === '女性' ? Gender.FEMALE :
-          selectedUser.gender === '男児' ? Gender.BOY :
-          selectedUser.gender === '女児' ? Gender.GIRL :
-          Gender.UNKNOWN,
+          selectedUser.gender === '男性' ? '男性' :
+          selectedUser.gender === '女性' ? '女性' :
+          selectedUser.gender === '男児' ? '男児' :
+          selectedUser.gender === '女児' ? '女児' :
+          '不明',
         underlyingDiseases: selectedUser.underlyingDiseases ?? '',
         certificates: selectedUser.certificates ?? '',
         careLevel: selectedUser.careLevel ?? ''
@@ -407,38 +356,42 @@ const StructuredDailyLogPage: React.FC = () => {
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">📝 記録する利用者を選択</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {users.map((user) => (
-                <div key={user.id} className="border-2 border-gray-200 rounded-lg hover:border-blue-300 transition-all duration-200">
-                  <button
-                    onClick={() => setSelectedUserId(user.id)}
-                    className="p-4 text-left w-full hover:bg-blue-50 rounded-lg transition-all duration-200"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-blue-600 font-semibold text-lg">{user.name.charAt(0)}</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-semibold text-gray-800 text-lg">{user.name}</div>
-                        <div className="text-sm text-gray-500">記録を開始</div>
-                      </div>
-                    </div>
-                  </button>
-                  
-                  {/* AI分析ボタン */}
-                  <div className="px-4 pb-3">
+              {users && users.length > 0 ? (
+                users.map((user) => (
+                  <div key={user.id} className="border-2 border-gray-200 rounded-lg hover:border-blue-300 transition-all duration-200">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedUserId(user.id);
-                        setShowAIAnalysis(true);
-                      }}
-                      className="w-full mt-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white py-2 px-4 rounded-lg font-medium transition-all duration-200 text-sm"
+                      onClick={() => setSelectedUserId(user.id)}
+                      className="p-4 text-left w-full hover:bg-blue-50 rounded-lg transition-all duration-200"
                     >
-                      🤖 AI分析を表示
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-blue-600 font-semibold text-lg">{user.name.charAt(0)}</span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-gray-800 text-lg">{user.name}</div>
+                          <div className="text-sm text-gray-500">記録を開始</div>
+                        </div>
+                      </div>
                     </button>
+                    
+                    {/* AI分析ボタン */}
+                    <div className="px-4 pb-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedUserId(user.id);
+                          setShowAIAnalysis(true);
+                        }}
+                        className="w-full mt-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white py-2 px-4 rounded-lg font-medium transition-all duration-200 text-sm"
+                      >
+                        🤖 AI分析を表示
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-center text-gray-500 col-span-1 sm:col-span-2">利用者データを読み込んでいます...</p>
+              )}
             </div>
           </div>
         )}
