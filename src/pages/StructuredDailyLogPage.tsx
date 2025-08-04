@@ -64,6 +64,15 @@ const StructuredDailyLogPage: React.FC = () => {
   const [showEventEditor, setShowEventEditor] = useLocalStorage<boolean>('showEventEditor', false);
   const [editingEventType, setEditingEventType] = useLocalStorage<string | null>('editingEventType', null);
 
+  // ▼▼▼ コンテキストのusersをローカルステートに同期 ▼▼▼
+  const [localUsers, setLocalUsers] = React.useState<User[]>([]);
+  useEffect(() => {
+    if (users && users.length > 0) {
+      setLocalUsers(users);
+    }
+  }, [users]);
+  // ▲▲▲ コンテキストのusersをローカルステートに同期 ▲▲▲
+
   // 管理者向け: 全日誌データ表示モーダル
   const [showLogsModal, setShowLogsModal] = React.useState(false);
   const [logsJson, setLogsJson] = React.useState('');
@@ -118,6 +127,11 @@ const StructuredDailyLogPage: React.FC = () => {
 
   // 今日の記録数を取得
   useEffect(() => {
+    // usersが空の場合は処理を中断するガード節
+    if (!users || users.length === 0) {
+      return;
+    }
+
     const counts: TodayEventCounts = {};
     currentEventTypes.forEach(type => {
       counts[type.id] = 0;
@@ -356,8 +370,8 @@ const StructuredDailyLogPage: React.FC = () => {
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">📝 記録する利用者を選択</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {users && users.length > 0 ? (
-                users.map((user) => (
+              {localUsers && localUsers.length > 0 ? (
+                localUsers.map((user) => (
                   <div key={user.id} className="border-2 border-gray-200 rounded-lg hover:border-blue-300 transition-all duration-200">
                     <button
                       onClick={() => setSelectedUserId(user.id)}
@@ -649,6 +663,7 @@ const StructuredDailyLogPage: React.FC = () => {
               </div>
             )}
             {/* ▼▼▼ 利用者ごとの帳票型Excel出力・A4帳票PDF出力ボタン ▼▼▼ */}
+            {selectedUserId && (
             <div className="my-6 flex flex-col sm:flex-row justify-center gap-4">
               <ErrorBoundary excelOnly>
                 <UserCareExcelTemplateExporter userId={selectedUserId || null} />
@@ -724,6 +739,7 @@ const StructuredDailyLogPage: React.FC = () => {
               })()}
               {/* ▲▲▲ A4帳票PDF出力ボタン ▲▲▲ */}
             </div>
+            )}
             {/* ▲▲▲ 利用者ごとの帳票型Excel出力・A4帳票PDF出力ボタン ▲▲▲ */}
           </div>
         )}
