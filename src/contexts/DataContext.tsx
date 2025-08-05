@@ -38,29 +38,28 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
 
-  const [users] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>(() => {
+    try {
+      const storedUsers = localStorage.getItem('users');
+      return storedUsers ? JSON.parse(storedUsers) : initialUsers;
+    } catch (error) {
+      console.error('Failed to parse users from localStorage', error);
+      return initialUsers;
+    }
+  });
 
   // DataContext初期化時にlocalStorageのusersキーも必ず24名で上書き
   React.useEffect(() => {
     if (!users || users.length === 0) {
-      localStorage.setItem('users', JSON.stringify(SEVERE_DISABILITY_USERS));
-      console.log('初期利用者データを再投入しました', SEVERE_DISABILITY_USERS);
+      const initialData = SEVERE_DISABILITY_USERS;
+      setUsers(initialData);
+      localStorage.setItem('users', JSON.stringify(initialData));
+      console.log('初期利用者データを投入しました', initialData);
     } else {
+      // 起動時に現在のusersステートをlocalStorageに保存する
       localStorage.setItem('users', JSON.stringify(users));
-      console.log('users:', users);
-      if (users.length > 0) {
-        console.log('users[0]詳細:', users[0]);
-        Object.entries(users[0]).forEach(([key, value]) => {
-          console.log(`users[0].${key}:`, value);
-        });
-        users.forEach((u, i) => {
-          if (!u.id || !u.name) {
-            console.warn(`users[${i}]にidまたはnameがありません`, u);
-          }
-        });
-      }
     }
-  }, [users]);
+  }, []); // 初回レンダリング時にのみ実行
 
   const getUserById = (id: string) => users.find((u) => u.id === id);
   // localStorageから該当ユーザーの日誌全件を取得

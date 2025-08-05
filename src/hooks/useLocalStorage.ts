@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 /**
  * localStorageのキーごとに値を取得・保存・削除できる共通フック
