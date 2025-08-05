@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 // ...existing code...
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useNavigate } from 'react-router-dom';
@@ -20,7 +20,7 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import InlineEditText from '../components/InlineEditText';
 import InlineEditableList from '../components/InlineEditableList';
 import { useData } from '../contexts/DataContext';
-import type { User } from '../../types';
+import type { UserProfile as User } from '../../types';
 import { Gender } from '../../types';
 import { useAdmin } from '../contexts/AdminContext';
 import { useConfigurableComponent } from '../../services/DynamicConfigSystem';
@@ -107,17 +107,16 @@ const StructuredDailyLogPage: React.FC = () => {
     { id: 'seizure', name: '発作', icon: '⚡', color: 'bg-red-500' },
     { id: 'expression', name: '表情・反応', icon: '😊', color: 'bg-blue-500' },
     { id: 'vitals', name: 'バイタル', icon: '🌡️', color: 'bg-green-500' },
-    { id: 'hydration', name: '水分摂取', icon: '💧', color: 'bg-blue-300' },
+    { id: 'hydration', name: '食事・水分', icon: '💧', color: 'bg-blue-300' },
     { id: 'excretion', name: '排泄', icon: '🚽', color: 'bg-purple-500' },
     { id: 'sleep', name: '睡眠', icon: '😴', color: 'bg-indigo-500' },
     { id: 'activity', name: '活動', icon: '🎯', color: 'bg-teal-500' },
     { id: 'care', name: 'ケア', icon: '🤲', color: 'bg-pink-500' },
-    { id: 'medication', name: '服薬', icon: '💊', color: 'bg-cyan-500' },
     { id: 'skin_oral_care', name: 'スキンケア', icon: '🧴', color: 'bg-yellow-400' },
     { id: 'illness', name: '体調記録', icon: '🤒', color: 'bg-orange-400' },
     { id: 'cough_choke', name: '咳・むせ', icon: '🤧', color: 'bg-gray-400' },
     { id: 'tube_feeding', name: '栄養管理', icon: '🍼', color: 'bg-yellow-300' },
-    { id: 'medication', name: '薬剤投与', icon: '💊', color: 'bg-cyan-500' },
+    { id: 'medication_administration', name: '薬剤投与', icon: '💊', color: 'bg-cyan-500' },
     { id: 'behavioral', name: '行動記録', icon: '🦾', color: 'bg-indigo-300' },
     { id: 'communication', name: 'その他記録', icon: '💬', color: 'bg-gray-500' },
     { id: 'other', name: 'その他', icon: '📝', color: 'bg-gray-500' }
@@ -232,7 +231,7 @@ const StructuredDailyLogPage: React.FC = () => {
         activeEventType === 'cough_choke' ? 'cough_choke_events' :
         activeEventType === 'sleep' ? 'sleep_events' :
         activeEventType === 'illness' ? 'illness_events' :
-        activeEventType === 'medication' ? 'medication_events' :
+        activeEventType === 'medication_administration' ? 'medication_events' :
         activeEventType === 'behavioral' ? 'behavioral_events' :
         activeEventType === 'communication' ? 'communication_events' :
         'other_events';
@@ -647,7 +646,7 @@ const StructuredDailyLogPage: React.FC = () => {
                   {activeEventType === 'care' && (
                     <CareInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
                   )}
-                  {activeEventType === 'medication' && (
+                  {activeEventType === 'medication_administration' && (
                     <MedicationInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
                   )}
                   {activeEventType === 'other' && (
