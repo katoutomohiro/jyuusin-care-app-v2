@@ -123,7 +123,7 @@ const StructuredDailyLogPage: React.FC = () => {
     { id: 'other', name: 'その他', icon: '📝', color: 'bg-gray-500' }
   ];
 
-  const currentEventTypes = eventTypes.length > 0 ? eventTypes : defaultEventTypes;
+  const currentEventTypes = (eventTypes && eventTypes.length > 0) ? eventTypes : defaultEventTypes;
 
   // 今日の記録数を取得
   useEffect(() => {
@@ -276,7 +276,7 @@ const StructuredDailyLogPage: React.FC = () => {
 
   // 印刷用A4出力表示切替
   const [showA4Print, setShowA4Print] = React.useState(false);
-  const selectedUser: User | undefined = users.find((u: any) => u.id === selectedUserId);
+  const selectedUser: User | undefined = users && users.find((u: any) => u.id === selectedUserId);
   // PDF出力用にUser型の不足プロパティを補完
   const selectedUserForPdf = selectedUser
     ? ({
@@ -372,11 +372,12 @@ const StructuredDailyLogPage: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {localUsers && localUsers.length > 0 ? (
                 localUsers.map((user) => (
-                  <div key={user.id} className="border-2 border-gray-200 rounded-lg hover:border-blue-300 transition-all duration-200">
-                    <button
-                      onClick={() => setSelectedUserId(user.id)}
-                      className="p-4 text-left w-full hover:bg-blue-50 rounded-lg transition-all duration-200"
-                    >
+                  <div
+                    key={user.id}
+                    className="border-2 border-gray-200 rounded-lg hover:border-blue-300 transition-all duration-200 cursor-pointer hover:bg-blue-50"
+                    onClick={() => setSelectedUserId(user.id)}
+                  >
+                    <div className="p-4 text-left w-full">
                       <div className="flex items-center space-x-3">
                         <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                           <span className="text-blue-600 font-semibold text-lg">{user.name.charAt(0)}</span>
@@ -386,13 +387,13 @@ const StructuredDailyLogPage: React.FC = () => {
                           <div className="text-sm text-gray-500">記録を開始</div>
                         </div>
                       </div>
-                    </button>
+                    </div>
                     
                     {/* AI分析ボタン */}
                     <div className="px-4 pb-3">
                       <button
                         onClick={(e) => {
-                          e.stopPropagation();
+                          e.stopPropagation(); // 親のonClickが発火しないようにする
                           setSelectedUserId(user.id);
                           setShowAIAnalysis(true);
                         }}

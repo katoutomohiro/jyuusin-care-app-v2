@@ -6,7 +6,10 @@ export default defineConfig({
   server: {
     port: 3003,
     host: '0.0.0.0',
-    hmr: false,
+    hmr: {
+      clientPort: 443,
+      protocol: 'wss'
+    },
     watch: {
       usePolling: false,
       ignored: ['**/node_modules/**', '**/dist/**'],
