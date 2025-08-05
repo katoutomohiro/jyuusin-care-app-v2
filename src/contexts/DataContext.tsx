@@ -18,7 +18,7 @@ const getSampleLogs = (): any[] => {
     };
   });
 };
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 
 // 本番用の利用者データ（24名）
 import { SEVERE_DISABILITY_USERS, STAFF_MEMBERS, FACILITY_INFO, SAMPLE_LOGS_BASE } from '../../constants';

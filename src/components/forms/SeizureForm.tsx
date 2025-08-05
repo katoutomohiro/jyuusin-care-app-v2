@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect, FC } from 'react';
 
 type SeizureFormProps = {
   onSave: (data: any) => void;
