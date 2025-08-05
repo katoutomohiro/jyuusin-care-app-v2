@@ -14,8 +14,8 @@ import MedicationInput from '../components/forms/MedicationInput';
 import OtherInput from '../components/forms/OtherInput';
 import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
 import DailyLogA4Print from '../components/DailyLogA4Print';
-import DailyLogPdfDocument from '../../components/forms/DailyLogPdfDocument';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+// import DailyLogPdfDocument from '../components/DailyLogPdfDocument';
+// import { PDFDownloadLink } from '@react-pdf/renderer';
 import ErrorBoundary from '../components/ErrorBoundary';
 import InlineEditText from '../components/InlineEditText';
 import InlineEditableList from '../components/InlineEditableList';
@@ -646,9 +646,9 @@ const StructuredDailyLogPage: React.FC = () => {
                   {activeEventType === 'care' && (
                     <CareInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
                   )}
-                  {activeEventType === 'medication_administration' && (
+                  {/* {activeEventType === 'medication' && (
                     <MedicationInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-                  )}
+                  )} */}
                   {activeEventType === 'other' && (
                     <OtherInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
                   )}
@@ -678,8 +678,8 @@ const StructuredDailyLogPage: React.FC = () => {
               <ErrorBoundary excelOnly>
                 <UserCareExcelTemplateExporter userId={selectedUserId || null} />
               </ErrorBoundary>
-              {/* ▼▼▼ A4帳票PDF出力ボタン ▼▼▼ */}
-              {selectedUserId && (() => {
+              {/* ▼▼▼ A4帳票PDF出力ボタン (一時的に無効化) ▼▼▼ */}
+              {/* {selectedUserId && (() => {
                 // PDF出力前バリデーション&例外キャッチ
                 const user = selectedUserForPdf;
                 if (!user) {
@@ -746,7 +746,7 @@ const StructuredDailyLogPage: React.FC = () => {
                     </button>
                   );
                 }
-              })()}
+              })()} */}
               {/* ▲▲▲ A4帳票PDF出力ボタン ▲▲▲ */}
             </div>
             )}
