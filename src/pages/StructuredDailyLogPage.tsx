@@ -620,10 +620,20 @@ const StructuredDailyLogPage: React.FC = () => {
                     <ExpressionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
                   )}
                   {activeEventType === 'vitals' && (
-                    <VitalSignsInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+                    <VitalSignsInput
+                      onSave={handleSaveEvent}
+                      isSubmitting={isSubmitting}
+                      draftData={getDraftData()}
+                      handleDraftChange={handleDraftChange}
+                    />
                   )}
-                  {activeEventType === 'meal' && (
-                    <HydrationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+                  {activeEventType === 'hydration' && (
+                    <HydrationForm
+                      onSave={handleSaveEvent}
+                      isSubmitting={isSubmitting}
+                      draftData={getDraftData()}
+                      handleDraftChange={handleDraftChange}
+                    />
                   )}
                   {activeEventType === 'excretion' && (
                     <ExcretionInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
