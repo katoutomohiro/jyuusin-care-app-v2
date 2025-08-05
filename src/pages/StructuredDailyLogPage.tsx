@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useState, useEffect, FC } from 'react';
 // ...existing code...
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useNavigate } from 'react-router-dom';

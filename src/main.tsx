@@ -1,3 +1,8 @@
+// main.tsx 最上部
+if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(r =>
+    r.forEach(reg => reg.unregister()));
+}
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
@@ -8,11 +13,20 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { AdminProvider } from './contexts/AdminContext';
 import ErrorBoundary from './components/ErrorBoundary';
 
-// ========== エラー撲滅システムはデバッグのため一時的に無効化します ==========
-// 大量のカスタムエラー処理があり、これが原因で問題が発生している可能性があるため、
-// 一時的にコメントアウトして、Reactの標準的なエントリーポイントを構成します。
-// これにより、根本的なエラーがコンソールに表示されるようになります。
-// ========== ここまで ==========
+// Vite環境向けService Worker登録制御
+// 開発環境(development)ではHMRを優先し、Service Workerの登録をスキップ
+// 本番環境(production)でのみService Workerを有効化する
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('SW registered: ', registration.scope);
+      })
+      .catch(registrationError => {
+        console.log('SW registration failed: ', registrationError);
+      });
+  });
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
