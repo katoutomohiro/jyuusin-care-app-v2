@@ -14,6 +14,9 @@ import MedicationInput from '../components/forms/MedicationInput';
 import OtherInput from '../components/forms/OtherInput';
 import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
 import DailyLogA4Print from '../components/DailyLogA4Print';
+import { exportDailyLog } from '../../services/DailyLogExportService';
+import { PDFViewer } from '@react-pdf/renderer';
+import { DailyLogPdfDoc } from '../components/pdf/DailyLogPdfDoc';
 // import DailyLogPdfDocument from '../components/DailyLogPdfDocument';
 // import { PDFDownloadLink } from '@react-pdf/renderer';
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -34,6 +37,7 @@ const StructuredDailyLogPage: React.FC = () => {
   // ▼▼▼ 本日分logデータ表示用 state
   const [showTodayLogModal, setShowTodayLogModal] = React.useState(false);
   const [todayLogJson, setTodayLogJson] = React.useState('');
+  const [showPdfPreview, setShowPdfPreview] = React.useState(false);
   // 本日分logデータ取得関数
   const handleShowTodayLog = () => {
     if (!selectedUserId) return;
@@ -273,7 +277,6 @@ const StructuredDailyLogPage: React.FC = () => {
     }
   };
 
-  // 印刷用A4出力表示切替
   const [showA4Print, setShowA4Print] = React.useState(false);
   const selectedUser: User | undefined = users && users.find((u: any) => u.id === selectedUserId);
   // PDF出力用にUser型の不足プロパティを補完
@@ -308,11 +311,45 @@ const StructuredDailyLogPage: React.FC = () => {
       {/* ▼▼▼ A4印刷用日誌出力ボタン ▼▼▼ */}
       {selectedUserId && (
         <div className="mb-4 flex justify-end">
-          <button className="bg-green-600 text-white px-4 py-2 rounded" onClick={() => setShowA4Print(v => !v)}>
-            {showA4Print ? '日誌入力画面に戻る' : 'A4印刷用日誌プレビュー'}
+          <button className="bg-green-600 text-white px-4 py-2 rounded" onClick={() => setShowPdfPreview(true)}>
+            A4印刷用日誌プレビュー
           </button>
         </div>
       )}
+
+      {showPdfPreview && selectedUser && todayLog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-[90vh] flex flex-col p-4">
+            <h2 className="text-xl font-bold mb-4 text-center">A4日誌プレビュー</h2>
+            <div className="flex-grow border rounded-lg overflow-hidden">
+              <PDFViewer width="100%" height="100%">
+                <DailyLogPdfDoc log={{...todayLog, userName: selectedUser.name, date: today }} />
+              </PDFViewer>
+            </div>
+            <div className="flex justify-center items-center gap-4 mt-4">
+              <button
+                onClick={() => exportDailyLog(selectedUserId, today, 'pdf')}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg"
+              >
+                PDFダウンロード
+              </button>
+              <button
+                onClick={() => exportDailyLog(selectedUserId, today, 'xlsx')}
+                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg"
+              >
+                Excelダウンロード
+              </button>
+              <button
+                onClick={() => setShowPdfPreview(false)}
+                className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg"
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {showA4Print && selectedUser && todayLog && (
         <DailyLogA4Print user={selectedUser} log={todayLog} />
       )}
