@@ -80,6 +80,37 @@ const StructuredDailyLogPage: FC = () => {
     };
   };
 
+  // Excel Export Handler
+  const handleExportExcel = async () => {
+    console.time('exportExcel');
+    console.log('Excel export started');
+    try {
+      if (!selectedUser) {
+        alert('利用者が選択されていません。');
+        return;
+      }
+      
+      const dailyLog = generateDailyLog();
+      console.log('Generated dailyLog:', dailyLog);
+      
+      await exportDailyLogExcel(dailyLog, selectedUser, today);
+      console.log('Excel export completed successfully');
+      
+      // toast.success('Excel を生成しました'); // Future: implement toast
+      alert('Excel ファイルを生成しました');
+    } catch (error) {
+      console.error('Excel export error:', error);
+      // toast.error('Excel 生成に失敗しました'); // Future: implement toast
+      alert('Excel出力に失敗しました: ' + (error as Error).message);
+    }
+    console.timeEnd('exportExcel');
+  };
+
+  // DEBUG: State monitoring
+  useEffect(() => {
+    console.log('DEBUG - selectedUserId:', selectedUserId, 'selectedUser:', selectedUser);
+  }, [selectedUserId, selectedUser]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-2 sm:p-4">
       {/* PDF・Excel出力ボタン */}
@@ -87,25 +118,16 @@ const StructuredDailyLogPage: FC = () => {
         <div className="mb-4 flex justify-end gap-2">
           <button 
             className="bg-green-600 text-white px-4 py-2 rounded" 
-            onClick={() => setPdfPreviewOpen(true)}
+            onClick={() => {
+              console.log('PDF Preview button clicked');
+              setPdfPreviewOpen(true);
+            }}
           >
             A4印刷用日誌プレビュー
           </button>
           <button 
             className="bg-blue-600 text-white px-4 py-2 rounded"
-            onClick={() => {
-              try {
-                if (selectedUser) {
-                  const dailyLog = generateDailyLog();
-                  exportDailyLogExcel(dailyLog, selectedUser, today);
-                } else {
-                  alert('利用者が選択されていません。');
-                }
-              } catch (error) {
-                console.error('Excel出力エラー:', error);
-                alert('Excel出力に失敗しました: ' + (error as Error).message);
-              }
-            }}
+            onClick={handleExportExcel}
           >
             Excel ダウンロード
           </button>
