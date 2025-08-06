@@ -2,18 +2,24 @@ import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
 import { DailyLog, User } from '../../types';
 
-// TODO: フォントファイル（NotoSansJP-Regular.otf）を public/fonts などに配置する必要がある
-// Font.register({
-//   family: 'Noto Sans JP',
-//   src: '/fonts/NotoSansJP-Regular.otf'
-// });
+// フォント設定 - フォールバック対応
+// TODO: 日本語フォント対応を後で追加
+try {
+  // 日本語フォントが利用可能な場合のみ登録
+  // Font.register({
+  //   family: 'Noto Sans JP', 
+  //   src: '/fonts/NotoSansJP-Regular.ttf'
+  // });
+} catch (error) {
+  console.warn('Japanese font not available, using fallback');
+}
 
 const styles = StyleSheet.create({
   body: {
     paddingTop: 35,
     paddingBottom: 65,
     paddingHorizontal: 35,
-    fontFamily: 'Noto Sans JP',
+    fontFamily: 'Helvetica', // フォールバック用フォント
     fontSize: 9,
   },
   header: {

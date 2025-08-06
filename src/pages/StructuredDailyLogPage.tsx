@@ -5,10 +5,14 @@ import { useNavigate } from 'react-router-dom';
 import SeizureForm from '../components/forms/SeizureForm';
 import ExpressionForm from '../components/forms/ExpressionForm';
 import VitalSignsInput from '../components/forms/VitalSignsInput';
+import VitalsForm from '../components/forms/VitalsForm';
 import { HydrationForm } from '../components/forms/HydrationForm';
+import { ExcretionForm } from '../components/forms/ExcretionForm';
+import { ActivityForm } from '../components/forms/ActivityForm';
+import { SkinOralCareForm } from '../components/forms/SkinOralCareForm';
+import TubeFeedingForm from '../components/forms/TubeFeedingForm';
 import ExcretionInput from '../components/forms/ExcretionInput';
 import SleepInput from '../components/forms/SleepInput';
-import ActivityInput from '../components/forms/ActivityInput';
 import CareInput from '../components/forms/CareInput';
 import MedicationInput from '../components/forms/MedicationInput';
 import OtherInput from '../components/forms/OtherInput';
@@ -60,26 +64,115 @@ const StructuredDailyLogPage: FC = () => {
   // 施設名（データコンテキストから取得、なければデフォルト）
   const facilityName = "重心ケア施設";
 
-  // 安全なダミーデータ生成関数
+  // 安全なダミーデータ生成関数 → 実際のlocalStorage読み込み関数に変更
   const generateDailyLog = (userId: string, userName: string, date: string): DailyLog => {
-    return {
+    // localStorageから今日のイベントデータを取得
+    const allLogs = JSON.parse(localStorage.getItem('daily_logs') || '[]');
+    const todayLogs = allLogs.filter((log: any) => 
+      log.user_id === userId && 
+      log.created_at && 
+      log.created_at.startsWith(date)
+    );
+    
+    console.log('DEBUG - Found logs for', userId, 'on', date, ':', todayLogs.length, 'events');
+    
+    // 基本構造
+    const dailyLog: DailyLog = {
       userId,
       userName,
       date,
-      vitals: { 
-        temperature: 36.5, 
-        pulse: 80, 
-        spo2: 98,
-        blood_pressure_systolic: null,
-        blood_pressure_diastolic: null,
-        respiratory_rate: null,
-        measurement_time: '10:00'
-      },
-      hydration: [{ time: '10:00', amount: 200, type: 'oral', content: '水' }],
-      excretion: [{ time: '11:00', type: 'urine', amount: '中量' }],
+      vitals: null,
+      hydration: [],
+      excretion: [],
+      sleep: null,
       seizure: [],
-      notes: 'テスト用メモ'
+      activity: [],
+      care: [],
+      notes: ''
     };
+
+    // イベントタイプ別にデータを集計
+    todayLogs.forEach((log: any) => {
+      try {
+        switch (log.event_type) {
+          case 'vitals':
+            dailyLog.vitals = {
+              temperature: parseFloat(log.temperature) || null,
+              pulse: parseInt(log.pulse) || null,
+              spo2: parseInt(log.spo2) || null,
+              blood_pressure_systolic: parseInt(log.blood_pressure_systolic) || null,
+              blood_pressure_diastolic: parseInt(log.blood_pressure_diastolic) || null,
+              respiratory_rate: parseInt(log.respiratory_rate) || null,
+              measurement_time: log.event_timestamp || ''
+            };
+            break;
+            
+          case 'hydration':
+            dailyLog.hydration.push({
+              time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
+              amount: parseInt(log.amount) || 0,
+              type: log.intake_type === 'oral' ? 'oral' : 'tube',
+              content: log.meal_content || ''
+            });
+            break;
+            
+          case 'excretion':
+            dailyLog.excretion.push({
+              time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
+              type: log.record_type === 'urination' ? 'urine' : 'stool',
+              amount: log.urination?.amount || log.defecation?.amount || '',
+              color: log.urination?.color || '',
+              properties: log.defecation?.bristol_scale || '',
+              notes: log.notes || ''
+            });
+            break;
+            
+          case 'seizure':
+            if (!dailyLog.seizure) dailyLog.seizure = [];
+            dailyLog.seizure.push({
+              time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
+              type: log.seizure_type || '',
+              duration: (log.duration_minutes || 0) * 60, // Convert minutes to seconds
+              symptoms: log.seizure_phenomena || [],
+              postIctalState: log.post_ictal_state || '',
+              notes: log.notes || ''
+            });
+            break;
+            
+          case 'activity':
+            if (!dailyLog.activity) dailyLog.activity = [];
+            dailyLog.activity.push({
+              time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
+              title: log.activity_type || '',
+              description: log.notes || '',
+              mood: log.mood_during_activity || ''
+            });
+            break;
+            
+          default:
+            // その他のイベントタイプもcareに追加
+            if (!dailyLog.care) dailyLog.care = [];
+            dailyLog.care.push({
+              time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
+              type: 'other',
+              details: log.notes || `${log.event_type}: ${JSON.stringify(log, null, 2)}`
+            });
+        }
+      } catch (error) {
+        console.warn('Error processing log entry:', log, error);
+      }
+    });
+    
+    console.log('DEBUG - Generated dailyLog with items:', {
+      vitals: !!dailyLog.vitals,
+      hydration: dailyLog.hydration.length,
+      excretion: dailyLog.excretion.length,
+      seizure: dailyLog.seizure?.length || 0,
+      activity: dailyLog.activity?.length || 0,
+      care: dailyLog.care?.length || 0
+    });
+    
+    return dailyLog;
   };
 
   // ユーザー変更時のログ生成
@@ -238,12 +331,12 @@ const StructuredDailyLogPage: FC = () => {
             {logsReady && (
               <>
                 <ButtonsRow
-                  disabled={!dailyLog}
+                  disabled={!dailyLog || Object.keys(dailyLog).length === 0}
                   onPdf={() => setPdfPreviewOpen(true)}
                   onExcel={handleExportExcel}
                 />
 
-                {dailyLog && Object.keys(dailyLog).length === 0 && (
+                {(!dailyLog || Object.keys(dailyLog).length === 0) && (
                   <p className="text-sm text-orange-500 text-center">まだ記録がありません。下のタイルから入力してください。</p>
                 )}
               </>
@@ -285,9 +378,15 @@ const StructuredDailyLogPage: FC = () => {
               {/* Form Components */}
               {activeEventType === 'seizure' && <SeizureForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
               {activeEventType === 'expression' && <ExpressionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+              {activeEventType === 'vitals' && <VitalsForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
               {activeEventType === 'hydration' && <HydrationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
-              {/* Add other form components as needed */}
-              {!['seizure', 'expression', 'hydration'].includes(activeEventType) && (
+              {activeEventType === 'excretion' && <ExcretionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+              {activeEventType === 'activity' && <ActivityForm userId={selectedUserId} onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+              {activeEventType === 'skin_oral_care' && <SkinOralCareForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+              {activeEventType === 'tube_feeding' && <TubeFeedingForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+              
+              {/* ダミーフォーム表示（まだ実装していないもの） */}
+              {!['seizure', 'expression', 'vitals', 'hydration', 'excretion', 'activity', 'skin_oral_care', 'tube_feeding'].includes(activeEventType) && (
                 <div className="text-center text-gray-500 py-8">
                   <p>🚧 {CATEGORIES.find(c => c.key === activeEventType)?.label || activeEventType} フォームは準備中です</p>
                   <button

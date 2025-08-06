@@ -43,6 +43,23 @@ export const HydrationForm: FC<HydrationFormProps> = ({ onSave, isSubmitting, dr
 
   // フォームデータ
   const [formData, setFormData] = useState(draftData || initialFormData);
+  
+  // ドロップダウンの表示状態
+  const [dropdown, setDropdown] = useState({
+    intake_type: false,
+    meal_content: false,
+    texture: false,
+    temperature: false,
+    position: false,
+    intake_method: false,
+    assistance_level: false,
+    appetite: false,
+    swallowing: false,
+    special_care: false,
+    adverse_reaction: false,
+    intervention: false,
+    amount: false
+  });
 
   useEffect(() => {
     if (handleDraftChange) {
