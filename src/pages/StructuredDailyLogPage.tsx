@@ -28,14 +28,17 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { DailyLog, User } from '../types';
 import { useLocation } from 'react-router-dom';
+import { ButtonsRow } from '../components/ButtonsRow';
+import { RecordTile } from '../components/RecordTile';
+import { CATEGORIES, EventType as CatEventType } from '../utils/eventCategories';
 
-type EventType = 'seizure' | 'expression' | 'vitals' | 'hydration' | 'excretion' | 'sleep' | 'activity' | 'care' | 'skin_oral_care' | 'illness' | 'cough_choke' | 'tube_feeding' | 'medication_administration' | 'behavioral' | 'communication' | 'other';
+type EventType = 'seizure' | 'expression' | 'vitals' | 'hydration' | 'excretion' | 'sleep' | 'activity' | 'care' | 'skin_oral_care' | 'illness' | 'cough_choke' | 'tube_feeding' | 'medication_administration' | 'behavioral' | 'communication' | 'other' | 'positioning';
 
 const StructuredDailyLogPage: FC = () => {
   const navigate = useNavigate();
   const { users } = useData();
-  const { user: currentUser } = useAuth();
-  const { addNotification } = useNotification();
+  // const { user: currentUser } = useAuth(); // Commented out due to context type issues
+  // const { addNotification } = useNotification(); // Commented out due to context type issues
   const location = useLocation();
   
   // 基本的な状態管理
@@ -46,6 +49,7 @@ const StructuredDailyLogPage: FC = () => {
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
   const [logsReady, setLogsReady] = useState(false);
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // 現在選択されている利用者
   const selectedUser = users.find(user => user.id === selectedUserId);
@@ -133,6 +137,43 @@ const StructuredDailyLogPage: FC = () => {
     console.timeEnd('exportExcel');
   };
 
+  // Event Tile Click Handler
+  const handleTileClick = (eventType: CatEventType) => {
+    console.log('Tile clicked:', eventType);
+    setActiveEventType(eventType as EventType);
+    setShowEventEditor(true);
+  };
+
+  // Handle Save Event (from forms)
+  const handleSaveEvent = async (eventData: any) => {
+    setIsSubmitting(true);
+    
+    const newEvent = {
+      id: Date.now().toString(),
+      user_id: selectedUserId,
+      event_type: activeEventType,
+      created_at: new Date().toISOString(),
+      ...eventData
+    };
+    
+    // Save to localStorage
+    const existingLogs = JSON.parse(localStorage.getItem('daily_logs') || '[]');
+    const updatedLogs = [...existingLogs, newEvent];
+    localStorage.setItem('daily_logs', JSON.stringify(updatedLogs));
+    
+    // Regenerate daily log to reflect changes
+    if (selectedUser) {
+      const updatedLog = generateDailyLog(selectedUser.id, selectedUser.name, today);
+      setDailyLog(updatedLog);
+      console.log('DEBUG - generateDailyLog regenerated, items:', Object.keys(updatedLog).length);
+    }
+    
+    setIsSubmitting(false);
+    setShowEventEditor(false);
+    // TODO: Show success toast
+    console.log('Event saved:', newEvent);
+  };
+
   // DEBUG: State monitoring
   useEffect(() => {
     console.log('DEBUG - selectedUserId:', selectedUserId, 'selectedUser:', selectedUser);
@@ -140,35 +181,6 @@ const StructuredDailyLogPage: FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-2 sm:p-4">
-      {/* PDF・Excel出力ボタン */}
-      {selectedUserId && logsReady && (
-        <div className="mb-4 flex justify-end gap-2">
-          <button 
-            className="bg-green-600 text-white px-4 py-2 rounded" 
-            onClick={() => {
-              console.log('PDF Preview button clicked');
-              setPdfPreviewOpen(true);
-            }}
-          >
-            A4印刷用日誌プレビュー
-          </button>
-          <button 
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-            onClick={handleExportExcel}
-          >
-            Excel ダウンロード
-          </button>
-          {/* 強制テストボタン (開発用) */}
-          <button 
-            onClick={() => setPdfPreviewOpen(true)} 
-            className="hidden bg-red-500 text-white px-2 py-1 rounded text-xs" 
-            id="__forcePdf"
-          >
-            Force PDF
-          </button>
-        </div>
-      )}
-
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-4 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">📋 構造化日誌入力</h1>
@@ -218,8 +230,74 @@ const StructuredDailyLogPage: FC = () => {
               </div>
             </div>
 
-            <div className="text-center text-gray-500 text-sm">
-              構造化日誌の実装を準備中...
+            {/* PDF/Excel ボタン */}
+            {!logsReady && (
+              <p className="text-sm text-gray-500 text-center">構造化日誌の変換を準備中…</p>
+            )}
+            
+            {logsReady && (
+              <>
+                <ButtonsRow
+                  disabled={!dailyLog}
+                  onPdf={() => setPdfPreviewOpen(true)}
+                  onExcel={handleExportExcel}
+                />
+
+                {dailyLog && Object.keys(dailyLog).length === 0 && (
+                  <p className="text-sm text-orange-500 text-center">まだ記録がありません。下のタイルから入力してください。</p>
+                )}
+              </>
+            )}
+
+            {/* 記録入力タイルグリッド */}
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">📝 記録入力</h3>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {CATEGORIES.map(category => (
+                  <RecordTile
+                    key={category.key}
+                    icon={category.icon}
+                    label={category.label}
+                    onClick={() => handleTileClick(category.key)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Form Modals */}
+        {showEventEditor && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold">
+                  {CATEGORIES.find(c => c.key === activeEventType)?.label || activeEventType} 入力
+                </h3>
+                <button
+                  onClick={() => setShowEventEditor(false)}
+                  className="text-gray-500 hover:text-gray-700 text-xl"
+                >
+                  ×
+                </button>
+              </div>
+              
+              {/* Form Components */}
+              {activeEventType === 'seizure' && <SeizureForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+              {activeEventType === 'expression' && <ExpressionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+              {activeEventType === 'hydration' && <HydrationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+              {/* Add other form components as needed */}
+              {!['seizure', 'expression', 'hydration'].includes(activeEventType) && (
+                <div className="text-center text-gray-500 py-8">
+                  <p>🚧 {CATEGORIES.find(c => c.key === activeEventType)?.label || activeEventType} フォームは準備中です</p>
+                  <button
+                    onClick={() => setShowEventEditor(false)}
+                    className="mt-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                  >
+                    閉じる
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
