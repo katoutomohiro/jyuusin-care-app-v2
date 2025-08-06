@@ -26,45 +26,94 @@ import { DailyLog } from '../../types';
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [logForPdf, setLogForPdf] = useState<DailyLog | null>(null);
 
-  // ... (existing code)
+  /**
+   * 指定されたユーザーと日付のログを収集・整形する
+   */
+  const generateDailyLog = (userId: string, date: string): DailyLog | null => {
+    const user = getUserById(userId);
+    if (!user) return null;
+
+    const allLogs = JSON.parse(localStorage.getItem(`dailyLogs_${userId}`) || '[]');
+    const targetLogs = allLogs.filter((log: any) => (log.date || log.record_date || log.timestamp || '').startsWith(date));
+
+    if (targetLogs.length === 0) return null;
+
+    const dailyLog: DailyLog = {
+      userId: user.id,
+      userName: user.name,
+      date: date,
+      vitals: null,
+      hydration: [],
+      excretion: [],
+      seizure: [],
+      activity: [],
+      care: [],
+      notes: '',
+    };
+
+    let notes: string[] = [];
+
+    targetLogs.forEach((log: any) => {
+      switch (log.event_type) {
+        case 'vitals':
+          dailyLog.vitals = { ...log.data, measurement_time: log.timestamp.substring(11, 16) };
+          break;
+        case 'hydration':
+          dailyLog.hydration.push({ ...log.data, time: log.timestamp.substring(11, 16) });
+          break;
+        case 'excretion':
+          dailyLog.excretion.push({ ...log.data, time: log.timestamp.substring(11, 16) });
+          break;
+        case 'seizure':
+          dailyLog.seizure?.push({ ...log.data, time: log.timestamp.substring(11, 16) });
+          break;
+        case 'activity':
+          dailyLog.activity?.push({ ...log.data, time: log.timestamp.substring(11, 16) });
+          break;
+        case 'medication':
+          dailyLog.care?.push({ type: 'medication', details: `${log.data.medicationName} ${log.data.dose}`, time: log.timestamp.substring(11, 16) });
+          break;
+        case 'skin_oral_care':
+           dailyLog.care?.push({ type: 'skin_care', details: log.data.care_details, time: log.timestamp.substring(11, 16) });
+           break;
+        case 'special_notes':
+        case 'other':
+          notes.push(log.data.note);
+          break;
+      }
+    });
+    
+    dailyLog.notes = notes.join('\\n');
+
+    return dailyLog;
+  };
+
 
   // PDFプレビュー表示
   const handlePreviewPdf = () => {
     if (!selectedUser) return;
-    // TODO: この部分は実際のログデータから構築する必要があります
-    const dummyLog: DailyLog = {
-      userId: selectedUser.id,
-      userName: selectedUser.name,
-      date: new Date().toISOString().split('T')[0],
-      vitals: { measurement_time: '09:00', temperature: 36.8, pulse: 80, blood_pressure_systolic: 120, blood_pressure_diastolic: 80, spo2: 98, respiratory_rate: 18 },
-      hydration: [{ time: '10:00', type: 'oral', content: 'お茶', amount: 100 }],
-      excretion: [{ time: '11:00', type: 'urine', amount: '中量' }],
-      seizure: [],
-      activity: [],
-      care: [],
-      notes: '元気に過ごしました。',
-    };
-    setLogForPdf(dummyLog);
-    setShowPdfPreview(true);
+    const today = new Date().toISOString().split('T')[0];
+    const logData = generateDailyLog(selectedUser.id, today);
+    
+    if (logData) {
+      setLogForPdf(logData);
+      setShowPdfPreview(true);
+    } else {
+      alert('本日の記録データがありません。');
+    }
   };
 
   // PDFダウンロード処理
   const handleDownloadPdf = () => {
     if (!selectedUser) return;
-    // TODO: handlePreviewPdfと同様に、実際のログデータから構築する
-    const dummyLog: DailyLog = {
-      userId: selectedUser.id,
-      userName: selectedUser.name,
-      date: new Date().toISOString().split('T')[0],
-      vitals: { measurement_time: '09:00', temperature: 36.8, pulse: 80, blood_pressure_systolic: 120, blood_pressure_diastolic: 80, spo2: 98, respiratory_rate: 18 },
-      hydration: [{ time: '10:00', type: 'oral', content: 'お茶', amount: 100 }],
-      excretion: [{ time: '11:00', type: 'urine', amount: '中量' }],
-      seizure: [],
-      activity: [],
-      care: [],
-      notes: '元気に過ごしました。',
-    };
-    exportDailyLogPdf(dummyLog);
+    const today = new Date().toISOString().split('T')[0];
+    const logData = generateDailyLog(selectedUser.id, today);
+
+    if (logData) {
+      exportDailyLogPdf(logData);
+    } else {
+      alert('本日の記録データがありません。');
+    }
   };
 
   // ... (inside JSX)
