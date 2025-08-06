@@ -13,10 +13,85 @@ import CareInput from '../components/forms/CareInput';
 import MedicationInput from '../components/forms/MedicationInput';
 import OtherInput from '../components/forms/OtherInput';
 import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
-import DailyLogA4Print from '../components/DailyLogA4Print';
-import { exportDailyLog } from '../../services/DailyLogExportService';
-import { PDFViewer } from '@react-pdf/renderer';
-import { DailyLogPdfDoc } from '../components/pdf/DailyLogPdfDoc';
+// ... (imports)
+import { exportDailyLog, exportDailyLogPdf } from '../services/DailyLogExportService';
+import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
+import DailyLogPdfDoc from '../components/pdf/DailyLogPdfDoc';
+import { DailyLog } from '../../types';
+// ... (other imports)
+
+// ... (inside component)
+
+  // PDFプレビュー用のstate
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [logForPdf, setLogForPdf] = useState<DailyLog | null>(null);
+
+  // ... (existing code)
+
+  // PDFプレビュー表示
+  const handlePreviewPdf = () => {
+    if (!selectedUser) return;
+    // TODO: この部分は実際のログデータから構築する必要があります
+    const dummyLog: DailyLog = {
+      userId: selectedUser.id,
+      userName: selectedUser.name,
+      date: new Date().toISOString().split('T')[0],
+      vitals: { measurement_time: '09:00', temperature: 36.8, pulse: 80, blood_pressure_systolic: 120, blood_pressure_diastolic: 80, spo2: 98, respiratory_rate: 18 },
+      hydration: [{ time: '10:00', type: 'oral', content: 'お茶', amount: 100 }],
+      excretion: [{ time: '11:00', type: 'urine', amount: '中量' }],
+      seizure: [],
+      activity: [],
+      care: [],
+      notes: '元気に過ごしました。',
+    };
+    setLogForPdf(dummyLog);
+    setShowPdfPreview(true);
+  };
+
+  // PDFダウンロード処理
+  const handleDownloadPdf = () => {
+    if (!selectedUser) return;
+    // TODO: handlePreviewPdfと同様に、実際のログデータから構築する
+    const dummyLog: DailyLog = {
+      userId: selectedUser.id,
+      userName: selectedUser.name,
+      date: new Date().toISOString().split('T')[0],
+      vitals: { measurement_time: '09:00', temperature: 36.8, pulse: 80, blood_pressure_systolic: 120, blood_pressure_diastolic: 80, spo2: 98, respiratory_rate: 18 },
+      hydration: [{ time: '10:00', type: 'oral', content: 'お茶', amount: 100 }],
+      excretion: [{ time: '11:00', type: 'urine', amount: '中量' }],
+      seizure: [],
+      activity: [],
+      care: [],
+      notes: '元気に過ごしました。',
+    };
+    exportDailyLogPdf(dummyLog);
+  };
+
+  // ... (inside JSX)
+
+        <button onClick={handlePreviewPdf} className="bg-blue-500 text-white p-2 rounded-lg">
+          A4印刷用日誌プレビュー
+        </button>
+        <button onClick={handleDownloadPdf} className="bg-green-500 text-white p-2 rounded-lg ml-2">
+          PDFダウンロード
+        </button>
+
+      {/* PDFプレビューモーダル */}
+      {showPdfPreview && logForPdf && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-4 rounded-lg w-11/12 h-5/6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">PDFプレビュー</h2>
+              <button onClick={() => setShowPdfPreview(false)} className="text-2xl">&times;</button>
+            </div>
+            <PDFViewer width="100%" height="90%">
+              <DailyLogPdfDoc log={logForPdf} />
+            </PDFViewer>
+          </div>
+        </div>
+      )}
+
+// ... (rest of the component)
 // import DailyLogPdfDocument from '../components/DailyLogPdfDocument';
 // import { PDFDownloadLink } from '@react-pdf/renderer';
 import ErrorBoundary from '../components/ErrorBoundary';
