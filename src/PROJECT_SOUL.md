@@ -286,6 +286,7 @@ KPI 例：
 ---
 
 ## 14. Change Log
+2025-08-06 12:55 【Rollback】reset main → 62ed069 (last known good build)
 2025-08-02 16:00 【同期UI・履歴・手動同期ボタン等の現場最適化UI拡張】
  - CareDashboardにSyncStatusBar（同期状況・手動同期ボタン・最終同期時刻）を新規実装。
  - DataContextのsyncStatusと連携し、「同期中」「同期完了」「同期エラー」等を即時UI表示。
