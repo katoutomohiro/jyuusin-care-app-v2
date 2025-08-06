@@ -1,17 +1,71 @@
+import React from 'react';
 import { DailyLog, User } from '../types';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { pdf } from '@react-pdf/renderer';
 import { saveAs } from 'file-saver';
+import * as XLSX from 'xlsx';
 import DailyLogPdfDoc from '../components/pdf/DailyLogPdfDoc';
 
 
 /**
- * Excelエクスポート（現在はダミー）
+ * A4 Excel エクスポート - PDF と同じ見た目で出力
  */
-export async function exportDailyLogExcel(): Promise<void> {
-  /* eslint-disable-next-line no-console */
-  console.warn('exportDailyLogExcel stub');
+export async function exportDailyLogExcel(
+  log: DailyLog,
+  user: User,
+  date: string
+): Promise<void> {
+  try {
+    /* 2-A. シート用 2D 配列を用意 */
+    const sheetData = [
+      ['氏名', user.name, '', '', '記録日', date],
+      [],
+      ['■ バイタル / Vitals'],
+      ['体温', log.vitals?.temperature ?? '', '脈拍', log.vitals?.pulse ?? '', 'SpO2', log.vitals?.spo2 ?? ''],
+      [],
+      ['■ Hydration', '', '■ Excretion'],
+      ...mergeHydrationExcretion(log),
+      [],
+      ['■ Seizure 件数', log.seizure?.length ?? 0],
+      [],
+      ['■ Notes'],
+      [log.notes ?? ''],
+      [],
+      ['保護者署名：', '____________________________']
+    ];
+
+    /* 2-B. ワークブック生成 */
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+    /* 罫線・列幅などは最低限だけ */
+    XLSX.utils.book_append_sheet(wb, ws, 'DailyLog');
+
+    /* 2-C. 保存 */
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    saveAs(
+      new Blob([wbout], { type: 'application/octet-stream' }),
+      `dailylog_${user.id}_${date}.xlsx`
+    );
+  } catch (error) {
+    console.error("Excelの生成または保存に失敗しました。", error);
+  }
+}
+
+/* helper – 左右 2 列レイアウトで行を生成 */
+function mergeHydrationExcretion(log: DailyLog): any[][] {
+  const max = Math.max(log.hydration?.length ?? 0, log.excretion?.length ?? 0);
+  const rows: any[][] = [];
+  for (let i = 0; i < max; i++) {
+    const h = log.hydration?.[i];
+    const e = log.excretion?.[i];
+    rows.push([
+      h ? `${h.time} ${h.amount}ml (${h.method || h.type})` : '',
+      '',
+      e ? `${e.time} ${e.type} (${e.amount})` : ''
+    ]);
+  }
+  return rows;
 }
 
 /**
