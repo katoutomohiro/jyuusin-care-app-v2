@@ -44,6 +44,8 @@ const StructuredDailyLogPage: FC = () => {
   const [showEventEditor, setShowEventEditor] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [logsReady, setLogsReady] = useState(false);
+  const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
   
   // 現在選択されている利用者
   const selectedUser = users.find(user => user.id === selectedUserId);
@@ -54,16 +56,12 @@ const StructuredDailyLogPage: FC = () => {
   // 施設名（データコンテキストから取得、なければデフォルト）
   const facilityName = "重心ケア施設";
 
-  // ダミーデータ生成関数
-  const generateDailyLog = (): DailyLog => {
-    if (!selectedUser) {
-      throw new Error('利用者が選択されていません');
-    }
-    
+  // 安全なダミーデータ生成関数
+  const generateDailyLog = (userId: string, userName: string, date: string): DailyLog => {
     return {
-      userId: selectedUser.id,
-      userName: selectedUser.name,
-      date: today,
+      userId,
+      userName,
+      date,
       vitals: { 
         temperature: 36.5, 
         pulse: 80, 
@@ -80,17 +78,46 @@ const StructuredDailyLogPage: FC = () => {
     };
   };
 
+  // ユーザー変更時のログ生成
+  useEffect(() => {
+    if (!selectedUserId || users.length === 0) {
+      setLogsReady(false);
+      setDailyLog(null);
+      return;
+    }
+    
+    (async () => {
+      console.log('DEBUG - Starting generateDailyLog for userId:', selectedUserId);
+      setLogsReady(false);
+      
+      const user = users.find(u => u.id === selectedUserId);
+      if (!user) {
+        console.error('User not found:', selectedUserId);
+        return;
+      }
+      
+      try {
+        const log = generateDailyLog(user.id, user.name, today);
+        console.log('DEBUG - generateDailyLog done, items:', Object.keys(log).length);
+        setDailyLog(log);
+        setLogsReady(true);
+      } catch (error) {
+        console.error('generateDailyLog failed:', error);
+        setLogsReady(false);
+      }
+    })();
+  }, [selectedUserId, users, today]);
+
   // Excel Export Handler
   const handleExportExcel = async () => {
     console.time('exportExcel');
     console.log('Excel export started');
     try {
-      if (!selectedUser) {
-        alert('利用者が選択されていません。');
+      if (!selectedUser || !dailyLog || !logsReady) {
+        alert('利用者データの準備ができていません。少しお待ちください。');
         return;
       }
       
-      const dailyLog = generateDailyLog();
       console.log('Generated dailyLog:', dailyLog);
       
       await exportDailyLogExcel(dailyLog, selectedUser, today);
@@ -114,7 +141,7 @@ const StructuredDailyLogPage: FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-2 sm:p-4">
       {/* PDF・Excel出力ボタン */}
-      {selectedUserId && (
+      {selectedUserId && logsReady && (
         <div className="mb-4 flex justify-end gap-2">
           <button 
             className="bg-green-600 text-white px-4 py-2 rounded" 
@@ -130,6 +157,14 @@ const StructuredDailyLogPage: FC = () => {
             onClick={handleExportExcel}
           >
             Excel ダウンロード
+          </button>
+          {/* 強制テストボタン (開発用) */}
+          <button 
+            onClick={() => setPdfPreviewOpen(true)} 
+            className="hidden bg-red-500 text-white px-2 py-1 rounded text-xs" 
+            id="__forcePdf"
+          >
+            Force PDF
           </button>
         </div>
       )}
@@ -190,11 +225,11 @@ const StructuredDailyLogPage: FC = () => {
         )}
 
         {/* PDF Preview Modal */}
-        {selectedUserId && selectedUser && (
+        {selectedUserId && selectedUser && dailyLog && (
           <PdfPreviewModal
             open={pdfPreviewOpen}
             onClose={() => setPdfPreviewOpen(false)}
-            dailyLog={generateDailyLog()}
+            dailyLog={dailyLog}
             user={selectedUser}
             recordDate={today}
           />

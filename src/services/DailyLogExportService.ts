@@ -52,9 +52,22 @@ export async function exportDailyLogExcel(
     /* 2-D. ファイル出力 */
     XLSX.utils.book_append_sheet(wb, ws, 'DailyLog');
     const fileName = `dailylog_${user.id}_${date}.xlsx`;
-    XLSX.writeFile(wb, fileName);
-
-    console.log(`Excel ファイル "${fileName}" を保存しました`);
+    
+    // Blob サイズチェック付きExcel生成
+    const buffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+    if (!buffer || buffer.length === 0) {
+      throw new Error('Excel blob empty - workbook generation failed');
+    }
+    
+    console.log(`Excel buffer size: ${buffer.length} bytes`);
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    
+    if (!blob || blob.size === 0) {
+      throw new Error('Excel blob empty - blob creation failed');
+    }
+    
+    saveAs(blob, fileName);
+    console.log(`Excel ファイル "${fileName}" を保存しました (${blob.size} bytes)`);
   } catch (error) {
     console.error('Excel エクスポートエラー:', error);
     throw error;
