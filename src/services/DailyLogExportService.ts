@@ -38,34 +38,73 @@ export async function exportDailyLogExcel(
     /* 2-B. ワークブック生成 */
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(sheetData);
-    /* 罫線・列幅などは最低限だけ */
-    XLSX.utils.book_append_sheet(wb, ws, 'DailyLog');
 
-    /* 2-C. 保存 */
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    saveAs(
-      new Blob([wbout], { type: 'application/octet-stream' }),
-      `dailylog_${user.id}_${date}.xlsx`
-    );
+    /* 2-C. A4 印刷フォーマット設定 */
+    ws['!margins'] = {
+      left: 0.7,
+      right: 0.7,
+      top: 0.75,
+      bottom: 0.75,
+      header: 0.3,
+      footer: 0.3,
+    };
+
+    /* 2-D. ファイル出力 */
+    XLSX.utils.book_append_sheet(wb, ws, 'DailyLog');
+    const fileName = `dailylog_${user.id}_${date}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+
+    console.log(`Excel ファイル "${fileName}" を保存しました`);
   } catch (error) {
-    console.error("Excelの生成または保存に失敗しました。", error);
+    console.error('Excel エクスポートエラー:', error);
+    throw error;
   }
 }
 
-/* helper – 左右 2 列レイアウトで行を生成 */
-function mergeHydrationExcretion(log: DailyLog): any[][] {
-  const max = Math.max(log.hydration?.length ?? 0, log.excretion?.length ?? 0);
-  const rows: any[][] = [];
-  for (let i = 0; i < max; i++) {
-    const h = log.hydration?.[i];
-    const e = log.excretion?.[i];
-    rows.push([
-      h ? `${h.time} ${h.amount}ml (${h.method || h.type})` : '',
-      '',
-      e ? `${e.time} ${e.type} (${e.amount})` : ''
-    ]);
+/**
+ * Hydration と Excretion データを A4 レイアウト用に結合
+ */
+function mergeHydrationExcretion(log: DailyLog): (string | number)[][] {
+  const hydrationRows = [];
+  const excretionRows = [];
+
+  /* Hydration 行構築 */
+  if (log.hydration && log.hydration.length > 0) {
+    log.hydration.forEach((h) => {
+      hydrationRows.push([
+        h.time || '',
+        `${h.amount || 0}ml`,
+        h.content || '',
+      ]);
+    });
+  } else {
+    hydrationRows.push(['時間', '摂取量', '種類']);
   }
-  return rows;
+
+  /* Excretion 行構築 */
+  if (log.excretion && log.excretion.length > 0) {
+    log.excretion.forEach((e) => {
+      excretionRows.push([
+        e.time || '',
+        e.amount || '',
+        e.properties || '',
+      ]);
+    });
+  } else {
+    excretionRows.push(['時間', '量', '便の性状']);
+  }
+
+  /* 左右に並べて 2D 配列合成 */
+  const maxRows = Math.max(hydrationRows.length, excretionRows.length);
+  const merged = [];
+
+  for (let i = 0; i < maxRows; i++) {
+    const leftRow = hydrationRows[i] || ['', '', ''];
+    const rightRow = excretionRows[i] || ['', '', ''];
+    merged.push([...leftRow, ...rightRow]);
+  }
+
+  return merged;
 }
 
 /**
@@ -73,10 +112,13 @@ function mergeHydrationExcretion(log: DailyLog): any[][] {
  */
 export async function exportDailyLog(log: DailyLog, user: User, date: string): Promise<void> {
   try {
-    const blob = await pdf(<DailyLogPdfDoc log={log} user={user} recordDate={date} />).toBlob();
+    const element = React.createElement(DailyLogPdfDoc, { log, user, recordDate: date });
+    const blob = await pdf(element).toBlob();
     saveAs(blob, `dailylog_${user.id}_${date}.pdf`);
+    console.log(`PDF ファイル "dailylog_${user.id}_${date}.pdf" を保存しました`);
   } catch (error) {
     console.error("PDFの生成または保存に失敗しました。", error);
+    throw error;
   }
 }
 

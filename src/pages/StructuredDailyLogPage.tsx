@@ -16,7 +16,8 @@ import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
 import DailyLogA4Print from '../components/DailyLogA4Print';
 import { exportDailyLog, exportDailyLogExcel } from '../services/DailyLogExportService';
 import { PDFViewer } from '@react-pdf/renderer';
-import { DailyLogPdfDoc } from '../components/pdf/DailyLogPdfDoc';
+import DailyLogPdfDoc from '../components/pdf/DailyLogPdfDoc';
+import PdfPreviewModal from '../components/pdf/PdfPreviewModal';
 // import DailyLogPdfDocument from '../components/DailyLogPdfDocument';
 // import { PDFDownloadLink } from '@react-pdf/renderer';
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -25,7 +26,7 @@ import InlineEditableList from '../components/InlineEditableList';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
-import { AIPredictionService } from '../services/AIPredictionService';
+import { DailyLog, User } from '../types';
 import { useLocation } from 'react-router-dom';
 
 type EventType = 'seizure' | 'expression' | 'vitals' | 'hydration' | 'excretion' | 'sleep' | 'activity' | 'care' | 'skin_oral_care' | 'illness' | 'cough_choke' | 'tube_feeding' | 'medication_administration' | 'behavioral' | 'communication' | 'other';
@@ -42,6 +43,7 @@ const StructuredDailyLogPage: FC = () => {
   const [activeEventType, setActiveEventType] = useState<EventType>('seizure');
   const [showEventEditor, setShowEventEditor] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
   
   // 現在選択されている利用者
   const selectedUser = users.find(user => user.id === selectedUserId);
@@ -52,35 +54,56 @@ const StructuredDailyLogPage: FC = () => {
   // 施設名（データコンテキストから取得、なければデフォルト）
   const facilityName = "重心ケア施設";
 
+  // ダミーデータ生成関数
+  const generateDailyLog = (): DailyLog => {
+    if (!selectedUser) {
+      throw new Error('利用者が選択されていません');
+    }
+    
+    return {
+      userId: selectedUser.id,
+      userName: selectedUser.name,
+      date: today,
+      vitals: { 
+        temperature: 36.5, 
+        pulse: 80, 
+        spo2: 98,
+        blood_pressure_systolic: null,
+        blood_pressure_diastolic: null,
+        respiratory_rate: null,
+        measurement_time: '10:00'
+      },
+      hydration: [{ time: '10:00', amount: 200, type: 'oral', content: '水' }],
+      excretion: [{ time: '11:00', type: 'urine', amount: '中量' }],
+      seizure: [],
+      notes: 'テスト用メモ'
+    };
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-2 sm:p-4">
       {/* PDF・Excel出力ボタン */}
       {selectedUserId && (
         <div className="mb-4 flex justify-end gap-2">
-          <button className="bg-green-600 text-white px-4 py-2 rounded" onClick={() => setShowPdfPreview(true)}>
+          <button 
+            className="bg-green-600 text-white px-4 py-2 rounded" 
+            onClick={() => setPdfPreviewOpen(true)}
+          >
             A4印刷用日誌プレビュー
           </button>
           <button 
             className="bg-blue-600 text-white px-4 py-2 rounded"
             onClick={() => {
               try {
-                // 暫定でダミーデータを使用
-                const dummyLog = {
-                  vitals: { temperature: 36.5, pulse: 80, spo2: 98 },
-                  hydration: [{ time: '10:00', amount: 200, type: 'oral', content: '水' }],
-                  excretion: [{ time: '11:00', type: 'urine', amount: '中量' }],
-                  seizure: [],
-                  notes: 'テスト用メモ'
-                };
-                
                 if (selectedUser) {
-                  exportDailyLogExcel(dummyLog, selectedUser, today);
+                  const dailyLog = generateDailyLog();
+                  exportDailyLogExcel(dailyLog, selectedUser, today);
                 } else {
                   alert('利用者が選択されていません。');
                 }
               } catch (error) {
                 console.error('Excel出力エラー:', error);
-                alert('Excel出力に失敗しました: ' + error.message);
+                alert('Excel出力に失敗しました: ' + (error as Error).message);
               }
             }}
           >
@@ -142,6 +165,17 @@ const StructuredDailyLogPage: FC = () => {
               構造化日誌の実装を準備中...
             </div>
           </div>
+        )}
+
+        {/* PDF Preview Modal */}
+        {selectedUserId && selectedUser && (
+          <PdfPreviewModal
+            open={pdfPreviewOpen}
+            onClose={() => setPdfPreviewOpen(false)}
+            dailyLog={generateDailyLog()}
+            user={selectedUser}
+            recordDate={today}
+          />
         )}
       </div>
     </div>
