@@ -15,9 +15,9 @@ import OtherInput from '../components/forms/OtherInput';
 import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
 // ... (imports)
 import { exportDailyLog, exportDailyLogPdf } from '../services/DailyLogExportService';
-import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
+import { PDFViewer } from '@react-pdf/renderer';
 import DailyLogPdfDoc from '../components/pdf/DailyLogPdfDoc';
-import { DailyLog } from '../../types';
+import { DailyLog, User } from '../../types';
 // ... (other imports)
 
 // ... (inside component)
@@ -110,7 +110,7 @@ import { DailyLog } from '../../types';
     const logData = generateDailyLog(selectedUser.id, today);
 
     if (logData) {
-      exportDailyLogPdf(logData);
+      exportDailyLog(logData, selectedUser, today);
     } else {
       alert('本日の記録データがありません。');
     }
@@ -118,10 +118,16 @@ import { DailyLog } from '../../types';
 
   // ... (inside JSX)
 
-        <button onClick={handlePreviewPdf} className="bg-blue-500 text-white p-2 rounded-lg">
+        <button
+          className="bg-blue-500 text-white p-2 rounded-lg"
+          onClick={handlePreviewPdf}
+        >
           A4印刷用日誌プレビュー
         </button>
-        <button onClick={handleDownloadPdf} className="bg-green-500 text-white p-2 rounded-lg ml-2">
+        <button
+          className="bg-green-500 text-white p-2 rounded-lg ml-2"
+          onClick={handleDownloadPdf}
+        >
           PDFダウンロード
         </button>
 

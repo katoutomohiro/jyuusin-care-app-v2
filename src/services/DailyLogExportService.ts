@@ -1,13 +1,29 @@
-import { DailyLog } from '../types';
+import { DailyLog, User } from '../types';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { pdf } from '@react-pdf/renderer';
+import { saveAs } from 'file-saver';
+import DailyLogPdfDoc from '../components/pdf/DailyLogPdfDoc';
+
 
 /**
  * Excelエクスポート（現在はダミー）
  */
-export async function exportDailyLog(): Promise<void> {
+export async function exportDailyLogExcel(): Promise<void> {
   /* eslint-disable-next-line no-console */
-  console.warn('exportDailyLog stub');
+  console.warn('exportDailyLogExcel stub');
+}
+
+/**
+ * @react-pdf/renderer を使ってPDFを生成し、ダウンロードさせる
+ */
+export async function exportDailyLog(log: DailyLog, user: User, date: string): Promise<void> {
+  try {
+    const blob = await pdf(<DailyLogPdfDoc log={log} user={user} recordDate={date} />).toBlob();
+    saveAs(blob, `dailylog_${user.id}_${date}.pdf`);
+  } catch (error) {
+    console.error("PDFの生成または保存に失敗しました。", error);
+  }
 }
 
 /**

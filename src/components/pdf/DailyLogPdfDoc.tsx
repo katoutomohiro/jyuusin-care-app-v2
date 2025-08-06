@@ -1,213 +1,126 @@
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
-import { DailyLog, Vitals, Hydration, Excretion, Seizure, Activity, Care } from '../../types';
+import { DailyLog, User } from '../../types';
 
-// TODO: Noto Sans JPフォントを/public/fontsなどに配置し、パスを解決する
+// TODO: フォントファイル（NotoSansJP-Regular.otf）を public/fonts などに配置する必要がある
 // Font.register({
 //   family: 'Noto Sans JP',
-//   fonts: [
-//     { src: '/fonts/NotoSansJP-Regular.otf' },
-//     { src: '/fonts/NotoSansJP-Bold.otf', fontWeight: 'bold' },
-//   ]
+//   src: '/fonts/NotoSansJP-Regular.otf'
 // });
 
 const styles = StyleSheet.create({
-  page: {
+  body: {
+    paddingTop: 35,
+    paddingBottom: 65,
+    paddingHorizontal: 35,
     fontFamily: 'Noto Sans JP',
     fontSize: 9,
-    paddingTop: 30,
-    paddingBottom: 50, // フッター用にスペース確保
-    paddingHorizontal: 30,
-    backgroundColor: '#fff',
   },
   header: {
-    marginBottom: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    borderBottomColor: '#888',
     paddingBottom: 10,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  userInfo: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-  },
-  signatureBox: {
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-  },
-  signature: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-    width: 120,
-    height: 40,
-    marginTop: 5,
-  },
   section: {
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    backgroundColor: '#f0f0f0',
-    paddingVertical: 4,
-    paddingHorizontal: 6,
     marginBottom: 8,
-    borderRadius: 3,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
-  footer: {
-    position: 'absolute',
-    bottom: 25,
-    left: 30,
-    right: 30,
-    textAlign: 'center',
+  sectionTitle:{ 
+    fontSize: 11, 
+    fontWeight: 'bold', // 700 is equivalent to 'bold'
+    marginTop: 14, 
+    marginBottom: 4,
+  },
+  row: {
+    fontSize: 9,
+    lineHeight: 1.2,
+  },
+  none: {
     fontSize: 8,
-    color: 'grey',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    color: '#999',
   },
-  table: {
-    display: "flex",
-    width: "auto",
-    borderStyle: "solid",
-    borderWidth: 1,
-    borderColor: '#bfbfbf',
-    borderRightWidth: 0,
-    borderBottomWidth: 0,
-    marginBottom: 10,
+  columns: { 
+    flexDirection: 'row', 
+    gap: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    paddingBottom: 8,
+    marginBottom: 8,
   },
-  tableRow: {
-    flexDirection: "row"
+  colLeft:     { flex: 1 },
+  colRight:    { flex: 1 },
+  signatureBox:{ 
+    marginTop: 25, 
+    borderTopWidth: 1, 
+    borderTopColor: '#888',
+    paddingTop: 6, 
+    fontSize: 10 
   },
-  tableColHeader: {
-    backgroundColor: '#f0f0f0',
-    padding: 4,
-    borderStyle: "solid",
-    borderWidth: 1,
-    borderColor: '#bfbfbf',
-    borderLeftWidth: 0,
-    borderTopWidth: 0,
-    fontWeight: 'bold',
-  },
-  tableCol: {
-    padding: 4,
-    borderStyle: "solid",
-    borderWidth: 1,
-    borderColor: '#bfbfbf',
-    borderLeftWidth: 0,
-    borderTopWidth: 0,
-  },
-  flex1: { flex: 1 },
-  flex2: { flex: 2 },
-  flex3: { flex: 3 },
-  flex4: { flex: 4 },
 });
 
 interface DailyLogPdfDocProps {
   log: DailyLog;
+  user: User;
+  recordDate: string; // "YYYY-MM-DD"
 }
 
-const renderVitals = (vitals: Vitals | null) => (
-  <View style={styles.section}>
-    <Text style={styles.sectionTitle}>バイタルサイン</Text>
-    {vitals ? (
-       <Text>測定時間: {vitals.measurement_time}, 体温: {vitals.temperature}°C, 脈拍: {vitals.pulse}, 血圧: {vitals.blood_pressure_systolic}/{vitals.blood_pressure_diastolic}, SpO2: {vitals.spo2}%</Text>
-    ) : <Text>記録なし</Text>}
-  </View>
-);
-
-const renderTable = <T extends object>(title: string, data: T[] | undefined, columns: { header: string; accessor: keyof T, flex?: number }[]) => {
-  if (!data || data.length === 0) {
-    return (
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        <Text>記録なし</Text>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <View style={styles.table}>
-        <View style={styles.tableRow}>
-          {columns.map(col => <Text key={String(col.accessor)} style={[styles.tableColHeader, { flex: col.flex || 1 }]}>{col.header}</Text>)}
-        </View>
-        {data.map((row, rowIndex) => (
-          <View key={rowIndex} style={styles.tableRow}>
-            {columns.map(col => <Text key={String(col.accessor)} style={[styles.tableCol, { flex: col.flex || 1 }]}>{String(row[col.accessor] ?? '')}</Text>)}
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-};
-
-
-const DailyLogPdfDoc: React.FC<DailyLogPdfDocProps> = ({ log }) => (
+const DailyLogPdfDoc: React.FC<DailyLogPdfDocProps> = ({ log, user, recordDate }) => (
   <Document>
-    <Page size="A4" style={styles.page} wrap>
-      {/* ヘッダー */}
-      <View style={styles.header} fixed>
-        <View style={styles.userInfo}>
-          <Text style={styles.title}>{log.userName} 様 日次記録</Text>
-          <Text>日付: {log.date}</Text>
-        </View>
-        <View style={styles.signatureBox}>
-          <Text>確認者署名:</Text>
-          <View style={styles.signature} />
-        </View>
-      </View>
+    <Page size="A4" style={styles.body}>
+      {/* Header */}
+      <Text style={styles.header}>{`${user.name}　${recordDate}`}</Text>
 
-      {/* 各記録セクション */}
-      {renderVitals(log.vitals)}
-      {renderTable<Hydration>('水分・食事', log.hydration, [
-        { header: '時間', accessor: 'time', flex: 1 },
-        { header: '種類', accessor: 'type', flex: 1 },
-        { header: '内容', accessor: 'content', flex: 3 },
-        { header: '量(ml)', accessor: 'amount', flex: 1 },
-      ])}
-      {renderTable<Excretion>('排泄', log.excretion, [
-        { header: '時間', accessor: 'time', flex: 1 },
-        { header: '種類', accessor: 'type', flex: 1 },
-        { header: '量', accessor: 'amount', flex: 1 },
-        { header: '性状', accessor: 'properties', flex: 2 },
-        { header: '備考', accessor: 'notes', flex: 3 },
-      ])}
-      {renderTable<Seizure>('発作', log.seizure, [
-        { header: '時間', accessor: 'time', flex: 1 },
-        { header: '持続(秒)', accessor: 'duration', flex: 1 },
-        { header: '種類', accessor: 'type', flex: 2 },
-        { header: '事後状態', accessor: 'postIctalState', flex: 3 },
-      ])}
-      {renderTable<Activity>('活動', log.activity, [
-        { header: '時間', accessor: 'time', flex: 1 },
-        { header: '活動内容', accessor: 'title', flex: 3 },
-        { header: '様子', accessor: 'mood', flex: 2 },
-      ])}
-      {renderTable<Care>('医療ケア', log.care, [
-        { header: '時間', accessor: 'time', flex: 1 },
-        { header: 'ケア内容', accessor: 'type', flex: 2 },
-        { header: '詳細', accessor: 'details', flex: 4 },
-      ])}
-      
+      {/* Vitals */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>特記事項</Text>
-        <Text>{log.notes || '特記事項なし'}</Text>
+        <Text style={styles.sectionTitle}>■ バイタル / Vitals</Text>
+        {log.vitals ? (
+          <Text style={styles.row}>{`体温 ${log.vitals.temperature ?? 'N/A'}℃　脈拍 ${log.vitals.pulse ?? 'N/A'}　SpO2 ${log.vitals.spo2 ?? 'N/A'}%`}</Text>
+        ) : <Text style={styles.none}>※ 記録なし</Text>}
       </View>
 
-      {/* フッター */}
-      <View style={styles.footer} fixed>
-        <Text>重心ケアアプリ</Text>
-        <Text render={({ pageNumber, totalPages }) => (
-          `ページ ${pageNumber} / ${totalPages}`
-        )} />
+      {/* Columns for Hydration and Excretion */}
+      <View style={styles.columns}>
+        <View style={styles.colLeft}>
+          <Text style={styles.sectionTitle}>■ 水分・食事 / Hydration</Text>
+          {log.hydration && log.hydration.length > 0 ? log.hydration.map((h, i) => (
+            <Text key={i} style={styles.row}>{`${h.time}　${h.content} ${h.amount}ml`}</Text>
+          )) : <Text style={styles.none}>※ 記録なし</Text>}
+        </View>
+        <View style={styles.colRight}>
+          <Text style={styles.sectionTitle}>■ 排泄 / Excretion</Text>
+          {log.excretion && log.excretion.length > 0 ? log.excretion.map((e, i) => (
+            <Text key={i} style={styles.row}>{`${e.time}　${e.type} (${e.amount})`}</Text>
+          )) : <Text style={styles.none}>※ 記録なし</Text>}
+        </View>
       </View>
+      
+      {/* Seizure */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>■ 発作 / Seizure</Text>
+        <Text style={styles.row}>{log.seizure ? `${log.seizure.length} 件` : '0 件'}</Text>
+      </View>
+
+      {/* Notes */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>■ 特記事項・担当職員 / Notes</Text>
+        {log.notes ? (
+          <Text style={styles.row}>{log.notes}</Text>
+        ) : (
+          <Text style={styles.none}>※ 記録なし</Text>
+        )}
+      </View>
+
+      {/* Signature Box */}
+      <View style={styles.signatureBox}>
+        <Text>保護者署名 : ______________________</Text>
+      </View>
+
     </Page>
   </Document>
 );
