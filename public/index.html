@@ -4,9 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!--
-      ① style-src へ https://fonts.gstatic.com を追加し
-         Google NotoSansJP の埋め込み CSS を許可
-      ② "unsafe-inline" は Tailwind の dev 注入用、必要
+      ■ CSP 追加説明
+        Chrome は <link rel="stylesheet"> を "style-src-elem" で評価します。
+        style-src を書くだけでは translate.googleapis.com 由来の CSS がブロックされるため
+        style-src-elem にも *同じ許可リスト* を重ねます。
+      Google 翻訳拡張が挿入する stylesheets を許可するため
+        style-src に https://*.gstatic.com を追加
+      "unsafe-inline" は Tailwind JIT 用に存続
     -->
     <meta http-equiv="Content-Security-Policy" content="
        default-src 'self';
@@ -14,9 +18,16 @@
        connect-src 'self' blob:;
        font-src    'self' blob: data: https://fonts.gstatic.com;
        img-src     'self' blob: data:;
-       style-src   'self' 'unsafe-inline' blob: https://fonts.gstatic.com;
+       style-src   'self' 'unsafe-inline' blob: https://fonts.gstatic.com https://*.gstatic.com;
+       style-src-elem  'self' 'unsafe-inline' blob: https://fonts.gstatic.com https://*.gstatic.com;
        worker-src  'self' blob:;
     ">
+    <!-- 翻訳拡張ごと止めたい場合は ↓ をコメントアウト解除
+    <meta name="google" content="notranslate">
+    -->
+    <!-- Google 翻訳を抑止してスタイル注入を根本的に防ぐ場合はこちらを↑の meta の後に追加
+    <meta name="google" content="notranslate">
+    -->
     <title>重心ケアアプリ v2.0 - AIエージェント協働システム</title>
     <style>
         * {

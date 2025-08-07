@@ -3,15 +3,19 @@ import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/rendere
 import { DailyLog, User } from '../../types';
 
 /**
- * 400 / 700 の normal だけ登録し、italic 要求は
- *   <Text style={{ fontStyle:'italic' }}>  →  renderer が自動で faux-italic
- * にフォールバックさせる。これで "Unknown font format" が消える。
+ * react-pdf は OTF より TTF/TT Collection を安定して解析する。
+ * 公式 NotoSansJP TTF を使用して Unknown font format を防ぐ。
+ * （fonts ディレクトリに .ttf を配置済みであること）
+ * react-pdf が italics を要求した場合に備え、
+ * 同じファイルを使って faux-italic として登録しておく。
  */
 Font.register({
   family: 'NotoSansJP',
   fonts: [
-    { src: '/fonts/NotoSansJP-Regular.ttf', fontWeight: 400 },
-    { src: '/fonts/NotoSansJP-Bold.ttf',    fontWeight: 700 }
+    { src: '/fonts/NotoSansJP-Regular.ttf', fontWeight: 400, fontStyle: 'normal' },
+    { src: '/fonts/NotoSansJP-Regular.ttf', fontWeight: 400, fontStyle: 'italic' },
+    { src: '/fonts/NotoSansJP-Bold.ttf',    fontWeight: 700, fontStyle: 'normal' },
+    { src: '/fonts/NotoSansJP-Bold.ttf',    fontWeight: 700, fontStyle: 'italic' }
   ]
 });
 
