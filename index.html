@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+<!DOCTYP    <!-- エラー撲滅用CSP設定 -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' wasm-unsafe-eval blob: data:; worker-src 'self' blob:; connect-src 'self' data: blob:; font-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; frame-src 'self';"&gt;html>
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
@@ -41,7 +42,7 @@
 
       // 本番環境でのみService WorkerとWebSocketを無効化
       if (isProduction) {
-        console.log('本番環境と判定。ServiceWorkerとWebSocketを無効化します。');
+        if (window.location.hostname.includes('localhost')) console.debug('本番環境と判定。ServiceWorkerとWebSocketを無効化します。');
         
         // Service Worker完全無効化
         if ('serviceWorker' in navigator) {
@@ -50,7 +51,7 @@
               registration.unregister();
             }
           }).catch(function(err) {
-            console.error('Service Workerの登録解除に失敗:', err);
+            if (window.location.hostname.includes('localhost')) console.debug('Service Workerの登録解除に失敗:', err);
           });
         }
         
@@ -76,10 +77,10 @@
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
             .then((registration) => {
-              console.log('SW registered: ', registration);
+              if (window.location.hostname.includes('localhost')) console.debug('SW registered: ', registration);
             })
             .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
+              if (window.location.hostname.includes('localhost')) console.debug('SW registration failed: ', registrationError);
             });
         });
       }

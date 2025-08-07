@@ -5,6 +5,9 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import DailyLogPdfDoc from './DailyLogPdfDoc';
 import { DailyLog, User } from '../../types';
 
+// PDF.js Worker設定（将来のため）
+// pdfjs.GlobalWorkerOptions.workerSrc = '/pdf/pdf.worker.min.js';
+
 interface PdfPreviewModalProps {
   open: boolean;
   onClose: () => void;
@@ -53,7 +56,7 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-900"
                   >
-                    📄 A4印刷用日誌プレビュー - {user.name} ({dailyLog.date || '日付不明'})
+                    <span className="font-semibold text-lg">📄 A4印刷用日誌プレビュー - {user.name} ({dailyLog.date || '日付不明'})</span>
                   </Dialog.Title>
                   <button
                     type="button"

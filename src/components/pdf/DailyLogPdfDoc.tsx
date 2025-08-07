@@ -2,30 +2,24 @@ import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
 import { DailyLog, User } from '../../types';
 
-// 日本語フォントの登録（フォールバック対応）
-let fontRegistered = false;
-try {
-  Font.register({
-    family: 'NotoSansJP',
-    fonts: [
-      {
-        src: 'https://fonts.gstatic.com/s/notosansjp/v53/8gB7iThKqH2Wvl0wZwqPQwOv_DdjSBGnfLGCAVBq.woff2',
-        fontWeight: 400,
-      },
-    ]
-  });
-  fontRegistered = true;
-  console.log('✅ NotoSansJP font registered successfully');
-} catch (error) {
-  console.warn('⚠️ Using Helvetica fallback due to font registration error:', error);
-}
+// 完全ローカルフォント登録
+Font.register({
+  family: 'NotoSansJP',
+  fonts: [
+    { src: '/pdf/fonts/NotoSansJP-Regular.otf', fontWeight: 400, fontStyle: 'normal' },
+    { src: '/pdf/fonts/NotoSansJP-Regular.otf', fontWeight: 400, fontStyle: 'italic' },
+    { src: '/pdf/fonts/NotoSansJP-Bold.otf',    fontWeight: 700, fontStyle: 'normal' }
+  ]
+});
+
+if (import.meta.env.DEV) console.debug('✅ NotoSansJP ローカルフォント登録完了');
 
 const styles = StyleSheet.create({
   body: {
     paddingTop: 20,
     paddingBottom: 20,
     paddingHorizontal: 20,
-    fontFamily: fontRegistered ? 'NotoSansJP' : 'Helvetica',
+    fontFamily: 'NotoSansJP',
     fontSize: 9,
   },
   header: {
