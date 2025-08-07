@@ -105,14 +105,13 @@ const styles = StyleSheet.create({
 interface DailyLogPdfDocProps {
   log: DailyLog;
   user: User;
-  recordDate: string; // "YYYY-MM-DD"
 }
 
-const DailyLogPdfDoc: React.FC<DailyLogPdfDocProps> = ({ log, user, recordDate }) => (
+const DailyLogPdfDoc: React.FC<DailyLogPdfDocProps> = ({ log, user }) => (
   <Document>
     <Page size="A4" style={styles.body}>
       {/* Header */}
-      <Text style={styles.header}>{`${user.name}　${recordDate}`}</Text>
+      <Text style={styles.header}>{`${user.name}　${log.date || '日付不明'}`}</Text>
 
       {/* Vitals */}
       <View style={styles.section}>

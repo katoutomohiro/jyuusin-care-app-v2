@@ -10,15 +10,13 @@ interface PdfPreviewModalProps {
   onClose: () => void;
   dailyLog: DailyLog;
   user: User;
-  recordDate: string;
 }
 
 const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ 
   open, 
   onClose, 
   dailyLog, 
-  user, 
-  recordDate 
+  user
 }) => {
   return (
     <Transition appear show={open} as={Fragment}>
@@ -55,7 +53,9 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-900"
                   >
-                    📄 A4印刷用日誌プレビュー - {user.name} ({recordDate})
+                    <h3 className="text-base font-medium leading-6 text-gray-900">
+                    📄 A4印刷用日誌プレビュー - {user.name} ({dailyLog.date || '日付不明'})
+                  </h3>
                   </Dialog.Title>
                   <button
                     type="button"
@@ -80,8 +80,7 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
                   >
                     <DailyLogPdfDoc 
                       log={dailyLog} 
-                      user={user} 
-                      recordDate={recordDate} 
+                      user={user}
                     />
                   </PDFViewer>
                 </div>

@@ -466,7 +466,6 @@ const StructuredDailyLogPage: FC = () => {
             onClose={() => setPdfPreviewOpen(false)}
             dailyLog={dailyLog}
             user={selectedUser}
-            recordDate={today}
           />
         )}
       </div>
