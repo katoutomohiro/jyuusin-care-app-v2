@@ -1,5 +1,15 @@
-<!DOCTYPE html>
-<html lang="ja">
+<!DOCTYPE html    <!-- ■ Google翻訳拡張による <link rel="stylesheet" … gstatic …> を完全ブロックする -->
+    <meta name="google" content="notranslate">
+    <meta http-equiv="Content-Security-Policy" content="
+       default-src 'self';
+       script-src      'self' 'unsafe-inline' 'unsafe-eval' wasm-unsafe-eval blob:;
+       connect-src     'self' blob:;
+       font-src        'self' blob: data:;
+       img-src         'self' blob: data:;
+       style-src       'self' 'unsafe-inline' blob:;
+       style-src-elem  'self' 'unsafe-inline' blob:;
+       worker-src  'self' blob:;
+    ">ang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

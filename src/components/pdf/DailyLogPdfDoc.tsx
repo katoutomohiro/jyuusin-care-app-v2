@@ -3,19 +3,16 @@ import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/rendere
 import { DailyLog, User } from '../../types';
 
 /**
- * react-pdf は OTF より TTF/TT Collection を安定して解析する。
- * 公式 NotoSansJP TTF を使用して Unknown font format を防ぐ。
- * （fonts ディレクトリに .ttf を配置済みであること）
- * react-pdf が italics を要求した場合に備え、
- * 同じファイルを使って faux-italic として登録しておく。
+ * react-pdf / fontkit は "静的 TTF" を優先して解析する。
+ * 変数フォント・OTF・Woff2 などを混ぜると Unknown font format が発生する。
+ * ここでは 400 / 700 の TTF 2 本だけを明示登録し、
+ * 斜体指定が来たときは faux italic（skewX）にフォールバックさせる。
  */
 Font.register({
   family: 'NotoSansJP',
   fonts: [
-    { src: '/fonts/NotoSansJP-Regular.ttf', fontWeight: 400, fontStyle: 'normal' },
-    { src: '/fonts/NotoSansJP-Regular.ttf', fontWeight: 400, fontStyle: 'italic' },
-    { src: '/fonts/NotoSansJP-Bold.ttf',    fontWeight: 700, fontStyle: 'normal' },
-    { src: '/fonts/NotoSansJP-Bold.ttf',    fontWeight: 700, fontStyle: 'italic' }
+    { src: '/fonts/NotoSansJP-Regular.ttf', fontWeight: 400 },
+    { src: '/fonts/NotoSansJP-Bold.ttf',    fontWeight: 700 }
   ]
 });
 
@@ -78,7 +75,7 @@ const styles = StyleSheet.create({
   },
   emptyData: {
     color: '#999',
-    fontStyle: 'italic',
+    transform: 'skewX(-8deg)', // faux italic instead of fontStyle: 'italic'
   },
   signatureSection: {
     marginTop: 20,
