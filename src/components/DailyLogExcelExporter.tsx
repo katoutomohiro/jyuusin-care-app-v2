@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { LocalStorageService } from '../hooks/useLocalStorage';
 
@@ -19,7 +19,7 @@ export const DailyLogExcelExporter: React.FC = () => {
   }
 
   // データ検証: 利用者・日誌が1件もなければ警告
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const validateData = () => {
     if (!users.length) return '利用者データがありません。記録前に利用者登録してください。';
     if (!logs.length) return '日誌データがありません。記録を追加してください。';

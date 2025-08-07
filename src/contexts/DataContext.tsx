@@ -18,7 +18,7 @@ const getSampleLogs = (): any[] => {
     };
   });
 };
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 // 本番用の利用者データ（24名）
 import { SEVERE_DISABILITY_USERS, STAFF_MEMBERS, FACILITY_INFO, SAMPLE_LOGS_BASE } from '../../constants';
@@ -49,7 +49,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   });
 
   // DataContext初期化時にlocalStorageのusersキーも必ず24名で上書き
-  React.useEffect(() => {
+  useEffect(() => {
     if (!users || users.length === 0) {
       const initialData = SEVERE_DISABILITY_USERS;
       setUsers(initialData);

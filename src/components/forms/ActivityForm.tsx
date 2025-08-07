@@ -1,16 +1,16 @@
 
-import React from 'react';
-import { ActivityEvent } from '../../types';
+import { useState } from 'react';
+import { Activity } from '../../types';
 
 interface ActivityFormProps {
   userId: string;
-  onSave: (data: ActivityEvent) => void;
+  onSave: (data: any) => void;
   isSubmitting: boolean;
 }
 
 
 export const ActivityForm: React.FC<ActivityFormProps> = ({ userId, onSave, isSubmitting }) => {
-  const [formData, setFormData] = React.useState<ActivityEvent>({
+  const [formData, setFormData] = useState({
     id: Date.now().toString(),
     userId,
     activity_start_time: '',
@@ -24,7 +24,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ userId, onSave, isSu
     created_by: 'care_staff',
     created_at: new Date().toISOString()
   });
-  const [errorMsg, setErrorMsg] = React.useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +47,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ userId, onSave, isSu
       </div>
       <div>
         <label>活動種別 *</label>
-        <select value={formData.activity_type} onChange={e => setFormData({ ...formData, activity_type: e.target.value as ActivityEvent['activity_type'] })} required>
+        <select value={formData.activity_type} onChange={e => setFormData({ ...formData, activity_type: e.target.value })} required>
           <option value="rehabilitation">リハビリ</option>
           <option value="walk">歩行</option>
           <option value="recreation">レクリエーション</option>
@@ -70,7 +70,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ userId, onSave, isSu
       </div>
       <div>
         <label>活動中の気分</label>
-        <select value={formData.mood_during_activity} onChange={e => setFormData({ ...formData, mood_during_activity: e.target.value as ActivityEvent['mood_during_activity'] })} required>
+        <select value={formData.mood_during_activity} onChange={e => setFormData({ ...formData, mood_during_activity: e.target.value })} required>
           <option value="happy">楽しい</option>
           <option value="calm">落ち着き</option>
           <option value="neutral">普通</option>
@@ -80,7 +80,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ userId, onSave, isSu
       </div>
       <div>
         <label>介助レベル</label>
-        <select value={formData.assistance_level} onChange={e => setFormData({ ...formData, assistance_level: e.target.value as ActivityEvent['assistance_level'] })} required>
+        <select value={formData.assistance_level} onChange={e => setFormData({ ...formData, assistance_level: e.target.value })} required>
           <option value="full">全介助</option>
           <option value="partial">部分介助</option>
           <option value="minimal">最小限</option>

@@ -7,7 +7,7 @@ export default defineConfig({
     'process.env.VITE_DISABLE_WEBSOCKET': '"true"',
   },
   server: {
-    port: 3003,
+    port: 3004,
     host: '0.0.0.0',
     hmr: false,
     watch: {
@@ -18,7 +18,6 @@ export default defineConfig({
   build: {
     minify: 'terser',
     chunkSizeWarningLimit: 1000,
-    brotliSize: true,
     rollupOptions: {
       onwarn(warning, warn) {
         if (warning.code === 'MODULE_LEVEL_DIRECTIVE') {
@@ -29,6 +28,6 @@ export default defineConfig({
     }
   },
   esbuild: {
-    jsxInject: `import React from 'react'`
+    jsx: 'automatic'
   }
 })

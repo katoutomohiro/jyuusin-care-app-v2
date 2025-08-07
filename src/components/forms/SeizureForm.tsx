@@ -84,7 +84,7 @@ const SeizureForm: React.FC<SeizureFormProps> = ({ onSave, isSubmitting, draftDa
   const [isTiming, setIsTiming] = useState(false);
   const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
   // 各入力変更時に下書き自動保存
-  React.useEffect(() => {
+  useEffect(() => {
     if (handleDraftChange) {
       handleDraftChange({
         seizureTime,
