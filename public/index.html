@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Disable automatic Google-Translate injection,
-         ただし Chrome 拡張がどうしても差し込む gstatic CSS だけは読み込ませて黙らせる -->
+    <!-- CSP: Google 翻訳拡張の挿入 CSS を許可するには style-src に gstatic を追加するだけ。
+         style-src-elem はまだブラウザ実装が不完全なので使わない -->
     <meta name="google" content="notranslate">
     <meta http-equiv="Content-Security-Policy" content="
-       default-src      'self';
-       script-src       'self' 'unsafe-inline' 'unsafe-eval' wasm-unsafe-eval blob:;
-       connect-src      'self' blob:;
-       font-src         'self' blob: data:;
-       img-src          'self' blob: data:;
-       style-src        'self' 'unsafe-inline' blob:;
-       style-src-elem   'self' 'unsafe-inline' blob: https://*.gstatic.com;
-       worker-src       'self' blob:;
+       default-src  'self';
+       script-src   'self' 'unsafe-inline' 'unsafe-eval' wasm-unsafe-eval blob:;
+       connect-src  'self' blob:;
+       img-src      'self' blob: data:;
+       font-src     'self' blob: data:;
+       style-src    'self' 'unsafe-inline' blob: https://*.gstatic.com;
+       worker-src   'self' blob:;
     ">
     <!--
       ■ CSP 追加説明

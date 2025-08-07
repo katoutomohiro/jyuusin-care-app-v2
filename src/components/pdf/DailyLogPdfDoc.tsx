@@ -2,17 +2,16 @@ import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
 import { DailyLog, User } from '../../types';
 
-/**
- * react-pdf / fontkit は "静的 TTF" を優先して解析する。
- * 変数フォント・OTF・Woff2 などを混ぜると Unknown font format が発生する。
- * ここでは 400 / 700 の TTF 2 本だけを明示登録し、
- * 斜体指定が来たときは faux italic（skewX）にフォールバックさせる。
- */
+/* ──────────────────────────────────────────────
+   NotoSansJP.ttf を **TrueType形式** で配置しなおす
+   （/public/pdf/fonts/NotoSansJP-Regular.ttf と -Bold.ttf）。
+   italic は登録せず、必要なら CSS の skew で代替する。
+────────────────────────────────────────────── */
 Font.register({
   family: 'NotoSansJP',
   fonts: [
-    { src: '/fonts/NotoSansJP-Regular.ttf', fontWeight: 400 }
-    /* 700 は faux-bold で十分。italic 系は解析エラーになるので登録しない */
+    { src: '/pdf/fonts/NotoSansJP-Regular.ttf', fontWeight: 400 },
+    { src: '/pdf/fonts/NotoSansJP-Bold.ttf',    fontWeight: 700 }
   ]
 });
 
