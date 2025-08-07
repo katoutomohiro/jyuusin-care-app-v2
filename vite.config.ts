@@ -6,9 +6,6 @@ export default defineConfig({
   define: {
     'process.env.VITE_DISABLE_WEBSOCKET': '"true"',
   },
-  optimizeDeps: {
-    exclude: ['react', 'react-dom']
-  },
   resolve: {
     alias: {
       react: 'react',

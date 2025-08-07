@@ -1,21 +1,37 @@
 import { Font } from '@react-pdf/renderer';
 
+// Vite/Next（Vite駆動）で public 配下の静的アセットを確実に配信させるため、?url で取り込む
+// これによりバンドラがファイルを追跡し、実在 URL（ハッシュ付きパス等）を返す
+// ※ /public/fonts/* に実体が必須
+import regularUrl from '/fonts/ShipporiMincho-Regular.ttf?url';
+import boldUrl    from '/fonts/ShipporiMincho-Bold.ttf?url';
+
+const FAMILY = 'Shippori Mincho';
+let registered = false;
+
 /**
- * ブラウザ互換のパス生成。 `new URL()` で絶対パスに変換してから
- * `.href` を返せば Node の path.join を使わずに済む。
+ * PDF 用フォント登録（glyf 付き TTF 限定）
+ * - italic は登録しない（斜体は fauxItalic で表現）
+ * - weight は 400 / 700 のみ
+ * - 直に import した実在 URL を登録（HTMLへのフォールバックを回避）
  */
-const fontPath = (name: string, weight: string) =>
-  new URL(`/pdf/fonts/${name}-${weight}.ttf`, window.location.origin).href;
+export function registerPdfFonts() {
+  if (registered) return;
 
-Font.register({
-  family: 'NotoSansJP',
-  fonts : [
-    { src: fontPath('ShipporiMincho', 'Regular'), fontWeight: 400 },
-    { src: fontPath('ShipporiMincho', 'Bold'),    fontWeight: 700 }
-  ]
-});
+  Font.register({
+    family: FAMILY,
+    fonts: [
+      { src: regularUrl as unknown as string, fontWeight: 400 },
+      { src: boldUrl    as unknown as string, fontWeight: 700 },
+    ],
+  });
 
-// italic は fontkit が解析できないため fauxItalic をエクスポート
-export const fauxItalic = { transform: 'skewX(-8deg)' };
+  registered = true;
+}
 
-if (import.meta.env.DEV) console.debug('✅ NotoSansJP (ShipporiMincho TTF) フォント登録完了 (v26 - ブラウザ互換)');
+export const pdfFamily = FAMILY;
+
+/**
+ * 疑似イタリック（react-pdf 用スタイル）
+ */
+export const fauxItalic = { transform: 'skewX(-8deg)' } as const;

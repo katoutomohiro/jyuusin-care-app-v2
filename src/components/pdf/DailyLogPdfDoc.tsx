@@ -1,17 +1,19 @@
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 import { DailyLog, User } from '../../types';
-import './registerFonts';          // ← これをファイル冒頭に 1 行追加
-import { fauxItalic } from './registerFonts';
+import { registerPdfFonts, pdfFamily, fauxItalic } from './registerFonts';
 
-if (import.meta.env.DEV) console.debug('✅ DailyLogPdfDoc loaded with v26 registerFonts');
+// フォントを登録
+registerPdfFonts();
+
+if (import.meta.env.DEV) console.debug('✅ DailyLogPdfDoc loaded with registerFonts');
 
 const styles = StyleSheet.create({
   body: {
     paddingTop: 20,
     paddingBottom: 20,
     paddingHorizontal: 20,
-    fontFamily: 'NotoSansJP',
+    fontFamily: pdfFamily,
     fontSize: 9,
   },
   header: {
