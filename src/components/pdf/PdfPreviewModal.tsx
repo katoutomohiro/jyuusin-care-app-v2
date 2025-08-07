@@ -1,19 +1,27 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { PDFViewer } from '@react-pdf/renderer';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import DailyLogPdfDoc from './DailyLogPdfDoc';
 import { DailyLog, User } from '../../types';
 
-// PDF.js Worker設定
-if (typeof window !== 'undefined') {
-  (window as any).pdfjsLib = { GlobalWorkerOptions: { workerSrc: '/pdf/pdf.worker.min.js' } };
-}
-
-// React-pdfの場合の設定（利用可能な場合）
-if (typeof window !== 'undefined' && (window as any).pdfjs?.GlobalWorkerOptions) {
-  (window as any).pdfjs.GlobalWorkerOptions.workerSrc = '/pdf/pdf.worker.min.js';
-}
+// PDF.js Worker設定（複数の方法で試行）
+useEffect(() => {
+  if (typeof window !== 'undefined') {
+    // @react-pdf/renderer用の設定
+    if ((window as any).pdfjsLib?.GlobalWorkerOptions) {
+      (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf/pdf.worker.min.js';
+    }
+    
+    // react-pdf用の設定
+    if ((window as any).pdfjs?.GlobalWorkerOptions) {
+      (window as any).pdfjs.GlobalWorkerOptions.workerSrc = '/pdf/pdf.worker.min.js';
+    }
+    
+    // 直接設定
+    (window as any).pdfjsWorker = '/pdf/pdf.worker.min.js';
+  }
+}, []);
 
 interface PdfPreviewModalProps {
   open: boolean;

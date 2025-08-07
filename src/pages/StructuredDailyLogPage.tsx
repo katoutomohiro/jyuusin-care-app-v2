@@ -397,7 +397,7 @@ const StructuredDailyLogPage: FC = () => {
               dailyLog={dailyLog}
               logsReady={logsReady}
               todayLogsCount={todayLogsCount}
-              disabled={!logsReady || todayLogsCount === 0}
+              disabled={!todayLogsCount}
               onPdf={() => setPdfPreviewOpen(true)}
               onExcel={handleExportExcel}
               showExcel={false} // Excelボタンを非表示
