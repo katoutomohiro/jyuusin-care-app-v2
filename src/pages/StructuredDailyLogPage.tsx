@@ -472,7 +472,7 @@ const StructuredDailyLogPage: FC = () => {
         )}
 
         {/* PDF Preview Modal */}
-        {selectedUserId && selectedUser && dailyLog && (
+        {selectedUserId && selectedUser && (
           <PdfPreviewModal
             open={pdfPreviewOpen}
             onClose={() => setPdfPreviewOpen(false)}

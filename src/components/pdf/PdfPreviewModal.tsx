@@ -8,7 +8,7 @@ import { DailyLog, User } from '../../types';
 interface PdfPreviewModalProps {
   open: boolean;
   onClose: () => void;
-  dailyLog: DailyLog;
+  dailyLog: DailyLog | null;
   user: User;
 }
 
@@ -21,7 +21,7 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
   const [ready, setReady] = useState(false);
   
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (open && typeof window !== 'undefined') {
       // @react-pdf/renderer用の設定
       if ((window as any).pdfjsLib?.GlobalWorkerOptions) {
         (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf/pdf.worker.min.js';
@@ -35,10 +35,11 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
       // 直接設定
       (window as any).pdfjsWorker = '/pdf/pdf.worker.min.js';
     }
-    setReady(true);
-  }, []);
+    setReady(open);
+  }, [open]);
 
-  if (!ready) return null;
+  if (!open) return null;
+  if (!ready || !dailyLog) return null;
   return (
     <Transition appear show={open} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={onClose}>

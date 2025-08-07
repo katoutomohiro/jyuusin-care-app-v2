@@ -2,13 +2,12 @@ import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
 import { DailyLog, User } from '../../types';
 
-// 完全ローカルフォント登録
+// 完全ローカルフォント登録 - TTF形式
 Font.register({
   family: 'NotoSansJP',
   fonts: [
-    { src: '/pdf/fonts/NotoSansJP-Regular.otf', fontWeight: 400, fontStyle: 'normal' },
-    { src: '/pdf/fonts/NotoSansJP-Regular.otf', fontWeight: 400, fontStyle: 'italic' },
-    { src: '/pdf/fonts/NotoSansJP-Bold.otf',    fontWeight: 700, fontStyle: 'normal' },
+    { src: '/fonts/NotoSansJP-Regular.ttf', fontWeight: 400 },
+    { src: '/fonts/NotoSansJP-Bold.ttf',    fontWeight: 700 }
   ]
 });
 
