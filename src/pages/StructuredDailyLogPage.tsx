@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, FC } from 'react';
+import { useState, useEffect, useMemo, useCallback, FC } from 'react';
 // ...existing code...
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useNavigate } from 'react-router-dom';
@@ -18,7 +18,7 @@ import MedicationInput from '../components/forms/MedicationInput';
 import OtherInput from '../components/forms/OtherInput';
 import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
 import DailyLogA4Print from '../components/DailyLogA4Print';
-import { exportDailyLog, exportDailyLogExcel } from '../services/DailyLogExportService';
+import { exportDailyLog /*, exportDailyLogExcel */ } from '../services/DailyLogExportService';
 import { PDFViewer } from '@react-pdf/renderer';
 import DailyLogPdfDoc from '../components/pdf/DailyLogPdfDoc';
 import PdfPreviewModal from '../components/pdf/PdfPreviewModal';
@@ -45,39 +45,50 @@ function generateDailyLog(
   date: string,
   dailyLogsByUser: Record<string, any[]>
 ): DailyLog | null {
-  if (!userId) return null;
-  
-  // dailyLogsByUserから今日のイベントデータを取得
-  const userLogs = dailyLogsByUser[userId] || [];
-  const todayLogs = userLogs.filter((log: any) => 
-    log.user_id === userId && 
-    log.created_at && 
-    log.created_at.startsWith(date)
-  );
-  
-  if (import.meta.env.DEV) {
-    console.debug('DEBUG – Found logs for', userId, 'on', date, ':', todayLogs.length, 'events');
+  // 入力検証を強化してbefore-initエラーを防ぐ
+  if (!userId || !userName || !date || !dailyLogsByUser) {
+    console.warn('generateDailyLog: Invalid input parameters', { userId, userName, date, hasLogs: !!dailyLogsByUser });
+    return null;
   }
   
-  // 基本構造
-  const dailyLog: DailyLog = {
-    userId,
-    userName,
-    date,
-    vitals: null,
-    hydration: [],
-    excretion: [],
-    sleep: null,
-    seizure: [],
-    activity: [],
-    care: [],
-    notes: ''
-  };
+  try {
+    // dailyLogsByUserから今日のイベントデータを取得
+    const userLogs = dailyLogsByUser[userId] || [];
+    const todayLogs = userLogs.filter((log: any) => {
+      // より安全な日付フィルタリング
+      if (!log || !log.created_at) return false;
+      const logDate = log.created_at.split('T')[0];
+      return log.user_id === userId && logDate === date;
+    });
+    
+    if (import.meta.env.DEV) {
+      console.debug('DEBUG – generateDailyLog for', userId, 'on', date, ':', todayLogs.length, 'events');
+    }
+    
+    // 基本構造を初期化
+    const dailyLog: DailyLog = {
+      userId,
+      userName,
+      date,
+      vitals: null,
+      hydration: [],
+      excretion: [],
+      sleep: null,
+      seizure: [],
+      activity: [],
+      care: [],
+      notes: ''
+    };
 
-  // イベントタイプ別にデータを集計
-  todayLogs.forEach((log: any) => {
-    try {
-      switch (log.event_type) {
+    // イベントタイプ別にデータを集計（エラーハンドリング強化）
+    todayLogs.forEach((log: any, index: number) => {
+      try {
+        if (!log || !log.event_type) {
+          console.warn('generateDailyLog: Invalid log entry at index', index, log);
+          return;
+        }
+        
+        switch (log.event_type) {
         case 'vitals':
           dailyLog.vitals = {
             temperature: parseFloat(log.temperature) || null,
@@ -141,23 +152,28 @@ function generateDailyLog(
             details: log.notes || `${log.event_type}: ${JSON.stringify(log, null, 2)}`
           });
       }
-    } catch (error) {
-      console.warn('Error processing log entry:', log, error);
-    }
-  });
-  
-  if (import.meta.env.DEV) {
-    console.debug('DEBUG - Generated dailyLog with items:', {
-      vitals: !!dailyLog.vitals,
-      hydration: dailyLog.hydration.length,
-      excretion: dailyLog.excretion.length,
-      seizure: dailyLog.seizure?.length || 0,
-      activity: dailyLog.activity?.length || 0,
-      care: dailyLog.care?.length || 0
+      } catch (logError) {
+        console.warn('generateDailyLog: Error processing log entry at index', index, ':', logError, log);
+      }
     });
+    
+    if (import.meta.env.DEV) {
+      console.debug('DEBUG - generateDailyLog generated with items:', {
+        vitals: !!dailyLog.vitals,
+        hydration: dailyLog.hydration.length,
+        excretion: dailyLog.excretion.length,
+        seizure: dailyLog.seizure?.length || 0,
+        activity: dailyLog.activity?.length || 0,
+        care: dailyLog.care?.length || 0
+      });
+    }
+    
+    return dailyLog;
+    
+  } catch (error) {
+    console.error('generateDailyLog: Critical error generating daily log for', userId, ':', error);
+    return null;
   }
-  
-  return dailyLog;
 }
 
 const StructuredDailyLogPage: FC = () => {
@@ -198,34 +214,57 @@ const StructuredDailyLogPage: FC = () => {
     return generatedLog;
   }, [selectedUserId, selectedUser, today, dailyLogsByUser]);
 
-  // 各カテゴリーの件数を計算
-  const getCategoryCount = (categoryKey: string): number => {
-    if (!dailyLog) return 0;
+  // 各カテゴリーの件数を計算 - dailyLogsByUserから直接計算して最新の状態を反映
+  const getCategoryCount = useCallback((categoryKey: string): number => {
+    if (!selectedUserId || !dailyLogsByUser[selectedUserId]) return 0;
     
+    // 今日の日付に該当するログをフィルタリング
+    const todayLogs = dailyLogsByUser[selectedUserId].filter((log: any) => {
+      const logDate = log.created_at ? log.created_at.split('T')[0] : today;
+      return logDate === today;
+    });
+    
+    // イベントタイプ別にカウント
     switch (categoryKey) {
       case 'seizure':
-        return dailyLog.seizure?.length || 0;
+        return todayLogs.filter((log: any) => log.event_type === 'seizure').length;
       case 'expression':
-        return dailyLog.activity?.filter((item: any) => item.type === 'expression').length || 0;
+        return todayLogs.filter((log: any) => log.event_type === 'expression').length;
       case 'vitals':
-        return dailyLog.vitals ? 1 : 0;
+        return todayLogs.filter((log: any) => log.event_type === 'vitals').length;
       case 'hydration':
-        return dailyLog.hydration?.length || 0;
+        return todayLogs.filter((log: any) => log.event_type === 'hydration').length;
       case 'excretion':
-        return dailyLog.excretion?.length || 0;
+        return todayLogs.filter((log: any) => log.event_type === 'excretion').length;
       case 'activity':
-        return dailyLog.activity?.filter((item: any) => item.type !== 'expression').length || 0;
+        return todayLogs.filter((log: any) => log.event_type === 'activity').length;
       case 'skin_oral_care':
-        return dailyLog.care?.filter((item: any) => item.type === 'skin_oral_care').length || 0;
+        return todayLogs.filter((log: any) => log.event_type === 'skin_oral_care').length;
       case 'tube_feeding':
-        return dailyLog.care?.filter((item: any) => item.type === 'tube_feeding').length || 0;
+        return todayLogs.filter((log: any) => log.event_type === 'tube_feeding').length;
+      case 'positioning':
+        return todayLogs.filter((log: any) => log.event_type === 'positioning').length;
+      case 'medication':
+        return todayLogs.filter((log: any) => log.event_type === 'medication').length;
+      case 'behavioral':
+        return todayLogs.filter((log: any) => log.event_type === 'behavioral').length;
+      case 'communication':
+        return todayLogs.filter((log: any) => log.event_type === 'communication').length;
+      case 'illness':
+        return todayLogs.filter((log: any) => log.event_type === 'illness').length;
+      case 'sleep':
+        return todayLogs.filter((log: any) => log.event_type === 'sleep').length;
+      case 'cough_choke':
+        return todayLogs.filter((log: any) => log.event_type === 'cough_choke').length;
       default:
         return 0;
     }
-  };
+  }, [selectedUserId, dailyLogsByUser, today]);
 
-  // Excel Export Handler
+  // Excel Export Handler (一時無効化 - PDFが主力出力)
   const handleExportExcel = async () => {
+    alert('Excel出力は一時的に無効化されています。PDF出力をご利用ください。');
+    /* 
     console.time('exportExcel');
     console.log('Excel export started');
     try {
@@ -239,14 +278,13 @@ const StructuredDailyLogPage: FC = () => {
       await exportDailyLogExcel(dailyLog, selectedUser, today);
       console.log('Excel export completed successfully');
       
-      // toast.success('Excel を生成しました'); // Future: implement toast
       alert('Excel ファイルを生成しました');
     } catch (error) {
       console.error('Excel export error:', error);
-      // toast.error('Excel 生成に失敗しました'); // Future: implement toast
       alert('Excel出力に失敗しました: ' + (error as Error).message);
     }
     console.timeEnd('exportExcel');
+    */
   };
 
   // Event Tile Click Handler
@@ -257,8 +295,9 @@ const StructuredDailyLogPage: FC = () => {
   };
 
   // Handle Save Event (from forms) - DataContextのaddDailyLogを使用
+  const { addDailyLog } = useData(); // フック呼び出しをコンポーネント最上位に移動
+  
   const handleSaveEvent = async (eventData: any) => {
-    const { addDailyLog } = useData();
     setIsSubmitting(true);
     
     const newEvent = {
@@ -267,6 +306,7 @@ const StructuredDailyLogPage: FC = () => {
       userId: selectedUserId,
       event_type: activeEventType,
       created_at: new Date().toISOString(),
+      event_timestamp: new Date().toISOString(),
       ...eventData
     };
     
@@ -348,6 +388,7 @@ const StructuredDailyLogPage: FC = () => {
               logsReady={logsReady}
               onPdf={() => setPdfPreviewOpen(true)}
               onExcel={handleExportExcel}
+              showExcel={false} // Excelボタンを非表示
             />
 
             {!logsReady && (
