@@ -2,12 +2,12 @@ import React, { FC } from 'react';
 import { Page, View, Text, StyleSheet, Font } from '@react-pdf/renderer';
 import { DailyLog } from '../../types';
 
-// 完全ローカルフォント登録 - TTF 2本のみで Unknown font format を回避
+// 完全ローカルフォント登録 - TTF 1本のみで Unknown font format を回避
 Font.register({
   family: 'NotoSansJP',
   fonts: [
-    { src: '/fonts/NotoSansJP-Regular.ttf', fontWeight: 400 },
-    { src: '/fonts/NotoSansJP-Bold.ttf',    fontWeight: 700 }
+    { src: '/fonts/NotoSansJP-Regular.ttf', fontWeight: 400 }
+    /* italic/bold は faux-style で十分。登録すると解析エラーになる */
   ]
 });
 

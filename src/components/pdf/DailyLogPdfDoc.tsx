@@ -11,12 +11,15 @@ import { DailyLog, User } from '../../types';
 Font.register({
   family: 'NotoSansJP',
   fonts: [
-    { src: '/fonts/NotoSansJP-Regular.ttf', fontWeight: 400 },
-    { src: '/fonts/NotoSansJP-Bold.ttf',    fontWeight: 700 }
+    { src: '/fonts/NotoSansJP-Regular.ttf', fontWeight: 400 }
+    /* 700 は faux-bold で十分。italic 系は解析エラーになるので登録しない */
   ]
 });
 
 if (import.meta.env.DEV) console.debug('✅ NotoSansJP ローカルフォント登録完了');
+
+// Faux italic style for PDF (react-pdf doesn't handle real italic well)
+export const fauxItalic = { transform: 'skewX(-8deg)' };
 
 const styles = StyleSheet.create({
   body: {
@@ -75,7 +78,7 @@ const styles = StyleSheet.create({
   },
   emptyData: {
     color: '#999',
-    transform: 'skewX(-8deg)', // faux italic instead of fontStyle: 'italic'
+    ...fauxItalic, // Use faux italic instead of fontStyle: 'italic'
   },
   signatureSection: {
     marginTop: 20,
