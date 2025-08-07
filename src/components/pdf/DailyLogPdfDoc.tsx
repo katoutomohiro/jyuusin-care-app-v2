@@ -22,57 +22,83 @@ try {
 
 const styles = StyleSheet.create({
   body: {
-    paddingTop: 35,
-    paddingBottom: 65,
-    paddingHorizontal: 35,
+    paddingTop: 20,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
     fontFamily: fontRegistered ? 'NotoSansJP' : 'Helvetica',
     fontSize: 9,
   },
   header: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 15,
     textAlign: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#888',
-    paddingBottom: 10,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+    fontSize: 10,
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    marginBottom: 15,
+  },
+  leftColumn: {
+    flex: 1,
+    marginRight: 10,
+  },
+  rightColumn: {
+    flex: 1,
+    marginLeft: 10,
   },
   section: {
-    marginBottom: 8,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 8,
   },
-  sectionTitle:{ 
-    fontSize: 11, 
-    fontWeight: 'bold', // 700 is equivalent to 'bold'
-    marginTop: 14, 
-    marginBottom: 4,
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    marginBottom: 5,
   },
-  row: {
-    fontSize: 9,
-    lineHeight: 1.2,
-  },
-  none: {
+  itemRow: {
+    flexDirection: 'row',
+    marginBottom: 2,
     fontSize: 8,
+  },
+  timeColumn: {
+    width: 40,
+    marginRight: 5,
+  },
+  dataColumn: {
+    flex: 1,
+  },
+  emptyData: {
     color: '#999',
+    fontStyle: 'italic',
   },
-  columns: { 
-    flexDirection: 'row', 
-    gap: 10,
+  signatureSection: {
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+    paddingTop: 15,
+  },
+  signatureRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginTop: 10,
+  },
+  signatureLabel: {
+    fontSize: 10,
+  },
+  signatureLine: {
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingBottom: 8,
-    marginBottom: 8,
-  },
-  colLeft:     { flex: 1 },
-  colRight:    { flex: 1 },
-  signatureBox:{ 
-    marginTop: 25, 
-    borderTopWidth: 1, 
-    borderTopColor: '#888',
-    paddingTop: 6, 
-    fontSize: 10 
+    borderBottomColor: '#000',
+    width: 120,
+    height: 15,
   },
 });
 
@@ -92,44 +118,44 @@ const DailyLogPdfDoc: React.FC<DailyLogPdfDocProps> = ({ log, user, recordDate }
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>■ バイタル / Vitals</Text>
         {log.vitals ? (
-          <Text style={styles.row}>{`体温 ${log.vitals.temperature ?? 'N/A'}℃　脈拍 ${log.vitals.pulse ?? 'N/A'}　SpO2 ${log.vitals.spo2 ?? 'N/A'}%`}</Text>
-        ) : <Text style={styles.none}>※ 記録なし</Text>}
+          <Text style={styles.dataColumn}>{`体温 ${log.vitals.temperature ?? 'N/A'}℃　脈拍 ${log.vitals.pulse ?? 'N/A'}　SpO2 ${log.vitals.spo2 ?? 'N/A'}%`}</Text>
+        ) : <Text style={styles.emptyData}>※ 記録なし</Text>}
       </View>
 
       {/* Columns for Hydration and Excretion */}
-      <View style={styles.columns}>
-        <View style={styles.colLeft}>
+      <View style={styles.gridContainer}>
+        <View style={styles.leftColumn}>
           <Text style={styles.sectionTitle}>■ 水分・食事 / Hydration</Text>
           {log.hydration && log.hydration.length > 0 ? log.hydration.map((h, i) => (
-            <Text key={i} style={styles.row}>{`${h.time}　${h.content} ${h.amount}ml`}</Text>
-          )) : <Text style={styles.none}>※ 記録なし</Text>}
+            <Text key={i} style={styles.dataColumn}>{`${h.time}　${h.content} ${h.amount}ml`}</Text>
+          )) : <Text style={styles.emptyData}>※ 記録なし</Text>}
         </View>
-        <View style={styles.colRight}>
+        <View style={styles.rightColumn}>
           <Text style={styles.sectionTitle}>■ 排泄 / Excretion</Text>
           {log.excretion && log.excretion.length > 0 ? log.excretion.map((e, i) => (
-            <Text key={i} style={styles.row}>{`${e.time}　${e.type} (${e.amount})`}</Text>
-          )) : <Text style={styles.none}>※ 記録なし</Text>}
+            <Text key={i} style={styles.dataColumn}>{`${e.time}　${e.type} (${e.amount})`}</Text>
+          )) : <Text style={styles.emptyData}>※ 記録なし</Text>}
         </View>
       </View>
       
       {/* Seizure */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>■ 発作 / Seizure</Text>
-        <Text style={styles.row}>{log.seizure ? `${log.seizure.length} 件` : '0 件'}</Text>
+        <Text style={styles.dataColumn}>{log.seizure ? `${log.seizure.length} 件` : '0 件'}</Text>
       </View>
 
       {/* Notes */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>■ 特記事項・担当職員 / Notes</Text>
         {log.notes ? (
-          <Text style={styles.row}>{log.notes}</Text>
+          <Text style={styles.dataColumn}>{log.notes}</Text>
         ) : (
-          <Text style={styles.none}>※ 記録なし</Text>
+          <Text style={styles.emptyData}>※ 記録なし</Text>
         )}
       </View>
 
       {/* Signature Box */}
-      <View style={styles.signatureBox}>
+      <View style={styles.signatureSection}>
         <Text>保護者署名 : ______________________</Text>
       </View>
 
