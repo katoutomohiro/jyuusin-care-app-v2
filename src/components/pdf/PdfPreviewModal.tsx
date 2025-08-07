@@ -53,9 +53,7 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-900"
                   >
-                    <h3 className="text-base font-medium leading-6 text-gray-900">
                     📄 A4印刷用日誌プレビュー - {user.name} ({dailyLog.date || '日付不明'})
-                  </h3>
                   </Dialog.Title>
                   <button
                     type="button"
