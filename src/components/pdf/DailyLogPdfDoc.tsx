@@ -2,7 +2,11 @@ import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
 import { DailyLog, User } from '../../types';
 
-// 完全ローカルフォント登録 - TTF形式
+/**
+ * 400 / 700 の normal だけ登録し、italic 要求は
+ *   <Text style={{ fontStyle:'italic' }}>  →  renderer が自動で faux-italic
+ * にフォールバックさせる。これで "Unknown font format" が消える。
+ */
 Font.register({
   family: 'NotoSansJP',
   fonts: [

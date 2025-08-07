@@ -3,7 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' blob: https://fonts.gstatic.com; font-src 'self' blob: data: https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' blob:; worker-src 'self' blob:;">
+    <!--
+      ① style-src へ https://fonts.gstatic.com を追加し
+         Google NotoSansJP の埋め込み CSS を許可
+      ② "unsafe-inline" は Tailwind の dev 注入用、必要
+    -->
+    <meta http-equiv="Content-Security-Policy" content="
+       default-src 'self';
+       script-src  'self' 'unsafe-inline' 'unsafe-eval' wasm-unsafe-eval blob:;
+       connect-src 'self' blob:;
+       font-src    'self' blob: data: https://fonts.gstatic.com;
+       img-src     'self' blob: data:;
+       style-src   'self' 'unsafe-inline' blob: https://fonts.gstatic.com;
+       worker-src  'self' blob:;
+    ">
     <title>重心ケアアプリ v2.0 - AIエージェント協働システム</title>
     <style>
         * {
