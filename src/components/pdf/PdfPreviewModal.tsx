@@ -10,6 +10,11 @@ if (typeof window !== 'undefined') {
   (window as any).pdfjsLib = { GlobalWorkerOptions: { workerSrc: '/pdf/pdf.worker.min.js' } };
 }
 
+// React-pdfの場合の設定（利用可能な場合）
+if (typeof window !== 'undefined' && (window as any).pdfjs?.GlobalWorkerOptions) {
+  (window as any).pdfjs.GlobalWorkerOptions.workerSrc = '/pdf/pdf.worker.min.js';
+}
+
 interface PdfPreviewModalProps {
   open: boolean;
   onClose: () => void;
@@ -82,7 +87,7 @@ const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
                     showToolbar={true}
                   >
                     <DailyLogPdfDoc 
-                      log={dailyLog} 
+                      dailyLogItems={dailyLog} 
                       user={user}
                     />
                   </PDFViewer>

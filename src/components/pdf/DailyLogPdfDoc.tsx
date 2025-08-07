@@ -97,21 +97,21 @@ const styles = StyleSheet.create({
 });
 
 interface DailyLogPdfDocProps {
-  log: DailyLog;
+  dailyLogItems: DailyLog;
   user: User;
 }
 
-const DailyLogPdfDoc: React.FC<DailyLogPdfDocProps> = ({ log, user }) => (
+const DailyLogPdfDoc: React.FC<DailyLogPdfDocProps> = ({ dailyLogItems, user }) => (
   <Document>
     <Page size="A4" style={styles.body}>
       {/* Header */}
-      <Text style={styles.header}>{`${user.name}　${log.date || '日付不明'}`}</Text>
+      <Text style={styles.header}>{`${user.name}　${dailyLogItems.date || '日付不明'}`}</Text>
 
       {/* Vitals */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>■ バイタル / Vitals</Text>
-        {log.vitals ? (
-          <Text style={styles.dataColumn}>{`体温 ${log.vitals.temperature ?? 'N/A'}℃　脈拍 ${log.vitals.pulse ?? 'N/A'}　SpO2 ${log.vitals.spo2 ?? 'N/A'}%`}</Text>
+        {dailyLogItems.vitals ? (
+          <Text style={styles.dataColumn}>{`体温 ${dailyLogItems.vitals.temperature ?? 'N/A'}℃　脈拍 ${dailyLogItems.vitals.pulse ?? 'N/A'}　SpO2 ${dailyLogItems.vitals.spo2 ?? 'N/A'}%`}</Text>
         ) : <Text style={styles.emptyData}>※ 記録なし</Text>}
       </View>
 
@@ -119,13 +119,13 @@ const DailyLogPdfDoc: React.FC<DailyLogPdfDocProps> = ({ log, user }) => (
       <View style={styles.gridContainer}>
         <View style={styles.leftColumn}>
           <Text style={styles.sectionTitle}>■ 水分・食事 / Hydration</Text>
-          {log.hydration && log.hydration.length > 0 ? log.hydration.map((h, i) => (
+          {dailyLogItems.hydration && dailyLogItems.hydration.length > 0 ? dailyLogItems.hydration.map((h, i) => (
             <Text key={i} style={styles.dataColumn}>{`${h.time}　${h.content} ${h.amount}ml`}</Text>
           )) : <Text style={styles.emptyData}>※ 記録なし</Text>}
         </View>
         <View style={styles.rightColumn}>
           <Text style={styles.sectionTitle}>■ 排泄 / Excretion</Text>
-          {log.excretion && log.excretion.length > 0 ? log.excretion.map((e, i) => (
+          {dailyLogItems.excretion && dailyLogItems.excretion.length > 0 ? dailyLogItems.excretion.map((e, i) => (
             <Text key={i} style={styles.dataColumn}>{`${e.time}　${e.type} (${e.amount})`}</Text>
           )) : <Text style={styles.emptyData}>※ 記録なし</Text>}
         </View>
@@ -134,14 +134,14 @@ const DailyLogPdfDoc: React.FC<DailyLogPdfDocProps> = ({ log, user }) => (
       {/* Seizure */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>■ 発作 / Seizure</Text>
-        <Text style={styles.dataColumn}>{log.seizure ? `${log.seizure.length} 件` : '0 件'}</Text>
+        <Text style={styles.dataColumn}>{dailyLogItems.seizure ? `${dailyLogItems.seizure.length} 件` : '0 件'}</Text>
       </View>
 
       {/* Notes */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>■ 特記事項・担当職員 / Notes</Text>
-        {log.notes ? (
-          <Text style={styles.dataColumn}>{log.notes}</Text>
+        {dailyLogItems.notes ? (
+          <Text style={styles.dataColumn}>{dailyLogItems.notes}</Text>
         ) : (
           <Text style={styles.emptyData}>※ 記録なし</Text>
         )}
