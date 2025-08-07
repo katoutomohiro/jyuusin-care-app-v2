@@ -11,7 +11,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 20,
     paddingHorizontal: 20,
-    fontFamily: 'NotoSansJP',
+    fontFamily: 'ShipporiMincho',
     fontSize: 9,
   },
   header: {
