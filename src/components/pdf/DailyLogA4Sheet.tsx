@@ -2,15 +2,9 @@ import React, { FC } from 'react';
 import { Page, View, Text, StyleSheet, Font } from '@react-pdf/renderer';
 import { DailyLogDto } from '../../types'; // DTOのパスは適宜修正してください
 
-// 日本語フォントの登録
-Font.register({
-  family: 'NotoSansJP',
-  src: 'https://fonts.gstatic.com/s/notosansjp/v28/-F62fjtqLzI2JPCgQBnw7HFyzrs.ttf', // 仮のURL、ローカルフォントパスを推奨
-});
-
 const styles = StyleSheet.create({
   page: {
-    fontFamily: 'NotoSansJP',
+    fontFamily: 'Helvetica', // 一時的にHelveticaのみ使用
     padding: '1cm',
     fontSize: 10,
     backgroundColor: '#fff',

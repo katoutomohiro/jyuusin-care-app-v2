@@ -99,20 +99,37 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(`Invalid userId: ${logData.userId}`);
     }
     
+    // 新しいログエントリにユニークIDとタイムスタンプを確保
+    const newLog = {
+      ...logData,
+      id: logData.id || Date.now().toString(),
+      log_id: logData.log_id || Date.now().toString(),
+      created_at: logData.created_at || new Date().toISOString(),
+      event_timestamp: logData.event_timestamp || new Date().toISOString()
+    };
+    
     // localStorageに保存
     const key = `dailyLogs_${logData.userId}`;
     const currentLogs = dailyLogsByUser[logData.userId] || [];
-    const updatedLogs = [...currentLogs, logData];
+    const updatedLogs = [...currentLogs, newLog];
     localStorage.setItem(key, JSON.stringify(updatedLogs));
     
     // ステート更新（重要: UI再レンダリング用）
-    setDailyLogsByUser(prev => ({
-      ...prev,
-      [logData.userId]: updatedLogs
-    }));
+    setDailyLogsByUser(prev => {
+      const newState = {
+        ...prev,
+        [logData.userId]: updatedLogs
+      };
+      
+      if (import.meta.env.DEV) {
+        console.debug('DEBUG – dailyLogsByUser updated for userId:', logData.userId, 'new count:', updatedLogs.length);
+      }
+      
+      return newState;
+    });
     
     if (import.meta.env.DEV) {
-      console.debug('DEBUG – addDailyLog saved:', logData);
+      console.debug('DEBUG – addDailyLog saved:', newLog);
     }
   };
 
