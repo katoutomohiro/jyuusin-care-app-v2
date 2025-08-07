@@ -5,13 +5,15 @@ interface RecordTileProps {
   label: string;
   onClick: () => void;
   className?: string;
+  count?: number;
 }
 
 export const RecordTile: FC<RecordTileProps> = ({ 
   icon, 
   label, 
   onClick, 
-  className = "" 
+  className = "",
+  count = 0
 }) => {
   return (
     <button
@@ -23,9 +25,17 @@ export const RecordTile: FC<RecordTileProps> = ({
         transition-all duration-200
         hover:shadow-md hover:bg-blue-50
         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+        relative
         ${className}
       `}
     >
+      {/* 件数バッジ */}
+      {count > 0 && (
+        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1">
+          {count}
+        </div>
+      )}
+      
       <div className="text-3xl mb-2 text-gray-600">
         {typeof icon === 'string' ? <span>{icon}</span> : icon}
       </div>

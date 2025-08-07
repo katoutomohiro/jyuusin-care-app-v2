@@ -1,4 +1,4 @@
-import { useState, useEffect, FC } from 'react';
+import { useState, useEffect, useMemo, FC } from 'react';
 // ...existing code...
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useNavigate } from 'react-router-dom';
@@ -40,7 +40,7 @@ type EventType = 'seizure' | 'expression' | 'vitals' | 'hydration' | 'excretion'
 
 const StructuredDailyLogPage: FC = () => {
   const navigate = useNavigate();
-  const { users } = useData();
+  const { users, dailyLogsByUser } = useData();
   // const { user: currentUser } = useAuth(); // Commented out due to context type issues
   // const { addNotification } = useNotification(); // Commented out due to context type issues
   const location = useLocation();
@@ -51,8 +51,6 @@ const StructuredDailyLogPage: FC = () => {
   const [showEventEditor, setShowEventEditor] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
-  const [logsReady, setLogsReady] = useState(false);
-  const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // 現在選択されている利用者
@@ -64,17 +62,33 @@ const StructuredDailyLogPage: FC = () => {
   // 施設名（データコンテキストから取得、なければデフォルト）
   const facilityName = "重心ケア施設";
 
-  // 安全なダミーデータ生成関数 → 実際のlocalStorage読み込み関数に変更
+  // logsReady判定: selectedUserIdが存在し、dailyLogsByUserにデータが存在する
+  const logsReady = selectedUserId && dailyLogsByUser[selectedUserId] !== undefined;
+
+  // dailyLogをuseMemoで生成（dailyLogsByUserの変更を購読）
+  const dailyLog = useMemo(() => {
+    if (!selectedUserId || !selectedUser || !logsReady) return null;
+    
+    const generatedLog = generateDailyLog(selectedUserId, selectedUser.name, today);
+    if (import.meta.env.DEV) {
+      console.debug('DEBUG – generateDailyLog regenerated, items:', Object.keys(generatedLog).length);
+    }
+    return generatedLog;
+  }, [selectedUserId, selectedUser, today, dailyLogsByUser]);
+
+  // 安全なダミーデータ生成関数 → 実際のdailyLogsByUser読み込み関数に変更
   const generateDailyLog = (userId: string, userName: string, date: string): DailyLog => {
-    // localStorageから今日のイベントデータを取得
-    const allLogs = JSON.parse(localStorage.getItem('daily_logs') || '[]');
-    const todayLogs = allLogs.filter((log: any) => 
+    // dailyLogsByUserから今日のイベントデータを取得
+    const userLogs = dailyLogsByUser[userId] || [];
+    const todayLogs = userLogs.filter((log: any) => 
       log.user_id === userId && 
       log.created_at && 
       log.created_at.startsWith(date)
     );
     
-    console.log('DEBUG - Found logs for', userId, 'on', date, ':', todayLogs.length, 'events');
+    if (import.meta.env.DEV) {
+      console.debug('DEBUG – Found logs for', userId, 'on', date, ':', todayLogs.length, 'events');
+    }
     
     // 基本構造
     const dailyLog: DailyLog = {
@@ -175,54 +189,31 @@ const StructuredDailyLogPage: FC = () => {
     return dailyLog;
   };
 
-  // ユーザー変更時のログ生成
-  useEffect(() => {
-    if (!selectedUserId || users.length === 0) {
-      setLogsReady(false);
-      setDailyLog(null);
-      return;
+  // 各カテゴリーの件数を計算
+  const getCategoryCount = (categoryKey: string): number => {
+    if (!dailyLog) return 0;
+    
+    switch (categoryKey) {
+      case 'seizure':
+        return dailyLog.seizure?.length || 0;
+      case 'expression':
+        return dailyLog.activity?.filter((item: any) => item.type === 'expression').length || 0;
+      case 'vitals':
+        return dailyLog.vitals ? 1 : 0;
+      case 'hydration':
+        return dailyLog.hydration?.length || 0;
+      case 'excretion':
+        return dailyLog.excretion?.length || 0;
+      case 'activity':
+        return dailyLog.activity?.filter((item: any) => item.type !== 'expression').length || 0;
+      case 'skin_oral_care':
+        return dailyLog.care?.filter((item: any) => item.type === 'skin_oral_care').length || 0;
+      case 'tube_feeding':
+        return dailyLog.care?.filter((item: any) => item.type === 'tube_feeding').length || 0;
+      default:
+        return 0;
     }
-    
-    (async () => {
-      console.log('DEBUG - Starting generateDailyLog for userId:', selectedUserId);
-      setLogsReady(false);
-      
-      const user = users.find(u => u.id === selectedUserId);
-      if (!user) {
-        console.error('User not found:', selectedUserId);
-        return;
-      }
-      
-      try {
-        const log = generateDailyLog(user.id, user.name, today);
-        console.log('DEBUG - generateDailyLog done, items:', Object.keys(log).length);
-        setDailyLog(log);
-        setLogsReady(true);
-      } catch (error) {
-        console.error('generateDailyLog failed:', error);
-        setLogsReady(false);
-      }
-    })();
-  }, [selectedUserId, users, today]);
-
-  // localStorage変更の監視（イベント保存後のdailyLog更新）
-  useEffect(() => {
-    if (!selectedUserId || !selectedUser || !logsReady) return;
-    
-    const handleStorageChange = () => {
-      console.debug('localStorage changed - regenerating dailyLog');
-      const updatedLog = generateDailyLog(selectedUser.id, selectedUser.name, today);
-      setDailyLog(updatedLog);
-    };
-    
-    // storage eventは他のタブからの変更のみ検知するため、
-    // 同一タブ内での変更は手動で監視する必要がある
-    window.addEventListener('storage', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [selectedUserId, selectedUser, logsReady, today]);
+  };
 
   // Excel Export Handler
   const handleExportExcel = async () => {
@@ -256,34 +247,34 @@ const StructuredDailyLogPage: FC = () => {
     setShowEventEditor(true);
   };
 
-  // Handle Save Event (from forms)
+  // Handle Save Event (from forms) - DataContextのaddDailyLogを使用
   const handleSaveEvent = async (eventData: any) => {
+    const { addDailyLog } = useData();
     setIsSubmitting(true);
     
     const newEvent = {
       id: Date.now().toString(),
       user_id: selectedUserId,
+      userId: selectedUserId,
       event_type: activeEventType,
       created_at: new Date().toISOString(),
       ...eventData
     };
     
-    // Save to localStorage
-    const existingLogs = JSON.parse(localStorage.getItem('daily_logs') || '[]');
-    const updatedLogs = [...existingLogs, newEvent];
-    localStorage.setItem('daily_logs', JSON.stringify(updatedLogs));
-    
-    // Regenerate daily log to reflect changes
-    if (selectedUser) {
-      const updatedLog = generateDailyLog(selectedUser.id, selectedUser.name, today);
-      setDailyLog(updatedLog);
-      console.log('DEBUG - generateDailyLog regenerated, items:', Object.keys(updatedLog).length);
+    try {
+      // DataContextのaddDailyLogを呼び出し（自動的にUI更新）
+      await addDailyLog(newEvent);
+      
+      if (import.meta.env.DEV) {
+        console.debug('DEBUG – Event saved:', newEvent);
+      }
+      
+      setIsSubmitting(false);
+      setShowEventEditor(false);
+    } catch (error) {
+      console.error('Failed to save event:', error);
+      setIsSubmitting(false);
     }
-    
-    setIsSubmitting(false);
-    setShowEventEditor(false);
-    // TODO: Show success toast
-    console.log('Event saved:', newEvent);
   };
 
   // DEBUG: State monitoring
@@ -368,6 +359,7 @@ const StructuredDailyLogPage: FC = () => {
                     icon={category.icon}
                     label={category.label}
                     onClick={() => handleTileClick(category.key)}
+                    count={getCategoryCount(category.key)}
                   />
                 ))}
               </div>

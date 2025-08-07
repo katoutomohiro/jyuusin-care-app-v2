@@ -28,6 +28,7 @@ import type { User } from '../../types';
 
 type DataContextType = {
   users: User[];
+  dailyLogsByUser: Record<string, any[]>;
   getUserById: (id: string) => User | undefined;
   getDailyLogsByUser: (userId: string) => any[];
   getFrequentTags: (userId: string, eventType: string, limit?: number) => string[];
@@ -48,6 +49,22 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     }
   });
 
+  // dailyLogsByUserステートを追加
+  const [dailyLogsByUser, setDailyLogsByUser] = useState<Record<string, any[]>>(() => {
+    const logs: Record<string, any[]> = {};
+    // 起動時にlocalStorageからすべてのユーザーの日誌を読み込み
+    for (const user of initialUsers) {
+      try {
+        const userLogs = JSON.parse(localStorage.getItem(`dailyLogs_${user.id}`) || '[]');
+        logs[user.id] = userLogs;
+      } catch (error) {
+        console.error(`Failed to load logs for user ${user.id}:`, error);
+        logs[user.id] = [];
+      }
+    }
+    return logs;
+  });
+
   // DataContext初期化時にlocalStorageのusersキーも必ず24名で上書き
   useEffect(() => {
     if (!users || users.length === 0) {
@@ -62,11 +79,12 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   }, []); // 初回レンダリング時にのみ実行
 
   const getUserById = (id: string) => users.find((u) => u.id === id);
-  // localStorageから該当ユーザーの日誌全件を取得
+  
+  // dailyLogsByUserステートから該当ユーザーの日誌全件を取得
   const getDailyLogsByUser = (userId: string) => {
-    const logs = JSON.parse(localStorage.getItem(`dailyLogs_${userId}`) || '[]');
-    return logs;
+    return dailyLogsByUser[userId] || [];
   };
+  
   // ダミー実装: よく使うタグを返す（本実装は日誌データ集計）
   const getFrequentTags = (userId: string, eventType: string, limit: number = 5) => {
     if (eventType === 'seizure') return ['強直', '間代', '眼球上転', 'チアノーゼ', '流涎多量'].slice(0, limit);
@@ -80,14 +98,26 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     if (!validUser) {
       throw new Error(`Invalid userId: ${logData.userId}`);
     }
+    
+    // localStorageに保存
     const key = `dailyLogs_${logData.userId}`;
-    const logs = JSON.parse(localStorage.getItem(key) || '[]');
-    logs.push(logData);
-    localStorage.setItem(key, JSON.stringify(logs));
+    const currentLogs = dailyLogsByUser[logData.userId] || [];
+    const updatedLogs = [...currentLogs, logData];
+    localStorage.setItem(key, JSON.stringify(updatedLogs));
+    
+    // ステート更新（重要: UI再レンダリング用）
+    setDailyLogsByUser(prev => ({
+      ...prev,
+      [logData.userId]: updatedLogs
+    }));
+    
+    if (import.meta.env.DEV) {
+      console.debug('DEBUG – addDailyLog saved:', logData);
+    }
   };
 
   return (
-    <DataContext.Provider value={{ users, getUserById, getDailyLogsByUser, getFrequentTags, addDailyLog }}>
+    <DataContext.Provider value={{ users, dailyLogsByUser, getUserById, getDailyLogsByUser, getFrequentTags, addDailyLog }}>
       {children}
     </DataContext.Provider>
   );
