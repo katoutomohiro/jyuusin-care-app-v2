@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
 import { Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import { DailyLog } from '../../types';
-import './fonts';          // ❶ フォント登録を集約
-import { fauxItalic } from './fonts';
+import './registerFonts';          // ❶ フォント登録を集約
+import { fauxItalic } from './registerFonts';
 
 const styles = StyleSheet.create({
   page: {

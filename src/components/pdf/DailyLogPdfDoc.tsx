@@ -1,10 +1,10 @@
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 import { DailyLog, User } from '../../types';
-import './fonts';          // ❶ フォント登録を集約
-import { fauxItalic } from './fonts';
+import './registerFonts';          // ❶ フォント登録を集約
+import { fauxItalic } from './registerFonts';
 
-if (import.meta.env.DEV) console.debug('✅ DailyLogPdfDoc loaded with centralized fonts');
+if (import.meta.env.DEV) console.debug('✅ DailyLogPdfDoc loaded with registerFonts');
 
 const styles = StyleSheet.create({
   body: {

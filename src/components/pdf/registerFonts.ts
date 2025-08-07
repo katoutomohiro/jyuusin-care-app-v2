@@ -1,6 +1,6 @@
 import { Font } from '@react-pdf/renderer';
 
-/* TrueType only  –  OTF は使わない */
+/* TTF only –  italic 未登録 */
 Font.register({
   family: 'NotoSansJP',
   fonts: [
@@ -9,7 +9,7 @@ Font.register({
   ]
 });
 
-/* faux italic (必要なら style に追加して使う) */
+/* faux italic – 使う場合は {...fauxItalic} を style に混ぜる */
 export const fauxItalic = { transform: 'skewX(-8deg)' };
 
-console.debug('✅ NotoSansJP TTF フォント登録完了 (fonts.ts)');
+if (import.meta.env.DEV) console.debug('✅ NotoSansJP TTF フォント登録完了 (registerFonts.ts)');
