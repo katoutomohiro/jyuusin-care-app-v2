@@ -6,7 +6,7 @@ import { fauxItalic } from './registerFonts';
 
 const styles = StyleSheet.create({
   page: {
-    fontFamily: 'ShipporiMincho',
+    fontFamily: 'NotoSansJP',
     padding: '1cm',
     fontSize: 10,
     backgroundColor: '#fff',

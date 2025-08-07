@@ -4,14 +4,14 @@ import { DailyLog, User } from '../../types';
 import './registerFonts';          // ← これをファイル冒頭に 1 行追加
 import { fauxItalic } from './registerFonts';
 
-if (import.meta.env.DEV) console.debug('✅ DailyLogPdfDoc loaded with v24 registerFonts');
+if (import.meta.env.DEV) console.debug('✅ DailyLogPdfDoc loaded with v25 registerFonts');
 
 const styles = StyleSheet.create({
   body: {
     paddingTop: 20,
     paddingBottom: 20,
     paddingHorizontal: 20,
-    fontFamily: 'ShipporiMincho',
+    fontFamily: 'NotoSansJP',
     fontSize: 9,
   },
   header: {

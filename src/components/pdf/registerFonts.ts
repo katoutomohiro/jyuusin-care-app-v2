@@ -1,19 +1,18 @@
 import { Font } from '@react-pdf/renderer';
+import path from 'path';
 
-/** BASE_URL を使用して確実なフォントパスを生成 */
-const base = import.meta.env.BASE_URL || '/';
-const fontPath = (filename: string) => `${base}pdf/fonts/${filename}`.replace(/\/+/g, '/');
+const base = (import.meta.env.BASE_URL ?? '/').replace(/\/+$/, '/'); // 末尾スラッシュ 1 個に整理
+const font = (file: string) => path.join(base, 'pdf/fonts', file);
 
-/** Shippori Mincho (glyf TrueType) だけ登録 */
 Font.register({
-  family: 'ShipporiMincho',
-  fonts: [
-    { src: fontPath('ShipporiMincho-Regular.ttf'), fontWeight: 400 },
-    { src: fontPath('ShipporiMincho-Bold.ttf'),    fontWeight: 700 }
+  family: 'NotoSansJP',
+  fonts : [
+    { src: font('ShipporiMincho-Regular.ttf'), fontWeight: 400 },
+    { src: font('ShipporiMincho-Bold.ttf'),    fontWeight: 700 }
   ]
 });
 
-/** 擬似イタリック（必要なら） */
+// italic は fontkit が解析できないため fauxItalic をエクスポート
 export const fauxItalic = { transform: 'skewX(-8deg)' };
 
-if (import.meta.env.DEV) console.debug('✅ ShipporiMincho glyf版 フォント登録完了 (v24 - BASE_URL対応)');
+if (import.meta.env.DEV) console.debug('✅ NotoSansJP (ShipporiMincho TTF) フォント登録完了 (v25 - BASE_URL対応)');
