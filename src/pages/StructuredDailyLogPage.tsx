@@ -38,6 +38,128 @@ import { CATEGORIES, EventType as CatEventType } from '../utils/eventCategories'
 
 type EventType = 'seizure' | 'expression' | 'vitals' | 'hydration' | 'excretion' | 'sleep' | 'activity' | 'care' | 'skin_oral_care' | 'illness' | 'cough_choke' | 'tube_feeding' | 'medication_administration' | 'behavioral' | 'communication' | 'other' | 'positioning';
 
+// generateDailyLog関数を巻き上げ可能な関数宣言として定義
+function generateDailyLog(
+  userId: string | undefined,
+  userName: string,
+  date: string,
+  dailyLogsByUser: Record<string, any[]>
+): DailyLog | null {
+  if (!userId) return null;
+  
+  // dailyLogsByUserから今日のイベントデータを取得
+  const userLogs = dailyLogsByUser[userId] || [];
+  const todayLogs = userLogs.filter((log: any) => 
+    log.user_id === userId && 
+    log.created_at && 
+    log.created_at.startsWith(date)
+  );
+  
+  if (import.meta.env.DEV) {
+    console.debug('DEBUG – Found logs for', userId, 'on', date, ':', todayLogs.length, 'events');
+  }
+  
+  // 基本構造
+  const dailyLog: DailyLog = {
+    userId,
+    userName,
+    date,
+    vitals: null,
+    hydration: [],
+    excretion: [],
+    sleep: null,
+    seizure: [],
+    activity: [],
+    care: [],
+    notes: ''
+  };
+
+  // イベントタイプ別にデータを集計
+  todayLogs.forEach((log: any) => {
+    try {
+      switch (log.event_type) {
+        case 'vitals':
+          dailyLog.vitals = {
+            temperature: parseFloat(log.temperature) || null,
+            pulse: parseInt(log.pulse) || null,
+            spo2: parseInt(log.spo2) || null,
+            blood_pressure_systolic: parseInt(log.blood_pressure_systolic) || null,
+            blood_pressure_diastolic: parseInt(log.blood_pressure_diastolic) || null,
+            respiratory_rate: parseInt(log.respiratory_rate) || null,
+            measurement_time: log.event_timestamp || ''
+          };
+          break;
+          
+        case 'hydration':
+          dailyLog.hydration.push({
+            time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
+            amount: parseInt(log.amount) || 0,
+            type: log.intake_type === 'oral' ? 'oral' : 'tube',
+            content: log.meal_content || ''
+          });
+          break;
+          
+        case 'excretion':
+          dailyLog.excretion.push({
+            time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
+            type: log.record_type === 'urination' ? 'urine' : 'stool',
+            amount: log.urination?.amount || log.defecation?.amount || '',
+            color: log.urination?.color || '',
+            properties: log.defecation?.bristol_scale || '',
+            notes: log.notes || ''
+          });
+          break;
+          
+        case 'seizure':
+          if (!dailyLog.seizure) dailyLog.seizure = [];
+          dailyLog.seizure.push({
+            time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
+            type: log.seizure_type || '',
+            duration: (log.duration_minutes || 0) * 60, // Convert minutes to seconds
+            symptoms: log.seizure_phenomena || [],
+            postIctalState: log.post_ictal_state || '',
+            notes: log.notes || ''
+          });
+          break;
+          
+        case 'activity':
+          if (!dailyLog.activity) dailyLog.activity = [];
+          dailyLog.activity.push({
+            time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
+            title: log.activity_type || '',
+            description: log.notes || '',
+            mood: log.mood_during_activity || ''
+          });
+          break;
+          
+        default:
+          // その他のイベントタイプもcareに追加
+          if (!dailyLog.care) dailyLog.care = [];
+          dailyLog.care.push({
+            time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
+            type: 'other',
+            details: log.notes || `${log.event_type}: ${JSON.stringify(log, null, 2)}`
+          });
+      }
+    } catch (error) {
+      console.warn('Error processing log entry:', log, error);
+    }
+  });
+  
+  if (import.meta.env.DEV) {
+    console.debug('DEBUG - Generated dailyLog with items:', {
+      vitals: !!dailyLog.vitals,
+      hydration: dailyLog.hydration.length,
+      excretion: dailyLog.excretion.length,
+      seizure: dailyLog.seizure?.length || 0,
+      activity: dailyLog.activity?.length || 0,
+      care: dailyLog.care?.length || 0
+    });
+  }
+  
+  return dailyLog;
+}
+
 const StructuredDailyLogPage: FC = () => {
   const navigate = useNavigate();
   const { users, dailyLogsByUser } = useData();
@@ -69,125 +191,12 @@ const StructuredDailyLogPage: FC = () => {
   const dailyLog = useMemo(() => {
     if (!selectedUserId || !selectedUser || !logsReady) return null;
     
-    const generatedLog = generateDailyLog(selectedUserId, selectedUser.name, today);
-    if (import.meta.env.DEV) {
+    const generatedLog = generateDailyLog(selectedUserId, selectedUser.name, today, dailyLogsByUser);
+    if (import.meta.env.DEV && generatedLog) {
       console.debug('DEBUG – generateDailyLog regenerated, items:', Object.keys(generatedLog).length);
     }
     return generatedLog;
   }, [selectedUserId, selectedUser, today, dailyLogsByUser]);
-
-  // 安全なダミーデータ生成関数 → 実際のdailyLogsByUser読み込み関数に変更
-  const generateDailyLog = (userId: string, userName: string, date: string): DailyLog => {
-    // dailyLogsByUserから今日のイベントデータを取得
-    const userLogs = dailyLogsByUser[userId] || [];
-    const todayLogs = userLogs.filter((log: any) => 
-      log.user_id === userId && 
-      log.created_at && 
-      log.created_at.startsWith(date)
-    );
-    
-    if (import.meta.env.DEV) {
-      console.debug('DEBUG – Found logs for', userId, 'on', date, ':', todayLogs.length, 'events');
-    }
-    
-    // 基本構造
-    const dailyLog: DailyLog = {
-      userId,
-      userName,
-      date,
-      vitals: null,
-      hydration: [],
-      excretion: [],
-      sleep: null,
-      seizure: [],
-      activity: [],
-      care: [],
-      notes: ''
-    };
-
-    // イベントタイプ別にデータを集計
-    todayLogs.forEach((log: any) => {
-      try {
-        switch (log.event_type) {
-          case 'vitals':
-            dailyLog.vitals = {
-              temperature: parseFloat(log.temperature) || null,
-              pulse: parseInt(log.pulse) || null,
-              spo2: parseInt(log.spo2) || null,
-              blood_pressure_systolic: parseInt(log.blood_pressure_systolic) || null,
-              blood_pressure_diastolic: parseInt(log.blood_pressure_diastolic) || null,
-              respiratory_rate: parseInt(log.respiratory_rate) || null,
-              measurement_time: log.event_timestamp || ''
-            };
-            break;
-            
-          case 'hydration':
-            dailyLog.hydration.push({
-              time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
-              amount: parseInt(log.amount) || 0,
-              type: log.intake_type === 'oral' ? 'oral' : 'tube',
-              content: log.meal_content || ''
-            });
-            break;
-            
-          case 'excretion':
-            dailyLog.excretion.push({
-              time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
-              type: log.record_type === 'urination' ? 'urine' : 'stool',
-              amount: log.urination?.amount || log.defecation?.amount || '',
-              color: log.urination?.color || '',
-              properties: log.defecation?.bristol_scale || '',
-              notes: log.notes || ''
-            });
-            break;
-            
-          case 'seizure':
-            if (!dailyLog.seizure) dailyLog.seizure = [];
-            dailyLog.seizure.push({
-              time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
-              type: log.seizure_type || '',
-              duration: (log.duration_minutes || 0) * 60, // Convert minutes to seconds
-              symptoms: log.seizure_phenomena || [],
-              postIctalState: log.post_ictal_state || '',
-              notes: log.notes || ''
-            });
-            break;
-            
-          case 'activity':
-            if (!dailyLog.activity) dailyLog.activity = [];
-            dailyLog.activity.push({
-              time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
-              title: log.activity_type || '',
-              description: log.notes || '',
-              mood: log.mood_during_activity || ''
-            });
-            break;
-            
-          default:
-            // その他のイベントタイプもcareに追加
-            if (!dailyLog.care) dailyLog.care = [];
-            dailyLog.care.push({
-              time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
-              type: 'other',
-              details: log.notes || `${log.event_type}: ${JSON.stringify(log, null, 2)}`
-            });
-        }
-      } catch (error) {
-        console.warn('Error processing log entry:', log, error);
-      }
-    });
-    
-    console.log('DEBUG - Generated dailyLog with items:', {
-      vitals: !!dailyLog.vitals,
-      hydration: dailyLog.hydration.length,
-      excretion: dailyLog.excretion.length,
-      seizure: dailyLog.seizure?.length || 0,
-      activity: dailyLog.activity?.length || 0,
-      care: dailyLog.care?.length || 0
-    });
-    
-    return dailyLog;
-  };
 
   // 各カテゴリーの件数を計算
   const getCategoryCount = (categoryKey: string): number => {

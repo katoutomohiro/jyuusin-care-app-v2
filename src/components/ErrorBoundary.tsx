@@ -34,8 +34,19 @@ export default class ErrorBoundary extends Component<Props, State> {
           </div>
         );
       }
-      // それ以外は何も表示しない（他ページでグローバルエラーが出ないように）
-      return null;
+      // デバッグ用にエラー情報を表示
+      return (
+        <div className="p-4 text-red-600 bg-red-50 border border-red-200 rounded-lg">
+          <h3 className="font-bold mb-2">UI クラッシュ:</h3>
+          <p className="mb-2">{this.state.error?.message}</p>
+          <details className="text-sm">
+            <summary className="cursor-pointer">スタックトレース</summary>
+            <pre className="mt-2 text-xs overflow-auto bg-gray-100 p-2 rounded">
+              {this.state.error?.stack}
+            </pre>
+          </details>
+        </div>
+      );
     }
     return this.props.children;
   }
