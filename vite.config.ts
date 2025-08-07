@@ -6,6 +6,15 @@ export default defineConfig({
   define: {
     'process.env.VITE_DISABLE_WEBSOCKET': '"true"',
   },
+  optimizeDeps: {
+    exclude: ['react', 'react-dom']
+  },
+  resolve: {
+    alias: {
+      react: 'react',
+      'react-dom': 'react-dom'
+    }
+  },
   server: {
     port: 3005,
     host: '0.0.0.0',
@@ -17,15 +26,25 @@ export default defineConfig({
   },
   build: {
     minify: 'terser',
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 500,
     rollupOptions: {
       onwarn(warning, warn) {
         if (warning.code === 'MODULE_LEVEL_DIRECTIVE') {
           return
         }
         warn(warning)
+      },
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          ui: ['@headlessui/react', '@heroicons/react'],
+          pdf: ['@react-pdf/renderer']
+        }
       }
-    }
+    },
+    reportCompressedSize: false,
+    assetsInlineLimit: 2048
   },
   esbuild: {
     jsx: 'automatic'
