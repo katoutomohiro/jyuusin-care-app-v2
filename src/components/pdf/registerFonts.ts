@@ -1,18 +1,21 @@
 import { Font } from '@react-pdf/renderer';
-import path from 'path';
 
-const base = (import.meta.env.BASE_URL ?? '/').replace(/\/+$/, '/'); // 末尾スラッシュ 1 個に整理
-const font = (file: string) => path.join(base, 'pdf/fonts', file);
+/**
+ * ブラウザ互換のパス生成。 `new URL()` で絶対パスに変換してから
+ * `.href` を返せば Node の path.join を使わずに済む。
+ */
+const fontPath = (name: string, weight: string) =>
+  new URL(`/pdf/fonts/${name}-${weight}.ttf`, window.location.origin).href;
 
 Font.register({
   family: 'NotoSansJP',
   fonts : [
-    { src: font('ShipporiMincho-Regular.ttf'), fontWeight: 400 },
-    { src: font('ShipporiMincho-Bold.ttf'),    fontWeight: 700 }
+    { src: fontPath('ShipporiMincho', 'Regular'), fontWeight: 400 },
+    { src: fontPath('ShipporiMincho', 'Bold'),    fontWeight: 700 }
   ]
 });
 
 // italic は fontkit が解析できないため fauxItalic をエクスポート
 export const fauxItalic = { transform: 'skewX(-8deg)' };
 
-if (import.meta.env.DEV) console.debug('✅ NotoSansJP (ShipporiMincho TTF) フォント登録完了 (v25 - BASE_URL対応)');
+if (import.meta.env.DEV) console.debug('✅ NotoSansJP (ShipporiMincho TTF) フォント登録完了 (v26 - ブラウザ互換)');
