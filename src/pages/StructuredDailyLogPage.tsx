@@ -276,17 +276,17 @@ const StructuredDailyLogPage: FC = () => {
     alert('Excel出力は一時的に無効化されています。PDF出力をご利用ください。');
     /* 
     console.time('exportExcel');
-    console.log('Excel export started');
+    if (import.meta.env.DEV) console.log('Excel export started');
     try {
       if (!selectedUser || !dailyLog || !logsReady) {
         alert('利用者データの準備ができていません。少しお待ちください。');
         return;
       }
       
-      console.log('Generated dailyLog:', dailyLog);
+      if (import.meta.env.DEV) console.log('Generated dailyLog:', dailyLog);
       
       await exportDailyLogExcel(dailyLog, selectedUser, today);
-      console.log('Excel export completed successfully');
+      if (import.meta.env.DEV) console.log('Excel export completed successfully');
       
       alert('Excel ファイルを生成しました');
     } catch (error) {
@@ -299,7 +299,7 @@ const StructuredDailyLogPage: FC = () => {
 
   // Event Tile Click Handler
   const handleTileClick = (eventType: CatEventType) => {
-    console.log('Tile clicked:', eventType);
+    if (import.meta.env.DEV) console.log('Tile clicked:', eventType);
     setActiveEventType(eventType as EventType);
     setShowEventEditor(true);
   };
@@ -397,6 +397,7 @@ const StructuredDailyLogPage: FC = () => {
               dailyLog={dailyLog}
               logsReady={logsReady}
               todayLogsCount={todayLogsCount}
+              disabled={!logsReady || todayLogsCount === 0}
               onPdf={() => setPdfPreviewOpen(true)}
               onExcel={handleExportExcel}
               showExcel={false} // Excelボタンを非表示
