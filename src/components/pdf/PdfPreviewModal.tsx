@@ -1,126 +1,67 @@
-import React, { Fragment, useEffect, useState } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
+import React, { useEffect, useState } from 'react';
+import { Dialog } from '@headlessui/react';
 import { PDFViewer } from '@react-pdf/renderer';
-import { XMarkIcon } from '@heroicons/react/24/outline';
 import DailyLogPdfDoc from './DailyLogPdfDoc';
 import { DailyLog, User } from '../../types';
 
-interface PdfPreviewModalProps {
+type Props = {
   open: boolean;
   onClose: () => void;
+  /* 日誌１日分のデータ構造（呼び出し側で既に validate 済み） */
   dailyLog: DailyLog | null;
   user: User;
-}
+};
 
-const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({ 
-  open, 
-  onClose, 
-  dailyLog, 
-  user
-}) => {
+const PdfPreviewModal: React.FC<Props> = ({ open, onClose, dailyLog, user }) => {
   const [ready, setReady] = useState(false);
-  
+
   useEffect(() => {
-    if (open && typeof window !== 'undefined') {
-      // @react-pdf/renderer用の設定
-      if ((window as any).pdfjsLib?.GlobalWorkerOptions) {
-        (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf/pdf.worker.min.js';
-      }
-      
-      // react-pdf用の設定
-      if ((window as any).pdfjs?.GlobalWorkerOptions) {
-        (window as any).pdfjs.GlobalWorkerOptions.workerSrc = '/pdf/pdf.worker.min.js';
-      }
-      
-      // 直接設定
-      (window as any).pdfjsWorker = '/pdf/pdf.worker.min.js';
-    }
-    setReady(open);
+    if (open) setReady(true);
+    else      setReady(false);
   }, [open]);
 
-  if (!open) return null;
-  if (!ready || !dailyLog) return null;
+  if (!open || !dailyLog || !ready) return null;
+
   return (
-    <Transition appear show={open} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
-        {/* Backdrop */}
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
-        </Transition.Child>
-
-        {/* Modal Content */}
-        <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
-              enterTo="opacity-100 scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
+    <Dialog open={open} onClose={onClose} className="relative z-50">
+      {/* Backdrop */}
+      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+      
+      {/* Full-screen container */}
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <Dialog.Panel className="mx-auto max-w-6xl bg-white rounded-lg shadow-xl w-full h-[90vh]">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b">
+            <Dialog.Title className="text-lg font-semibold">
+              📄 PDF プレビュー - {user.name} ({dailyLog.date || '日付不明'})
+            </Dialog.Title>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
             >
-              <Dialog.Panel className="w-full max-w-6xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900"
-                  >
-                    <span className="font-semibold text-lg">📄 A4印刷用日誌プレビュー - {user.name} ({dailyLog.date || '日付不明'})</span>
-                  </Dialog.Title>
-                  <button
-                    type="button"
-                    className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    onClick={onClose}
-                    autoFocus
-                  >
-                    <span className="sr-only">Close</span>
-                    <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                  </button>
-                </div>
-
-                {/* PDF Viewer */}
-                <div className="h-[70vh] w-full border border-gray-200 rounded-lg overflow-hidden">
-                  <PDFViewer 
-                    style={{ 
-                      width: '100%', 
-                      height: '100%',
-                      border: 'none'
-                    }}
-                    showToolbar={true}
-                  >
-                    <DailyLogPdfDoc 
-                      dailyLogItems={dailyLog} 
-                      user={user}
-                    />
-                  </PDFViewer>
-                </div>
-
-                {/* Footer */}
-                <div className="mt-4 flex justify-end space-x-2">
-                  <button
-                    type="button"
-                    className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                    onClick={onClose}
-                  >
-                    閉じる
-                  </button>
-                </div>
-              </Dialog.Panel>
-            </Transition.Child>
+              ✕
+            </button>
           </div>
-        </div>
-      </Dialog>
-    </Transition>
+
+          {/* PDF Viewer */}
+          <div className="h-full p-4">
+            <PDFViewer 
+              style={{ 
+                width: '100%', 
+                height: '100%',
+                border: 'none'
+              }}
+              showToolbar={true}
+            >
+              <DailyLogPdfDoc 
+                dailyLogItems={dailyLog} 
+                user={user}
+              />
+            </PDFViewer>
+          </div>
+        </Dialog.Panel>
+      </div>
+    </Dialog>
   );
 };
 
