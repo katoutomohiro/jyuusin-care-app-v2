@@ -8,7 +8,7 @@ Font.register({
   fonts: [
     { src: '/pdf/fonts/NotoSansJP-Regular.otf', fontWeight: 400, fontStyle: 'normal' },
     { src: '/pdf/fonts/NotoSansJP-Regular.otf', fontWeight: 400, fontStyle: 'italic' },
-    { src: '/pdf/fonts/NotoSansJP-Bold.otf',    fontWeight: 700, fontStyle: 'normal' }
+    { src: '/pdf/fonts/NotoSansJP-Bold.otf',    fontWeight: 700, fontStyle: 'normal' },
   ]
 });
 

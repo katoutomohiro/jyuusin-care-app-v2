@@ -5,8 +5,10 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import DailyLogPdfDoc from './DailyLogPdfDoc';
 import { DailyLog, User } from '../../types';
 
-// PDF.js Worker設定（将来のため）
-// pdfjs.GlobalWorkerOptions.workerSrc = '/pdf/pdf.worker.min.js';
+// PDF.js Worker設定
+if (typeof window !== 'undefined') {
+  (window as any).pdfjsLib = { GlobalWorkerOptions: { workerSrc: '/pdf/pdf.worker.min.js' } };
+}
 
 interface PdfPreviewModalProps {
   open: boolean;

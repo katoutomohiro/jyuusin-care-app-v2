@@ -71,7 +71,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       const initialData = SEVERE_DISABILITY_USERS;
       setUsers(initialData);
       localStorage.setItem('users', JSON.stringify(initialData));
-      if (import.meta.env.DEV) console.log('初期利用者データを投入しました', initialData);
+      if (import.meta.env.DEV) console.debug('初期利用者データを投入しました', initialData);
     } else {
       // 起動時に現在のusersステートをlocalStorageに保存する
       localStorage.setItem('users', JSON.stringify(users));

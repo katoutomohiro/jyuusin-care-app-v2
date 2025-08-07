@@ -276,17 +276,17 @@ const StructuredDailyLogPage: FC = () => {
     alert('Excel出力は一時的に無効化されています。PDF出力をご利用ください。');
     /* 
     console.time('exportExcel');
-    if (import.meta.env.DEV) console.log('Excel export started');
+    if (import.meta.env.DEV) console.debug('Excel export started');
     try {
       if (!selectedUser || !dailyLog || !logsReady) {
         alert('利用者データの準備ができていません。少しお待ちください。');
         return;
       }
       
-      if (import.meta.env.DEV) console.log('Generated dailyLog:', dailyLog);
+      if (import.meta.env.DEV) console.debug('Generated dailyLog:', dailyLog);
       
       await exportDailyLogExcel(dailyLog, selectedUser, today);
-      if (import.meta.env.DEV) console.log('Excel export completed successfully');
+      if (import.meta.env.DEV) console.debug('Excel export completed successfully');
       
       alert('Excel ファイルを生成しました');
     } catch (error) {
@@ -299,7 +299,7 @@ const StructuredDailyLogPage: FC = () => {
 
   // Event Tile Click Handler
   const handleTileClick = (eventType: CatEventType) => {
-    if (import.meta.env.DEV) console.log('Tile clicked:', eventType);
+    if (import.meta.env.DEV) console.debug('Tile clicked:', eventType);
     setActiveEventType(eventType as EventType);
     setShowEventEditor(true);
   };
@@ -338,7 +338,7 @@ const StructuredDailyLogPage: FC = () => {
 
   // DEBUG: State monitoring
   useEffect(() => {
-    if (import.meta.env.DEV) console.log('DEBUG - selectedUserId:', selectedUserId, 'selectedUser:', selectedUser);
+    if (import.meta.env.DEV) console.debug('DEBUG - selectedUserId:', selectedUserId, 'selectedUser:', selectedUser);
   }, [selectedUserId, selectedUser]);
 
   return (

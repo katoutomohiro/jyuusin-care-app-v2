@@ -1,90 +1,25 @@
-<!DOCTYP    <!-- エラー撲滅用CSP設定 -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' wasm-unsafe-eval blob: data:; worker-src 'self' blob:; connect-src 'self' data: blob:; font-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; frame-src 'self';"&gt;html>
+<!doctype html>
 <html lang="ja">
   <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/icon-512x512.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src  'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data:;
+        worker-src  'self' blob:;
+        connect-src 'self' data: blob:;
+        font-src    'self' data: blob:;
+        img-src     'self' data: blob:;
+        style-src   'self' 'unsafe-inline';
+        frame-src   'self';
+      "
+    />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>重心ケアアプリ</title>
-    
-    <!-- エラー撲滅用CSP設定 -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data:; worker-src 'self' blob:; connect-src 'self' data: blob:; font-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; frame-src 'self';">
-    
-    <!-- PWA関連メタタグ -->
-    <meta name="description" content="重度障がい者支援施設向けケア管理アプリ" />
-    <meta name="theme-color" content="#0ea5e9" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Jyushin Care" />
-    <link rel="apple-touch-icon" href="/icon-512x512.svg" />
-    <link rel="manifest" href="/manifest.json" />
-    
-    <!-- オフライン対応 -->
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="application-name" content="Jyushin Care" />
-    
-    <!-- 究極のエラー抑制システム -->
-    <script>
-      // グローバルエラーハンドラー（最優先）
-      window.addEventListener('error', function(e) {
-        const msg = e.message || e.error?.message || '';
-        // WebSocket関連のエラーは開発中は表示させたいので抑制対象から除外
-        const patterns = ['Extension', 'tunnel', 'github.dev', 'vscs:sw', 'HttpClient', 'gallerycdn', 'marketplace', 'User-Agent', 'Content Security Policy', 'TrustedTypePolicy', 'listener LEAK', '[@octokit/request]', 'deprecated', 'sandbox', 'iframe'];
-        if (patterns.some(p => msg.includes(p))) {
-          e.preventDefault();
-          e.stopPropagation();
-          return false;
-        }
-      }, true);
-
-      // 本番環境を判定
-      const isProduction = !['localhost', '127.0.0.1', '192.168.1.10'].includes(window.location.hostname) && !window.location.hostname.endsWith('.local');
-
-      // 本番環境でのみService WorkerとWebSocketを無効化
-      if (isProduction) {
-        if (window.location.hostname.includes('localhost')) console.debug('本番環境と判定。ServiceWorkerとWebSocketを無効化します。');
-        
-        // Service Worker完全無効化
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            for(let registration of registrations) {
-              registration.unregister();
-            }
-          }).catch(function(err) {
-            if (window.location.hostname.includes('localhost')) console.debug('Service Workerの登録解除に失敗:', err);
-          });
-        }
-        
-        // WebSocketとEventSourceを無効化
-        try {
-          Object.defineProperty(window, 'WebSocket', { value: undefined, writable: false, configurable: true });
-          Object.defineProperty(window, 'EventSource', { value: undefined, writable: false, configurable: true });
-        } catch (e) {
-          window.WebSocket = undefined;
-          window.EventSource = undefined;
-        }
-      }
-    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    
-    <!-- Service Worker登録（本番のみ） -->
-    <!--
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              if (window.location.hostname.includes('localhost')) console.debug('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-              if (window.location.hostname.includes('localhost')) console.debug('SW registration failed: ', registrationError);
-            });
-        });
-      }
-    </script>
-    -->
   </body>
 </html>
