@@ -4,7 +4,7 @@ import { DailyLog, User } from '../../types';
 import './registerFonts';          // ← これをファイル冒頭に 1 行追加
 import { fauxItalic } from './registerFonts';
 
-if (import.meta.env.DEV) console.debug('✅ DailyLogPdfDoc loaded with v22 registerFonts');
+if (import.meta.env.DEV) console.debug('✅ DailyLogPdfDoc loaded with v24 registerFonts');
 
 const styles = StyleSheet.create({
   body: {
