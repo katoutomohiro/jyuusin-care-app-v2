@@ -205,6 +205,25 @@ const StructuredDailyLogPage: FC = () => {
     })();
   }, [selectedUserId, users, today]);
 
+  // localStorage変更の監視（イベント保存後のdailyLog更新）
+  useEffect(() => {
+    if (!selectedUserId || !selectedUser || !logsReady) return;
+    
+    const handleStorageChange = () => {
+      console.debug('localStorage changed - regenerating dailyLog');
+      const updatedLog = generateDailyLog(selectedUser.id, selectedUser.name, today);
+      setDailyLog(updatedLog);
+    };
+    
+    // storage eventは他のタブからの変更のみ検知するため、
+    // 同一タブ内での変更は手動で監視する必要がある
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [selectedUserId, selectedUser, logsReady, today]);
+
   // Excel Export Handler
   const handleExportExcel = async () => {
     console.time('exportExcel');
@@ -324,22 +343,19 @@ const StructuredDailyLogPage: FC = () => {
             </div>
 
             {/* PDF/Excel ボタン */}
+            <ButtonsRow
+              dailyLog={dailyLog}
+              logsReady={logsReady}
+              onPdf={() => setPdfPreviewOpen(true)}
+              onExcel={handleExportExcel}
+            />
+
             {!logsReady && (
               <p className="text-sm text-gray-500 text-center">構造化日誌の変換を準備中…</p>
             )}
-            
-            {logsReady && (
-              <>
-                <ButtonsRow
-                  disabled={!dailyLog || Object.keys(dailyLog).length === 0}
-                  onPdf={() => setPdfPreviewOpen(true)}
-                  onExcel={handleExportExcel}
-                />
 
-                {(!dailyLog || Object.keys(dailyLog).length === 0) && (
-                  <p className="text-sm text-orange-500 text-center">まだ記録がありません。下のタイルから入力してください。</p>
-                )}
-              </>
+            {logsReady && (!dailyLog || Object.keys(dailyLog).length === 0) && (
+              <p className="text-sm text-orange-500 text-center">まだ記録がありません。下のタイルから入力してください。</p>
             )}
 
             {/* 記録入力タイルグリッド */}

@@ -7,7 +7,7 @@ export default defineConfig({
     'process.env.VITE_DISABLE_WEBSOCKET': '"true"',
   },
   server: {
-    port: 3004,
+    port: 3005,
     host: '0.0.0.0',
     hmr: false,
     watch: {
