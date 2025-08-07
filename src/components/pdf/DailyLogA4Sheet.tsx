@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import { DailyLog } from '../../types';
-import './registerFonts';          // ❶ フォント登録を集約
+import './registerFonts';          // ← これをファイル冒頭に 1 行追加
 import { fauxItalic } from './registerFonts';
 
 const styles = StyleSheet.create({
