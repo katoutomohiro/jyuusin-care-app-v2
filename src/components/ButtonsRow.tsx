@@ -4,9 +4,11 @@ interface ButtonsRowProps {
   disabled?: boolean;
   onPdf: () => void;
   onExcel?: () => void; // オプショナルに変更
+  onAllUsersPdf?: () => void; // 全員分PDF生成用
   dailyLog?: any;
   logsReady?: boolean;
   showExcel?: boolean; // Excel表示制御用プロパティ
+  showAllUsers?: boolean; // 全員分PDF表示制御用
   todayLogsCount?: number; // 今日のログ数
 }
 
@@ -14,9 +16,11 @@ export const ButtonsRow: FC<ButtonsRowProps> = ({
   disabled, 
   onPdf, 
   onExcel, 
+  onAllUsersPdf,
   dailyLog, 
   logsReady = true,
   showExcel = false, // デフォルトでExcelボタンを非表示
+  showAllUsers = false, // デフォルトで全員分PDFボタンを非表示
   todayLogsCount = 0
 }) => {
   // シンプルな判定: ログが準備完了 && 1件以上のログが存在
@@ -38,6 +42,18 @@ export const ButtonsRow: FC<ButtonsRowProps> = ({
       >
         📄 A4印刷日誌プレビュー
       </button>
+      
+      {/* 全員分PDFボタンを条件付きで表示 */}
+      {showAllUsers && onAllUsersPdf && (
+        <button 
+          onClick={onAllUsersPdf} 
+          disabled={disabled || !logsReady}
+          className="bg-purple-600 text-white px-4 py-2 rounded disabled:opacity-40 hover:bg-purple-700 disabled:hover:bg-purple-600 transition-colors min-w-[180px]"
+        >
+          👥 全員分印刷
+        </button>
+      )}
+      
       {/* Excelボタンを条件付きで表示 */}
       {showExcel && onExcel && (
         <button 

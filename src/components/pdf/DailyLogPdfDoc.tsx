@@ -2,6 +2,7 @@ import React from 'react';
 import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 import { DailyLog, User } from '../../types';
 import { registerPdfFonts, pdfFamily, fauxItalic } from './registerFonts';
+import { localDateKey } from '../../utils/dateKey';
 
 // フォントを登録
 registerPdfFonts();

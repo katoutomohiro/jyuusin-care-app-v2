@@ -35,6 +35,7 @@ import { useLocation } from 'react-router-dom';
 import { ButtonsRow } from '../components/ButtonsRow';
 import { RecordTile } from '../components/RecordTile';
 import { CATEGORIES, EventType as CatEventType } from '../utils/eventCategories';
+import { localDateKey } from '../utils/dateKey';
 
 type EventType = 'seizure' | 'expression' | 'vitals' | 'hydration' | 'excretion' | 'sleep' | 'activity' | 'care' | 'skin_oral_care' | 'illness' | 'cough_choke' | 'tube_feeding' | 'medication_administration' | 'behavioral' | 'communication' | 'other' | 'positioning';
 
@@ -189,6 +190,7 @@ const StructuredDailyLogPage: FC = () => {
   const [showEventEditor, setShowEventEditor] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [allUsersPdfOpen, setAllUsersPdfOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // 現在選択されている利用者
@@ -219,10 +221,11 @@ const StructuredDailyLogPage: FC = () => {
     if (!selectedUserId || !dailyLogsByUser[selectedUserId]) return 0;
     
     return dailyLogsByUser[selectedUserId].filter((log: any) => {
-      const logDate = log.created_at ? log.created_at.split('T')[0] : today;
-      return logDate === today;
+      const logDateKey = localDateKey(log.created_at || new Date());
+      const todayKey = localDateKey(new Date());
+      return logDateKey === todayKey;
     }).length;
-  }, [selectedUserId, dailyLogsByUser, today]);
+  }, [selectedUserId, dailyLogsByUser]);
 
   // 各カテゴリーの件数を計算 - dailyLogsByUserから直接計算して最新の状態を反映
   const getCategoryCount = useCallback((categoryKey: string): number => {
@@ -230,8 +233,9 @@ const StructuredDailyLogPage: FC = () => {
     
     // 今日の日付に該当するログをフィルタリング
     const todayLogs = dailyLogsByUser[selectedUserId].filter((log: any) => {
-      const logDate = log.created_at ? log.created_at.split('T')[0] : today;
-      return logDate === today;
+      const logDateKey = localDateKey(log.created_at || new Date());
+      const todayKey = localDateKey(new Date());
+      return logDateKey === todayKey;
     });
     
     // イベントタイプ別にカウント
@@ -325,7 +329,10 @@ const StructuredDailyLogPage: FC = () => {
       await addDailyLog(newEvent);
       
       if (import.meta.env.DEV) {
-        if (import.meta.env.DEV) console.debug('DEBUG – Event saved:', newEvent);
+        console.info('[daily-log][saved]', { 
+          id: newEvent?.id, 
+          dateKey: localDateKey(newEvent?.created_at ?? Date.now()) 
+        });
       }
       
       setIsSubmitting(false);
@@ -399,8 +406,10 @@ const StructuredDailyLogPage: FC = () => {
               todayLogsCount={todayLogsCount}
               disabled={!todayLogsCount}
               onPdf={() => setPdfPreviewOpen(true)}
+              onAllUsersPdf={() => setAllUsersPdfOpen(true)}
               onExcel={handleExportExcel}
               showExcel={false} // Excelボタンを非表示
+              showAllUsers={true} // 全員分PDFボタンを表示
             />
 
             {!logsReady && (
