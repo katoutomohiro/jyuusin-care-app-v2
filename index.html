@@ -7,7 +7,7 @@
     <title>重心ケアアプリ</title>
     
     <!-- エラー撲滅用CSP設定 -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' ws: blob: data:; font-src 'self' blob: data:; frame-src 'self' blob:; img-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; worker-src 'self' blob:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' blob:; worker-src 'self' blob:; connect-src 'self' https://fonts.gstatic.com blob: data:; font-src 'self' https://fonts.gstatic.com data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; frame-src 'self';">
     
     <!-- PWA関連メタタグ -->
     <meta name="description" content="重度障がい者支援施設向けケア管理アプリ" />

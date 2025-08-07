@@ -7,6 +7,7 @@ interface ButtonsRowProps {
   dailyLog?: any;
   logsReady?: boolean;
   showExcel?: boolean; // Excel表示制御用プロパティ
+  todayLogsCount?: number; // 今日のログ数
 }
 
 export const ButtonsRow: FC<ButtonsRowProps> = ({ 
@@ -15,19 +16,18 @@ export const ButtonsRow: FC<ButtonsRowProps> = ({
   onExcel, 
   dailyLog, 
   logsReady = true,
-  showExcel = false // デフォルトでExcelボタンを非表示
+  showExcel = false, // デフォルトでExcelボタンを非表示
+  todayLogsCount = 0
 }) => {
-  // dailyLogが存在し、何らかのデータがある場合にボタンを有効化
-  const hasData = dailyLog && (
-    (dailyLog.vitals) ||
+  // シンプルな判定: ログが準備完了 && 1件以上のログが存在
+  const isDisabled = disabled || !(logsReady && (todayLogsCount > 0 || (dailyLog && (
+    dailyLog.vitals ||
     (dailyLog.hydration && dailyLog.hydration.length > 0) ||
     (dailyLog.excretion && dailyLog.excretion.length > 0) ||
     (dailyLog.seizure && dailyLog.seizure.length > 0) ||
     (dailyLog.activity && dailyLog.activity.length > 0) ||
     (dailyLog.care && dailyLog.care.length > 0)
-  );
-  
-  const isDisabled = disabled || !logsReady || !hasData;
+  ))));
   
   return (
     <div className="flex gap-2 my-4 w-full">

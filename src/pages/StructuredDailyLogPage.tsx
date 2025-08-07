@@ -47,7 +47,7 @@ function generateDailyLog(
 ): DailyLog | null {
   // 入力検証を強化してbefore-initエラーを防ぐ
   if (!userId || !userName || !date || !dailyLogsByUser) {
-    console.warn('generateDailyLog: Invalid input parameters', { userId, userName, date, hasLogs: !!dailyLogsByUser });
+    if (import.meta.env.DEV) console.warn('generateDailyLog: Invalid input parameters', { userId, userName, date, hasLogs: !!dailyLogsByUser });
     return null;
   }
   
@@ -84,7 +84,7 @@ function generateDailyLog(
     todayLogs.forEach((log: any, index: number) => {
       try {
         if (!log || !log.event_type) {
-          console.warn('generateDailyLog: Invalid log entry at index', index, log);
+          if (import.meta.env.DEV) console.warn('generateDailyLog: Invalid log entry at index', index, log);
           return;
         }
         
@@ -153,7 +153,7 @@ function generateDailyLog(
           });
       }
       } catch (logError) {
-        console.warn('generateDailyLog: Error processing log entry at index', index, ':', logError, log);
+        if (import.meta.env.DEV) console.warn('generateDailyLog: Error processing log entry at index', index, ':', logError, log);
       }
     });
     
@@ -213,6 +213,16 @@ const StructuredDailyLogPage: FC = () => {
     }
     return generatedLog;
   }, [selectedUserId, selectedUser, today, dailyLogsByUser]);
+
+  // 今日の総ログ数を計算
+  const todayLogsCount = useMemo(() => {
+    if (!selectedUserId || !dailyLogsByUser[selectedUserId]) return 0;
+    
+    return dailyLogsByUser[selectedUserId].filter((log: any) => {
+      const logDate = log.created_at ? log.created_at.split('T')[0] : today;
+      return logDate === today;
+    }).length;
+  }, [selectedUserId, dailyLogsByUser, today]);
 
   // 各カテゴリーの件数を計算 - dailyLogsByUserから直接計算して最新の状態を反映
   const getCategoryCount = useCallback((categoryKey: string): number => {
@@ -328,7 +338,7 @@ const StructuredDailyLogPage: FC = () => {
 
   // DEBUG: State monitoring
   useEffect(() => {
-    console.log('DEBUG - selectedUserId:', selectedUserId, 'selectedUser:', selectedUser);
+    if (import.meta.env.DEV) console.log('DEBUG - selectedUserId:', selectedUserId, 'selectedUser:', selectedUser);
   }, [selectedUserId, selectedUser]);
 
   return (
@@ -386,14 +396,7 @@ const StructuredDailyLogPage: FC = () => {
             <ButtonsRow
               dailyLog={dailyLog}
               logsReady={logsReady}
-              disabled={!logsReady || !dailyLog || (
-                !dailyLog.vitals && 
-                (!dailyLog.hydration || dailyLog.hydration.length === 0) && 
-                (!dailyLog.excretion || dailyLog.excretion.length === 0) &&
-                (!dailyLog.seizure || dailyLog.seizure.length === 0) &&
-                (!dailyLog.activity || dailyLog.activity.length === 0) &&
-                (!dailyLog.care || dailyLog.care.length === 0)
-              )}
+              todayLogsCount={todayLogsCount}
               onPdf={() => setPdfPreviewOpen(true)}
               onExcel={handleExportExcel}
               showExcel={false} // Excelボタンを非表示
