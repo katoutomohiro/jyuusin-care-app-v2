@@ -386,6 +386,14 @@ const StructuredDailyLogPage: FC = () => {
             <ButtonsRow
               dailyLog={dailyLog}
               logsReady={logsReady}
+              disabled={!logsReady || !dailyLog || (
+                !dailyLog.vitals && 
+                (!dailyLog.hydration || dailyLog.hydration.length === 0) && 
+                (!dailyLog.excretion || dailyLog.excretion.length === 0) &&
+                (!dailyLog.seizure || dailyLog.seizure.length === 0) &&
+                (!dailyLog.activity || dailyLog.activity.length === 0) &&
+                (!dailyLog.care || dailyLog.care.length === 0)
+              )}
               onPdf={() => setPdfPreviewOpen(true)}
               onExcel={handleExportExcel}
               showExcel={false} // Excelボタンを非表示
