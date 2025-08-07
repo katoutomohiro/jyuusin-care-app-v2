@@ -62,7 +62,7 @@ function generateDailyLog(
     });
     
     if (import.meta.env.DEV) {
-      console.debug('DEBUG – generateDailyLog for', userId, 'on', date, ':', todayLogs.length, 'events');
+      if (import.meta.env.DEV) console.debug('DEBUG – generateDailyLog for', userId, 'on', date, ':', todayLogs.length, 'events');
     }
     
     // 基本構造を初期化
@@ -158,7 +158,7 @@ function generateDailyLog(
     });
     
     if (import.meta.env.DEV) {
-      console.debug('DEBUG - generateDailyLog generated with items:', {
+      if (import.meta.env.DEV) console.debug('DEBUG - generateDailyLog generated with items:', {
         vitals: !!dailyLog.vitals,
         hydration: dailyLog.hydration.length,
         excretion: dailyLog.excretion.length,
@@ -209,7 +209,7 @@ const StructuredDailyLogPage: FC = () => {
     
     const generatedLog = generateDailyLog(selectedUserId, selectedUser.name, today, dailyLogsByUser);
     if (import.meta.env.DEV && generatedLog) {
-      console.debug('DEBUG – generateDailyLog regenerated, items:', Object.keys(generatedLog).length);
+      if (import.meta.env.DEV) console.debug('DEBUG – generateDailyLog regenerated, items:', Object.keys(generatedLog).length);
     }
     return generatedLog;
   }, [selectedUserId, selectedUser, today, dailyLogsByUser]);
@@ -315,7 +315,7 @@ const StructuredDailyLogPage: FC = () => {
       await addDailyLog(newEvent);
       
       if (import.meta.env.DEV) {
-        console.debug('DEBUG – Event saved:', newEvent);
+        if (import.meta.env.DEV) console.debug('DEBUG – Event saved:', newEvent);
       }
       
       setIsSubmitting(false);

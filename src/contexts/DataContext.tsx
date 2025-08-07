@@ -122,14 +122,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       };
       
       if (import.meta.env.DEV) {
-        console.debug('DEBUG – dailyLogsByUser updated for userId:', logData.userId, 'new count:', updatedLogs.length);
+        if (import.meta.env.DEV) console.debug('DEBUG – dailyLogsByUser updated for userId:', logData.userId, 'new count:', updatedLogs.length);
       }
       
       return newState;
     });
     
     if (import.meta.env.DEV) {
-      console.debug('DEBUG – addDailyLog saved:', newLog);
+      if (import.meta.env.DEV) console.debug('DEBUG – addDailyLog saved:', newLog);
     }
   };
 
