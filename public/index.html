@@ -15,31 +15,6 @@
        style-src    'self' 'unsafe-inline' blob: https://*.gstatic.com;
        worker-src   'self' blob:;
     ">
-    <!--
-      ■ CSP 追加説明
-        Chrome は <link rel="stylesheet"> を "style-src-elem" で評価します。
-        style-src を書くだけでは translate.googleapis.com 由来の CSS がブロックされるため
-        style-src-elem にも *同じ許可リスト* を重ねます。
-      Google 翻訳拡張が挿入する stylesheets を許可するため
-        style-src に https://*.gstatic.com を追加
-      "unsafe-inline" は Tailwind JIT 用に存続
-    -->
-    <meta http-equiv="Content-Security-Policy" content="
-       default-src 'self';
-       script-src  'self' 'unsafe-inline' 'unsafe-eval' wasm-unsafe-eval blob:;
-       connect-src 'self' blob:;
-       font-src    'self' blob: data: https://fonts.gstatic.com;
-       img-src     'self' blob: data:;
-       style-src   'self' 'unsafe-inline' blob: https://fonts.gstatic.com https://*.gstatic.com;
-       style-src-elem  'self' 'unsafe-inline' blob: https://fonts.gstatic.com https://*.gstatic.com;
-       worker-src  'self' blob:;
-    ">
-    <!-- 翻訳拡張ごと止めたい場合は ↓ をコメントアウト解除
-    <meta name="google" content="notranslate">
-    -->
-    <!-- Google 翻訳を抑止してスタイル注入を根本的に防ぐ場合はこちらを↑の meta の後に追加
-    <meta name="google" content="notranslate">
-    -->
     <title>重心ケアアプリ v2.0 - AIエージェント協働システム</title>
     <style>
         * {

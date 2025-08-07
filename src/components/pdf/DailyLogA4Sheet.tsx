@@ -1,15 +1,8 @@
 import React, { FC } from 'react';
-import { Page, View, Text, StyleSheet, Font } from '@react-pdf/renderer';
+import { Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 import { DailyLog } from '../../types';
-
-// TrueType フォント登録 - OTF/italic 登録は fontkit エラーの原因
-Font.register({
-  family: 'NotoSansJP',
-  fonts: [
-    { src: '/pdf/fonts/NotoSansJP-Regular.ttf', fontWeight: 400 },
-    { src: '/pdf/fonts/NotoSansJP-Bold.ttf',    fontWeight: 700 }
-  ]
-});
+import './fonts';          // ❶ フォント登録を集約
+import { fauxItalic } from './fonts';
 
 const styles = StyleSheet.create({
   page: {

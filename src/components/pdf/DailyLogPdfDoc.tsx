@@ -1,24 +1,10 @@
 import React from 'react';
-import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
+import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 import { DailyLog, User } from '../../types';
+import './fonts';          // ❶ フォント登録を集約
+import { fauxItalic } from './fonts';
 
-/* ──────────────────────────────────────────────
-   NotoSansJP.ttf を **TrueType形式** で配置しなおす
-   （/public/pdf/fonts/NotoSansJP-Regular.ttf と -Bold.ttf）。
-   italic は登録せず、必要なら CSS の skew で代替する。
-────────────────────────────────────────────── */
-Font.register({
-  family: 'NotoSansJP',
-  fonts: [
-    { src: '/pdf/fonts/NotoSansJP-Regular.ttf', fontWeight: 400 },
-    { src: '/pdf/fonts/NotoSansJP-Bold.ttf',    fontWeight: 700 }
-  ]
-});
-
-if (import.meta.env.DEV) console.debug('✅ NotoSansJP ローカルフォント登録完了');
-
-// Faux italic style for PDF (react-pdf doesn't handle real italic well)
-export const fauxItalic = { transform: 'skewX(-8deg)' };
+if (import.meta.env.DEV) console.debug('✅ DailyLogPdfDoc loaded with centralized fonts');
 
 const styles = StyleSheet.create({
   body: {
