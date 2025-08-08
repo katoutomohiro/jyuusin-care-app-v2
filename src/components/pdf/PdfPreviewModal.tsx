@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import { PDFViewer } from '@react-pdf/renderer';
-import DailyLogPdfDoc from './DailyLogPdfDoc';
+import { DailyLogPdfDoc, VitalRow } from '../DailyLogPdfDoc';
 import { DailyLog, User } from '../../types';
+import { useData } from '../../contexts/DataContext';
+import { localDateKey } from '../../utils/dateKey';
 
 type Props = {
   open: boolean;
@@ -14,6 +16,7 @@ type Props = {
 
 const PdfPreviewModal: React.FC<Props> = ({ open, onClose, dailyLog, user }) => {
   const [ready, setReady] = useState(false);
+  const { dailyLogsByUser } = useData();
 
   useEffect(() => {
     if (open) setReady(true);
@@ -22,6 +25,20 @@ const PdfPreviewModal: React.FC<Props> = ({ open, onClose, dailyLog, user }) => 
 
   if (!open || !dailyLog || !ready) return null;
 
+  // 当日分のバイタルを抽出してPDF用に整形
+  const targetDateKey = localDateKey(dailyLog.date ? new Date(dailyLog.date) : new Date());
+  const rawLogs: any[] = dailyLogsByUser[user.id] || [];
+  const vitalsRows: VitalRow[] = rawLogs
+    .filter(l => l.event_type === 'vitals' && localDateKey(l.created_at || new Date()) === targetDateKey)
+    .map(l => ({
+      time: l.event_timestamp ? String(l.event_timestamp).substring(11,16) : (l.created_at ? String(l.created_at).substring(11,16) : ''),
+      tempC: l.temperature != null ? Number(l.temperature) : undefined,
+      bpSys: l.blood_pressure_systolic != null ? Number(l.blood_pressure_systolic) : undefined,
+      bpDia: l.blood_pressure_diastolic != null ? Number(l.blood_pressure_diastolic) : undefined,
+      spo2: l.spo2 != null ? Number(l.spo2) : undefined,
+      hr: l.pulse != null ? Number(l.pulse) : undefined,
+    }));
+
   return (
     <Dialog open={open} onClose={onClose} className="relative z-50">
       {/* Backdrop */}
@@ -29,10 +46,10 @@ const PdfPreviewModal: React.FC<Props> = ({ open, onClose, dailyLog, user }) => 
       
       {/* Full-screen container */}
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className="mx-auto max-w-6xl bg-white rounded-lg shadow-xl w-full h-[90vh]">
+        <Dialog.Panel className="w-full max-w-5xl bg-white rounded shadow-xl overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
-            <Dialog.Title className="text-lg font-semibold">
+          <div className="flex justify-between items-center px-4 py-3 border-b">
+            <Dialog.Title className="text-lg font-bold">
               📄 PDF プレビュー - {user.name} ({dailyLog.date || '日付不明'})
             </Dialog.Title>
             <button
@@ -44,7 +61,7 @@ const PdfPreviewModal: React.FC<Props> = ({ open, onClose, dailyLog, user }) => 
           </div>
 
           {/* PDF Viewer */}
-          <div className="h-full p-4">
+          <div className="h-[80vh] p-4">
             <PDFViewer 
               style={{ 
                 width: '100%', 
@@ -54,8 +71,11 @@ const PdfPreviewModal: React.FC<Props> = ({ open, onClose, dailyLog, user }) => 
               showToolbar={true}
             >
               <DailyLogPdfDoc 
-                dailyLogItems={dailyLog} 
-                user={user}
+                userName={user.name}
+                date={dailyLog.date || new Date()}
+                staffName={''}
+                logData={dailyLog}
+                vitals={vitalsRows}
               />
             </PDFViewer>
           </div>

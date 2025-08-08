@@ -1,5 +1,6 @@
 // EventType definition (should match existing types.ts)
 export type EventType = 
+  | 'vitals'
   | 'seizure' 
   | 'expression' 
   | 'hydration' 
@@ -17,15 +18,16 @@ export interface RecordCategory {
 }
 
 export const CATEGORIES: RecordCategory[] = [
+  // 1行目（lg:4列）: バイタル, 発作, 水分摂取, ポジショニング
+  {
+    key: 'vitals',
+    label: 'バイタル',
+    icon: '🩺'
+  },
   {
     key: 'seizure',
     label: '発作',
     icon: '⚡'
-  },
-  {
-    key: 'expression',
-    label: '表情・反応',
-    icon: '😊'
   },
   {
     key: 'hydration',
@@ -36,6 +38,13 @@ export const CATEGORIES: RecordCategory[] = [
     key: 'positioning',
     label: 'ポジショニング',
     icon: '🛏️'
+  },
+
+  // 2行目: 表情・反応（バイタルの下）, 活動, 排泄, 皮膚・口腔ケア
+  {
+    key: 'expression',
+    label: '表情・反応',
+    icon: '😊'
   },
   {
     key: 'activity',
@@ -52,6 +61,8 @@ export const CATEGORIES: RecordCategory[] = [
     label: '皮膚・口腔ケア',
     icon: '🧼'
   },
+
+  // 3行目以降: 経管栄養（その他の順は現状維持）
   {
     key: 'tube_feeding',
     label: '経管栄養',

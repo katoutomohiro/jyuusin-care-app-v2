@@ -1,10 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, FC } from 'react';
-// ...existing code...
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useNavigate } from 'react-router-dom';
 import SeizureForm from '../components/forms/SeizureForm';
 import ExpressionForm from '../components/forms/ExpressionForm';
-import VitalSignsInput from '../components/forms/VitalSignsInput';
 import VitalsForm from '../components/forms/VitalsForm';
 import { HydrationForm } from '../components/forms/HydrationForm';
 import { ExcretionForm } from '../components/forms/ExcretionForm';
@@ -33,6 +31,7 @@ import { useNotification } from '../contexts/NotificationContext';
 import { DailyLog, User } from '../types';
 import { useLocation } from 'react-router-dom';
 import { ButtonsRow } from '../components/ButtonsRow';
+import { AllUsersPdfModal } from '../components/AllUsersPdfModal';
 import { RecordTile } from '../components/RecordTile';
 import { CATEGORIES, EventType as CatEventType } from '../utils/eventCategories';
 import { localDateKey } from '../utils/dateKey';
@@ -489,6 +488,13 @@ const StructuredDailyLogPage: FC = () => {
             user={selectedUser}
           />
         )}
+
+        {/* All Users PDF Modal */}
+        <AllUsersPdfModal
+          isOpen={allUsersPdfOpen}
+          onClose={() => setAllUsersPdfOpen(false)}
+          date={today}
+        />
       </div>
     </div>
   );

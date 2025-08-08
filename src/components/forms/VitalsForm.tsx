@@ -66,15 +66,15 @@ export const VitalsForm: React.FC<VitalsFormProps> = ({ onSave, isSubmitting }) 
       return;
     }
 
-    // 脈拍の範囲チェック
-    if (formData.pulse && (parseInt(formData.pulse) < 20 || parseInt(formData.pulse) > 200)) {
-      setErrorMsg('脈拍は20-200回/分の範囲で入力してください');
+    // 脈拍（HR）の範囲チェック
+    if (formData.pulse && (parseInt(formData.pulse) < 0 || parseInt(formData.pulse) > 250)) {
+      setErrorMsg('脈拍は0-250回/分の範囲で入力してください');
       return;
     }
 
     // SpO2の範囲チェック
-    if (formData.spo2 && (parseInt(formData.spo2) < 70 || parseInt(formData.spo2) > 100)) {
-      setErrorMsg('SpO2は70-100%の範囲で入力してください');
+    if (formData.spo2 && (parseInt(formData.spo2) < 50 || parseInt(formData.spo2) > 100)) {
+      setErrorMsg('SpO2は50-100%の範囲で入力してください');
       return;
     }
 
@@ -164,8 +164,8 @@ export const VitalsForm: React.FC<VitalsFormProps> = ({ onSave, isSubmitting }) 
         </label>
         <input
           type="number"
-          min="20"
-          max="200"
+          min="0"
+          max="250"
           value={formData.pulse}
           onChange={(e) => setFormData({ ...formData, pulse: e.target.value })}
           className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -180,7 +180,7 @@ export const VitalsForm: React.FC<VitalsFormProps> = ({ onSave, isSubmitting }) 
         </label>
         <input
           type="number"
-          min="70"
+          min="50"
           max="100"
           value={formData.spo2}
           onChange={(e) => setFormData({ ...formData, spo2: e.target.value })}
