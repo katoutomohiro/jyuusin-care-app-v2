@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import SeizureForm from '../components/forms/SeizureForm';
 import ExpressionForm from '../components/forms/ExpressionForm';
 import VitalsForm from '../components/forms/VitalsForm';
+import VitalsTile from '../components/tiles/VitalsTile';
 import { HydrationForm } from '../components/forms/HydrationForm';
 import { ExcretionForm } from '../components/forms/ExcretionForm';
 import { ActivityForm } from '../components/forms/ActivityForm';
@@ -424,13 +425,36 @@ const StructuredDailyLogPage: FC = () => {
               <h3 className="text-lg font-bold text-gray-800 mb-4">📝 記録入力</h3>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {CATEGORIES.map(category => (
-                  <RecordTile
-                    key={category.key}
-                    icon={category.icon}
-                    label={category.label}
-                    onClick={() => handleTileClick(category.key)}
-                    count={getCategoryCount(category.key)}
-                  />
+                  category.key === 'vitals' ? (
+                    <VitalsTile
+                      key={category.key}
+                      userId={selectedUser?.id || ''}
+                      date={today}
+                      onSaved={(vital) => {
+                        // Vitals 用の正規フィールドにマッピングし、event_type を強制
+                        const eventData = {
+                          event_type: 'vitals',
+                          event_timestamp: vital.time,
+                          temperature: vital.tempC,
+                          blood_pressure_systolic: vital.bpSys,
+                          blood_pressure_diastolic: vital.bpDia,
+                          spo2: vital.spo2,
+                          pulse: vital.hr,
+                          respiratory_rate: vital.rr,
+                          notes: vital.note,
+                        };
+                        handleSaveEvent(eventData);
+                      }}
+                    />
+                  ) : (
+                    <RecordTile
+                      key={category.key}
+                      icon={category.icon}
+                      label={category.label}
+                      onClick={() => handleTileClick(category.key)}
+                      count={getCategoryCount(category.key)}
+                    />
+                  )
                 ))}
               </div>
             </div>
