@@ -2,6 +2,9 @@ import React from "react";
 import { VITAL_DEFAULTS, VITAL_LIMITS } from "../../config/vitalsDefaults";
 import { getPatientSpecById } from "../../config/patientProfiles";
 import { useNotification, NotificationType } from "../../contexts/NotificationContext";
+import { PreviewVaultService } from "../../services/PreviewVaultService";
+import { localDateKey } from "../../utils/dateKey";
+import { minuteKey } from "../../utils/timeKey";
 
 type Vital = {
   id?: string;
@@ -69,10 +72,29 @@ export default function VitalsTile({ userId, date, onSaved, open, onOpenChange }
       rr:    clamp(form.rr,    VITAL_LIMITS.rr.min,    VITAL_LIMITS.rr.max),
     };
 
-    // フロントエンド即時反映（DataContext 経由の onSaved -> addDailyLog）に切替
-    const saved: Vital = { id: Date.now().toString(), ...payload };
+    const dkey = localDateKey(date ?? new Date());
+    const tkey = minuteKey(payload.time);
+    const stableId = `${dkey}-${tkey}`;
+    const saved: Vital = { id: stableId, ...payload };
     onSaved?.(saved);
-    showNotification('バイタルを保存しました', NotificationType.SUCCESS);
+
+    // デバッグ: 保存直後ログ
+    if (import.meta.env.DEV) console.info('[vitals][saved-upsert]', { userId, id: saved.id, time: tkey });
+
+    // 年間プレビュー記録ストック棚へ1行追加
+    const dateKey = localDateKey();
+    const title = `${form.time}  ${payload.tempC ?? ''}℃ / ${payload.bpSys ?? ''}-${payload.bpDia ?? ''} / SpO₂ ${payload.spo2 ?? ''}% / HR ${payload.hr ?? ''} / RR ${payload.rr ?? ''}`.trim();
+    await PreviewVaultService.add({
+      id: saved.id!,
+      userId,
+      dateKey,
+      kind: 'vitals',
+      title,
+      created_at: new Date().toISOString(),
+      payload: saved
+    });
+
+  showNotification(`バイタル ${tkey} を更新しました`, NotificationType.SUCCESS);
     setOpen(false);
   }
 
@@ -84,8 +106,7 @@ export default function VitalsTile({ userId, date, onSaved, open, onOpenChange }
         onClick={()=>setOpen(true)}
         aria-label="バイタル"
       >
-        <div className="text-3xl mb-1">🩺</div>
-        <div className="text-sm font-medium text-gray-800">バイタル</div>
+        <div className="text-3xl mb-1"><span className="align-middle">🩺</span> <span className="text-base align-middle font-semibold">バイタル</span></div>
         <div className="text-xs mt-1 text-gray-600">時間/体温/血圧/SpO₂/HR/RR を記録</div>
       </button>
 
@@ -109,7 +130,7 @@ export default function VitalsTile({ userId, date, onSaved, open, onOpenChange }
               >
                 今すぐ
               </button>
-              <input className="col-span-2 rounded border p-2" value={form.time} onChange={e=>setForm(f=>({...f, time:e.target.value}))}/>
+              <input className="col-span-2 rounded border p-2" value={form.time} onChange={e=>setForm(f=>({...f, time:e.target.value}))} />
             </div>
 
             {/* 温度 / SpO2 */}

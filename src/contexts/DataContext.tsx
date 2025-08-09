@@ -19,12 +19,14 @@ const getSampleLogs = (): any[] => {
   });
 };
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { localDateKey } from '../utils/dateKey';
+import { minuteKey } from '../utils/timeKey';
 
 // 本番用の利用者データ（24名）
 import { SEVERE_DISABILITY_USERS, STAFF_MEMBERS, FACILITY_INFO, SAMPLE_LOGS_BASE } from '../../constants';
 const initialUsers = SEVERE_DISABILITY_USERS;
 
-import type { User } from '../../types';
+import type { User } from '../types';
 
 type DataContextType = {
   users: User[];
@@ -100,18 +102,48 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     }
     
     // 新しいログエントリにユニークIDとタイムスタンプを確保
-    const newLog = {
+    let newLog = {
       ...logData,
       id: logData.id || Date.now().toString(),
       log_id: logData.log_id || Date.now().toString(),
       created_at: logData.created_at || new Date().toISOString(),
       event_timestamp: logData.event_timestamp || new Date().toISOString()
-    };
+    } as any;
+
+    // バイタルは「同一日付 + 同一HH:MM」で upsert（1分単位の上書き）
+    if (newLog.event_type === 'vitals') {
+      const dkey = localDateKey(newLog.created_at || newLog.event_timestamp);
+      const tkey = minuteKey(newLog.event_timestamp || newLog.created_at);
+      const stableId = `${dkey}-${tkey}`;
+      newLog = { ...newLog, id: stableId, _timeKey: tkey };
+    }
     
     // localStorageに保存
     const key = `dailyLogs_${logData.userId}`;
     const currentLogs = dailyLogsByUser[logData.userId] || [];
-    const updatedLogs = [...currentLogs, newLog];
+
+    let updatedLogs: any[] = [];
+    if (newLog.event_type === 'vitals') {
+      const dkey = localDateKey(newLog.created_at || newLog.event_timestamp);
+      const tkey = minuteKey(newLog.event_timestamp || newLog.created_at);
+      const keyOf = (v: any) => {
+        if (!v) return '';
+        if (v.id && typeof v.id === 'string') return v.id;
+        const vd = localDateKey(v.created_at || v.event_timestamp || newLog.created_at);
+        const vt = minuteKey(v.event_timestamp || v.created_at);
+        return `${vd}-${vt}`;
+      };
+      const vitalsIx = currentLogs.findIndex((v: any) => v?.event_type === 'vitals' && keyOf(v) === `${dkey}-${tkey}`);
+      if (vitalsIx >= 0) {
+        // 置換（上書き）
+        updatedLogs = currentLogs.slice();
+        updatedLogs[vitalsIx] = { ...currentLogs[vitalsIx], ...newLog };
+      } else {
+        updatedLogs = [...currentLogs, newLog];
+      }
+    } else {
+      updatedLogs = [...currentLogs, newLog];
+    }
     localStorage.setItem(key, JSON.stringify(updatedLogs));
     
     // ステート更新（重要: UI再レンダリング用）

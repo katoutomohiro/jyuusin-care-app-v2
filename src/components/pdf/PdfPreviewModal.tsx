@@ -5,6 +5,7 @@ import { DailyLogPdfDoc, VitalRow } from '../DailyLogPdfDoc';
 import { DailyLog, User } from '../../types';
 import { useData } from '../../contexts/DataContext';
 import { localDateKey } from '../../utils/dateKey';
+import { minuteKey } from '../../utils/timeKey';
 
 type Props = {
   open: boolean;
@@ -25,19 +26,33 @@ const PdfPreviewModal: React.FC<Props> = ({ open, onClose, dailyLog, user }) => 
 
   if (!open || !dailyLog || !ready) return null;
 
-  // 当日分のバイタルを抽出してPDF用に整形
+  // 当日分のバイタルを抽出してPDF用に整形（localDateKeyで統一）
   const targetDateKey = localDateKey(dailyLog.date ? new Date(dailyLog.date) : new Date());
   const rawLogs: any[] = dailyLogsByUser[user.id] || [];
-  const vitalsRows: VitalRow[] = rawLogs
-    .filter(l => l.event_type === 'vitals' && localDateKey(l.created_at || new Date()) === targetDateKey)
-    .map(l => ({
-      time: l.event_timestamp ? String(l.event_timestamp).substring(11,16) : (l.created_at ? String(l.created_at).substring(11,16) : ''),
-      tempC: l.temperature != null ? Number(l.temperature) : undefined,
-      bpSys: l.blood_pressure_systolic != null ? Number(l.blood_pressure_systolic) : undefined,
-      bpDia: l.blood_pressure_diastolic != null ? Number(l.blood_pressure_diastolic) : undefined,
-      spo2: l.spo2 != null ? Number(l.spo2) : undefined,
-      hr: l.pulse != null ? Number(l.pulse) : undefined,
-    }));
+  const vitalsRows: VitalRow[] = (() => {
+    const arr: VitalRow[] = rawLogs
+      .filter(l => l.event_type === 'vitals' && localDateKey(l.created_at || new Date()) === targetDateKey)
+      .map(l => ({
+        time: l.event_timestamp ? String(l.event_timestamp).substring(11,16) : (l.created_at ? String(l.created_at).substring(11,16) : ''),
+        tempC: l.temperature != null ? Number(l.temperature) : (l.tempC != null ? Number(l.tempC) : undefined),
+        bpSys: l.blood_pressure_systolic != null ? Number(l.blood_pressure_systolic) : (l.bpSys != null ? Number(l.bpSys) : undefined),
+        bpDia: l.blood_pressure_diastolic != null ? Number(l.blood_pressure_diastolic) : (l.bpDia != null ? Number(l.bpDia) : undefined),
+        spo2: l.spo2 != null ? Number(l.spo2) : (l.oxygen_saturation != null ? Number(l.oxygen_saturation) : undefined),
+        hr: l.pulse != null ? Number(l.pulse) : (l.pulse_rate != null ? Number(l.pulse_rate) : undefined),
+        rr: l.respiratory_rate != null ? Number(l.respiratory_rate) : undefined,
+      }));
+    // 去重（HH:mm 単位で最後のものを採用）
+    const map = new Map<string, VitalRow>();
+    for (const v of arr) {
+      const k = minuteKey(v.time);
+      map.set(k, { ...v, time: k });
+    }
+    const out = Array.from(map.values());
+    out.sort((a,b) => (minuteKey(a.time) > minuteKey(b.time) ? 1 : -1));
+    return out;
+  })();
+
+  if (import.meta.env.DEV) console.info('[pdf][vitals-length]', vitalsRows.length);
 
   return (
     <Dialog open={open} onClose={onClose} className="relative z-50">
@@ -75,7 +90,7 @@ const PdfPreviewModal: React.FC<Props> = ({ open, onClose, dailyLog, user }) => 
                 date={dailyLog.date || new Date()}
                 staffName={''}
                 logData={dailyLog}
-                vitals={vitalsRows}
+                vitals={vitalsRows} // ← 必ず渡す
               />
             </PDFViewer>
           </div>

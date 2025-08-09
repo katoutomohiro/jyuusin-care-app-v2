@@ -1,6 +1,7 @@
 import React from "react";
 import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
 import { formatReiwaWithWeekday } from "../utils/dateJp";
+import { minuteKey } from "../utils/timeKey";
 
 export type VitalRow = {
   time: string;
@@ -49,6 +50,21 @@ export const DailyLogPdfDoc: React.FC<DailyLogPdfProps> = ({
 }) => {
   const dateLabel = formatReiwaWithWeekday(date);
 
+  // PDF側でも保険で去重 + 昇順（最初に現れた同時刻を採用）
+  const uniqVitals = React.useMemo(() => {
+    const seen = new Set<string>();
+    const arr = (vitals ?? []).filter(Boolean) as VitalRow[];
+    const out: VitalRow[] = [];
+    for (const v of arr) {
+      const k = (v as any)?.id ?? minuteKey((v as any)?.time);
+      if (seen.has(k)) continue; // 先に出たものを優先
+      seen.add(k);
+      out.push({ ...v, time: minuteKey((v as any)?.time) });
+    }
+    out.sort((a, b) => (minuteKey((a as any)?.time) > minuteKey((b as any)?.time) ? 1 : -1));
+    return out;
+  }, [vitals]);
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -73,19 +89,23 @@ export const DailyLogPdfDoc: React.FC<DailyLogPdfProps> = ({
             <Text style={[styles.cell, styles.cRR]}>RR（/min）</Text>
             <Text style={[styles.cell, styles.cNote]}>備考</Text>
           </View>
-          {(vitals.length ? vitals : [{ time: "", tempC: undefined, bpSys: undefined, bpDia: undefined, spo2: undefined, hr: undefined, rr: undefined }]).map((v, i) => (
-            <View style={styles.tr} key={i}>
-              <Text style={[styles.cell, styles.cTime]}>{v.time ?? ""}</Text>
-              <Text style={[styles.cell, styles.cTemp]}>{v.tempC ?? ""}</Text>
-              <Text style={[styles.cell, styles.cBP]}>
-                {(v.bpSys ?? "")}{v.bpSys!==undefined||v.bpDia!==undefined ? " / " : ""}{(v.bpDia ?? "")}
-              </Text>
-              <Text style={[styles.cell, styles.cSpO2]}>{v.spo2 ?? ""}</Text>
-              <Text style={[styles.cell, styles.cHR]}>{v.hr ?? ""}</Text>
-              <Text style={[styles.cell, styles.cRR]}>{v.rr ?? ""}</Text>
-              <Text style={[styles.cell, styles.cNote]} />
-            </View>
-          ))}
+          {(uniqVitals.length ? uniqVitals : [{ time: "", tempC: undefined, bpSys: undefined, bpDia: undefined, spo2: undefined, hr: undefined, rr: undefined }]).map(v => {
+            if (!v) return null;
+            const k = (v as any)?.id ?? minuteKey((v as any)?.time);
+            return (
+              <View style={styles.tr} key={k}>
+                <Text style={[styles.cell, styles.cTime]}>{v.time ?? ""}</Text>
+                <Text style={[styles.cell, styles.cTemp]}>{v.tempC ?? ""}</Text>
+                <Text style={[styles.cell, styles.cBP]}>
+                  {(v.bpSys ?? "")}{v.bpSys!==undefined||v.bpDia!==undefined ? " / " : ""}{(v.bpDia ?? "")}
+                </Text>
+                <Text style={[styles.cell, styles.cSpO2]}>{v.spo2 ?? ""}</Text>
+                <Text style={[styles.cell, styles.cHR]}>{v.hr ?? ""}</Text>
+                <Text style={[styles.cell, styles.cRR]}>{v.rr ?? ""}</Text>
+                <Text style={[styles.cell, styles.cNote]} />
+              </View>
+            );
+          })}
         </View>
 
         {/* 既存の「発作～その他」テーブルは従来通り下部に描画してOK（必要に応じて別セクションで出力） */}

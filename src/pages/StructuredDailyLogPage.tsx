@@ -36,6 +36,7 @@ import { AllUsersPdfModal } from '../components/AllUsersPdfModal';
 import { RecordTile } from '../components/RecordTile';
 import { CATEGORIES, EventType as CatEventType } from '../utils/eventCategories';
 import { localDateKey } from '../utils/dateKey';
+import PreviewVaultShelf from '../components/PreviewVaultShelf';
 
 type EventType = 'seizure' | 'expression' | 'vitals' | 'hydration' | 'excretion' | 'sleep' | 'activity' | 'care' | 'skin_oral_care' | 'illness' | 'cough_choke' | 'tube_feeding' | 'medication_administration' | 'behavioral' | 'communication' | 'other' | 'positioning';
 
@@ -53,13 +54,12 @@ function generateDailyLog(
   }
   
   try {
-    // dailyLogsByUserから今日のイベントデータを取得
+    // dailyLogsByUserから今日のイベントデータを取得（ローカル日付キーで比較）
     const userLogs = dailyLogsByUser[userId] || [];
     const todayLogs = userLogs.filter((log: any) => {
-      // より安全な日付フィルタリング
       if (!log || !log.created_at) return false;
-      const logDate = log.created_at.split('T')[0];
-      return log.user_id === userId && logDate === date;
+      const logKey = localDateKey(log.created_at);
+      return log.user_id === userId && logKey === date;
     });
     
     if (import.meta.env.DEV) {
@@ -196,8 +196,8 @@ const StructuredDailyLogPage: FC = () => {
   // 現在選択されている利用者
   const selectedUser = users.find(user => user.id === selectedUserId);
   
-  // 今日の日付
-  const today = new Date().toISOString().split('T')[0];
+  // 今日の日付（ローカル日付キーで統一）
+  const today = localDateKey(new Date());
   
   // 施設名（データコンテキストから取得、なければデフォルト）
   const facilityName = "重心ケア施設";
@@ -431,7 +431,6 @@ const StructuredDailyLogPage: FC = () => {
                       userId={selectedUser?.id || ''}
                       date={today}
                       onSaved={(vital) => {
-                        // Vitals 用の正規フィールドにマッピングし、event_type を強制
                         const eventData = {
                           event_type: 'vitals',
                           event_timestamp: vital.time,
@@ -456,6 +455,10 @@ const StructuredDailyLogPage: FC = () => {
                     />
                   )
                 ))}
+              </div>
+              {/* 経管栄養の直後にストック棚を1回だけ表示 */}
+              <div className="mt-4">
+                <PreviewVaultShelf userId={selectedUser.id} />
               </div>
             </div>
           </div>
