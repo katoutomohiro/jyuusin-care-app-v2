@@ -1,6 +1,6 @@
 import React from 'react';
 import { FileText, AlertTriangle, Star } from 'lucide-react';
-import { SpecialNote } from '../../types';
+import { SpecialNote } from '../../../types';
 
 interface SpecialNotesInputProps {
   value: SpecialNote[];

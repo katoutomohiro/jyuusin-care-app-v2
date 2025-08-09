@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, Fragment, useEffect } from 'react';
 
 interface VitalSignsInputProps {
   onSave: (data: any) => void;
   isSubmitting: boolean;
+  draftData?: any;
+  handleDraftChange?: (data: any) => void;
 }
 
 const measurementPositions = [
@@ -32,13 +34,48 @@ const measurementLocations = [
   'その他'
 ];
 
-const VitalSignsInput: React.FC<VitalSignsInputProps> = ({ onSave, isSubmitting }) => {
+const VitalSignsInput: React.FC<VitalSignsInputProps> = ({ onSave, isSubmitting, draftData, handleDraftChange }) => {
+  // ドロップダウン表示制御
+  const [dropdown, setDropdown] = useState({
+    temperature: false,
+    pulse: false,
+    blood_pressure_systolic: false,
+    blood_pressure_diastolic: false,
+    spo2: false,
+    respiratory_rate: false,
+    measurement_condition: false,
+    measurement_position: false,
+    measurement_location: false,
+    vital_status: false,
+    special_finding: false,
+    intervention_required: false,
+    common_note: false,
+  });
+
   // 正確な現在時刻を取得する関数
   const getCurrentDateTime = () => {
     const now = new Date();
     const offset = now.getTimezoneOffset() * 60000;
     const localISOTime = (new Date(now.getTime() - offset)).toISOString().slice(0, 16);
     return localISOTime;
+  };
+
+  const initialFormData = {
+    event_timestamp: getCurrentDateTime(),
+    temperature: '36.5',
+    pulse: '70',
+    blood_pressure_systolic: '120',
+    blood_pressure_diastolic: '80',
+    spo2: '95',
+    respiratory_rate: '30',
+    measurement_condition: '',
+    measurement_position: '',
+    measurement_location: '',
+    vital_status: '',
+    special_finding: '',
+    intervention_required: '',
+    common_note: '',
+    notes: ''
   };
 
   // 絵文字付き選択肢（単一選択用）
@@ -132,23 +169,18 @@ const VitalSignsInput: React.FC<VitalSignsInputProps> = ({ onSave, isSubmitting 
     { value: 'other', label: '📝 その他' },
   ];
 
-  const [formData, setFormData] = useState({
-    event_timestamp: getCurrentDateTime(),
-    temperature: '36.5',
-    pulse: '70',
-    blood_pressure_systolic: '120',
-    blood_pressure_diastolic: '80',
-    spo2: '95',
-    respiratory_rate: '30',
-    measurement_condition: '',
-    measurement_position: '',
-    measurement_location: '',
-    vital_status: '',
-    special_finding: '',
-    intervention_required: '',
-    common_note: '',
-    notes: ''
-  });
+  const [formData, setFormData] = useState(draftData || initialFormData);
+
+  useEffect(() => {
+    if (handleDraftChange) {
+      handleDraftChange(formData);
+    }
+  }, [formData, handleDraftChange]);
+
+  const handleSingleSelect = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setDropdown(prev => ({ ...prev, [field]: false }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,237 +225,294 @@ const VitalSignsInput: React.FC<VitalSignsInputProps> = ({ onSave, isSubmitting 
       <div className="bg-white rounded-xl p-4 shadow-sm">
         <h3 className="text-sm font-semibold text-gray-700 mb-3">📊 バイタルサイン数値</h3>
         <div className="grid grid-cols-2 gap-4">
-          <div>
+          {/* 体温 */}
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-600 mb-1">体温 (℃)</label>
-            <select
-              value={formData.temperature}
-              onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
-            >
-              {Array.from({ length: 51 }, (_, i) => {
-                const temp = (34.0 + i * 0.1).toFixed(1);
-                return (
-                  <option key={temp} value={temp}>
-                    {temp}°C {temp === "36.5" ? "(基準値)" : ""}
-                  </option>
-                );
-              })}
-            </select>
+            <button type="button" className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-left" onClick={() => setDropdown(prev => ({ ...prev, temperature: !prev.temperature }))}>
+              {formData.temperature}°C {formData.temperature === "36.5" ? "(基準値)" : ""}
+            </button>
+            {dropdown.temperature && (
+              <div className="absolute z-20 bg-white border rounded shadow-lg w-full mt-1 max-h-60 overflow-y-auto">
+                {Array.from({ length: 51 }, (_, i) => {
+                  const temp = (34.0 + i * 0.1).toFixed(1);
+                  return (
+                    <div key={temp} className={`p-2 cursor-pointer hover:bg-blue-50 ${formData.temperature === temp ? 'bg-blue-100 font-bold' : ''}`} onClick={() => handleSingleSelect('temperature', temp)}>
+                      {temp}°C {temp === "36.5" ? "(基準値)" : ""}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-          <div>
+          {/* 脈拍 */}
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-600 mb-1">脈拍 (回/分)</label>
-            <select
-              value={formData.pulse}
-              onChange={(e) => setFormData({ ...formData, pulse: e.target.value })}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
-            >
-              {Array.from({ length: 121 }, (_, i) => {
-                const pulse = 40 + i;
-                return (
-                  <option key={pulse} value={pulse}>
-                    {pulse}回/分 {pulse === 70 ? "(基準値)" : ""}
-                  </option>
-                );
-              })}
-            </select>
+            <button type="button" className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-left" onClick={() => setDropdown(prev => ({ ...prev, pulse: !prev.pulse }))}>
+              {formData.pulse}回/分 {formData.pulse === "70" ? "(基準値)" : ""}
+            </button>
+            {dropdown.pulse && (
+              <div className="absolute z-20 bg-white border rounded shadow-lg w-full mt-1 max-h-60 overflow-y-auto">
+                {Array.from({ length: 121 }, (_, i) => {
+                  const pulse = 40 + i;
+                  return (
+                    <div key={pulse} className={`p-2 cursor-pointer hover:bg-blue-50 ${formData.pulse === String(pulse) ? 'bg-blue-100 font-bold' : ''}`} onClick={() => handleSingleSelect('pulse', String(pulse))}>
+                      {pulse}回/分 {pulse === 70 ? "(基準値)" : ""}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-          <div>
+          {/* 収縮期血圧 */}
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-600 mb-1">収縮期血圧 (mmHg)</label>
-            <select
-              value={formData.blood_pressure_systolic}
-              onChange={(e) => setFormData({ ...formData, blood_pressure_systolic: e.target.value })}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
-            >
-              {Array.from({ length: 131 }, (_, i) => {
-                const systolic = 70 + i;
-                return (
-                  <option key={systolic} value={systolic}>
-                    {systolic}mmHg {systolic === 120 ? "(基準値)" : ""}
-                  </option>
-                );
-              })}
-            </select>
+            <button type="button" className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-left" onClick={() => setDropdown(prev => ({ ...prev, blood_pressure_systolic: !prev.blood_pressure_systolic }))}>
+              {formData.blood_pressure_systolic}mmHg {formData.blood_pressure_systolic === "120" ? "(基準値)" : ""}
+            </button>
+            {dropdown.blood_pressure_systolic && (
+              <div className="absolute z-20 bg-white border rounded shadow-lg w-full mt-1 max-h-60 overflow-y-auto">
+                {Array.from({ length: 131 }, (_, i) => {
+                  const systolic = 70 + i;
+                  return (
+                    <div key={systolic} className={`p-2 cursor-pointer hover:bg-blue-50 ${formData.blood_pressure_systolic === String(systolic) ? 'bg-blue-100 font-bold' : ''}`} onClick={() => handleSingleSelect('blood_pressure_systolic', String(systolic))}>
+                      {systolic}mmHg {systolic === 120 ? "(基準値)" : ""}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-          <div>
+          {/* 拡張期血圧 */}
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-600 mb-1">拡張期血圧 (mmHg)</label>
-            <select
-              value={formData.blood_pressure_diastolic}
-              onChange={(e) => setFormData({ ...formData, blood_pressure_diastolic: e.target.value })}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
-            >
-              {Array.from({ length: 91 }, (_, i) => {
-                const diastolic = 40 + i;
-                return (
-                  <option key={diastolic} value={diastolic}>
-                    {diastolic}mmHg {diastolic === 80 ? "(基準値)" : ""}
-                  </option>
-                );
-              })}
-            </select>
+            <button type="button" className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-left" onClick={() => setDropdown(prev => ({ ...prev, blood_pressure_diastolic: !prev.blood_pressure_diastolic }))}>
+              {formData.blood_pressure_diastolic}mmHg {formData.blood_pressure_diastolic === "80" ? "(基準値)" : ""}
+            </button>
+            {dropdown.blood_pressure_diastolic && (
+              <div className="absolute z-20 bg-white border rounded shadow-lg w-full mt-1 max-h-60 overflow-y-auto">
+                {Array.from({ length: 91 }, (_, i) => {
+                  const diastolic = 40 + i;
+                  return (
+                    <div key={diastolic} className={`p-2 cursor-pointer hover:bg-blue-50 ${formData.blood_pressure_diastolic === String(diastolic) ? 'bg-blue-100 font-bold' : ''}`} onClick={() => handleSingleSelect('blood_pressure_diastolic', String(diastolic))}>
+                      {diastolic}mmHg {diastolic === 80 ? "(基準値)" : ""}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-          <div>
+          {/* SpO2 */}
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-600 mb-1">SpO2 (%)</label>
-            <select
-              value={formData.spo2}
-              onChange={(e) => setFormData({ ...formData, spo2: e.target.value })}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
-            >
-              {Array.from({ length: 36 }, (_, i) => {
-                const spo2 = 65 + i;
-                return (
-                  <option key={spo2} value={spo2}>
-                    {spo2}% {spo2 === 95 ? "(基準値)" : ""}
-                  </option>
-                );
-              })}
-            </select>
+            <button type="button" className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-left" onClick={() => setDropdown(prev => ({ ...prev, spo2: !prev.spo2 }))}>
+              {formData.spo2}% {formData.spo2 === "95" ? "(基準値)" : ""}
+            </button>
+            {dropdown.spo2 && (
+              <div className="absolute z-20 bg-white border rounded shadow-lg w-full mt-1 max-h-60 overflow-y-auto">
+                {Array.from({ length: 36 }, (_, i) => {
+                  const spo2 = 65 + i;
+                  return (
+                    <div key={spo2} className={`p-2 cursor-pointer hover:bg-blue-50 ${formData.spo2 === String(spo2) ? 'bg-blue-100 font-bold' : ''}`} onClick={() => handleSingleSelect('spo2', String(spo2))}>
+                      {spo2}% {spo2 === 95 ? "(基準値)" : ""}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-          <div>
+          {/* 呼吸数 */}
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-600 mb-1">呼吸数 (回/分)</label>
-            <select
-              value={formData.respiratory_rate}
-              onChange={(e) => setFormData({ ...formData, respiratory_rate: e.target.value })}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
-            >
-              {Array.from({ length: 41 }, (_, i) => {
-                const respiratory = 10 + i;
-                return (
-                  <option key={respiratory} value={respiratory}>
-                    {respiratory}回/分 {respiratory === 30 ? "(基準値)" : ""}
-                  </option>
-                );
-              })}
-            </select>
+            <button type="button" className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-left" onClick={() => setDropdown(prev => ({ ...prev, respiratory_rate: !prev.respiratory_rate }))}>
+              {formData.respiratory_rate}回/分 {formData.respiratory_rate === "30" ? "(基準値)" : ""}
+            </button>
+            {dropdown.respiratory_rate && (
+              <div className="absolute z-20 bg-white border rounded shadow-lg w-full mt-1 max-h-60 overflow-y-auto">
+                {Array.from({ length: 41 }, (_, i) => {
+                  const respiratory = 10 + i;
+                  return (
+                    <div key={respiratory} className={`p-2 cursor-pointer hover:bg-blue-50 ${formData.respiratory_rate === String(respiratory) ? 'bg-blue-100 font-bold' : ''}`} onClick={() => handleSingleSelect('respiratory_rate', String(respiratory))}>
+                      {respiratory}回/分 {respiratory === 30 ? "(基準値)" : ""}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* 測定条件（単一選択） */}
-      <div className="bg-white rounded-xl p-4 shadow-sm">
+      <div className="bg-white rounded-xl p-4 shadow-sm relative">
         <label className="block text-sm font-semibold text-gray-700 mb-3">
           🔍 測定条件（単一選択）
         </label>
-        <select
-          value={formData.measurement_condition}
-          onChange={e => setFormData({ ...formData, measurement_condition: e.target.value })}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white"
-        >
-          {measurementConditions.map(opt => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <button type="button" className="w-full border rounded p-3 text-left bg-gray-100 text-gray-700" onClick={() => setDropdown(prev => ({ ...prev, measurement_condition: !prev.measurement_condition }))}>
+          {formData.measurement_condition ? measurementConditions.find(opt => opt.value === formData.measurement_condition)?.label : '選択してください'}
+        </button>
+        {dropdown.measurement_condition && (
+          <div className="absolute z-10 bg-white border rounded shadow-lg w-full mt-2 max-h-60 overflow-y-auto">
+            {measurementConditions.map(opt => (
+              <div
+                key={opt.value}
+                className={`p-2 rounded cursor-pointer flex items-center transition-colors ${formData.measurement_condition === opt.value ? 'bg-blue-100 font-bold text-blue-700' : 'hover:bg-blue-50'}`}
+                onClick={() => handleSingleSelect('measurement_condition', opt.value)}
+              >
+                <span>{opt.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 測定体位 */}
-      <div className="bg-white rounded-xl p-4 shadow-sm">
+      <div className="bg-white rounded-xl p-4 shadow-sm relative">
         <label className="block text-sm font-semibold text-gray-700 mb-3">
           🛏️ 測定時の体位
         </label>
-        <select
-          value={formData.measurement_position}
-          onChange={(e) => setFormData({ ...formData, measurement_position: e.target.value })}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
-        >
-          <option value="">選択してください</option>
-          {measurementPositions.map((position) => (
-            <option key={position} value={position}>
-              {position}
-            </option>
-          ))}
-        </select>
+        <button type="button" className="w-full border rounded p-3 text-left bg-gray-100 text-gray-700" onClick={() => setDropdown(prev => ({ ...prev, measurement_position: !prev.measurement_position }))}>
+          {formData.measurement_position || '選択してください'}
+        </button>
+        {dropdown.measurement_position && (
+          <div className="absolute z-10 bg-white border rounded shadow-lg w-full mt-2 max-h-60 overflow-y-auto">
+            <div
+              className={`p-2 rounded cursor-pointer flex items-center transition-colors ${formData.measurement_position === '' ? 'bg-blue-100 font-bold text-blue-700' : 'hover:bg-blue-50'}`}
+              onClick={() => handleSingleSelect('measurement_position', '')}
+            >
+              <span>選択してください</span>
+            </div>
+            {measurementPositions.map((position) => (
+              <div
+                key={position}
+                className={`p-2 rounded cursor-pointer flex items-center transition-colors ${formData.measurement_position === position ? 'bg-blue-100 font-bold text-blue-700' : 'hover:bg-blue-50'}`}
+                onClick={() => handleSingleSelect('measurement_position', position)}
+              >
+                <span>{position}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 測定部位 */}
-      <div className="bg-white rounded-xl p-4 shadow-sm">
+      <div className="bg-white rounded-xl p-4 shadow-sm relative">
         <label className="block text-sm font-semibold text-gray-700 mb-3">
           📍 測定部位
         </label>
-        <select
-          value={formData.measurement_location}
-          onChange={(e) => setFormData({ ...formData, measurement_location: e.target.value })}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white"
-        >
-          <option value="">選択してください</option>
-          {measurementLocations.map((location) => (
-            <option key={location} value={location}>
-              {location}
-            </option>
-          ))}
-        </select>
+        <button type="button" className="w-full border rounded p-3 text-left bg-gray-100 text-gray-700" onClick={() => setDropdown(prev => ({ ...prev, measurement_location: !prev.measurement_location }))}>
+          {formData.measurement_location || '選択してください'}
+        </button>
+        {dropdown.measurement_location && (
+          <div className="absolute z-10 bg-white border rounded shadow-lg w-full mt-2 max-h-60 overflow-y-auto">
+            <div
+              className={`p-2 rounded cursor-pointer flex items-center transition-colors ${formData.measurement_location === '' ? 'bg-blue-100 font-bold text-blue-700' : 'hover:bg-blue-50'}`}
+              onClick={() => handleSingleSelect('measurement_location', '')}
+            >
+              <span>選択してください</span>
+            </div>
+            {measurementLocations.map((location) => (
+              <div
+                key={location}
+                className={`p-2 rounded cursor-pointer flex items-center transition-colors ${formData.measurement_location === location ? 'bg-blue-100 font-bold text-blue-700' : 'hover:bg-blue-50'}`}
+                onClick={() => handleSingleSelect('measurement_location', location)}
+              >
+                <span>{location}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* バイタル状態（単一選択） */}
-      <div className="bg-white rounded-xl p-4 shadow-sm">
+      <div className="bg-white rounded-xl p-4 shadow-sm relative">
         <label className="block text-sm font-semibold text-gray-700 mb-3">
           📈 バイタル状態（単一選択）
         </label>
-        <select
-          value={formData.vital_status}
-          onChange={e => setFormData({ ...formData, vital_status: e.target.value })}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white"
-        >
-          {vitalStatusOptions.map(opt => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <button type="button" className="w-full border rounded p-3 text-left bg-gray-100 text-gray-700" onClick={() => setDropdown(prev => ({ ...prev, vital_status: !prev.vital_status }))}>
+          {formData.vital_status ? vitalStatusOptions.find(opt => opt.value === formData.vital_status)?.label : '選択してください'}
+        </button>
+        {dropdown.vital_status && (
+          <div className="absolute z-10 bg-white border rounded shadow-lg w-full mt-2 max-h-60 overflow-y-auto">
+            {vitalStatusOptions.map(opt => (
+              <div
+                key={opt.value}
+                className={`p-2 rounded cursor-pointer flex items-center transition-colors ${formData.vital_status === opt.value ? 'bg-blue-100 font-bold text-blue-700' : 'hover:bg-blue-50'}`}
+                onClick={() => handleSingleSelect('vital_status', opt.value)}
+              >
+                <span>{opt.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 特別な所見（単一選択） */}
-      <div className="bg-white rounded-xl p-4 shadow-sm">
+      <div className="bg-white rounded-xl p-4 shadow-sm relative">
         <label className="block text-sm font-semibold text-gray-700 mb-3">
           👁️ 特別な所見（単一選択）
         </label>
-        <select
-          value={formData.special_finding}
-          onChange={e => setFormData({ ...formData, special_finding: e.target.value })}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 bg-white"
-        >
-          {specialFindings.map(opt => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <button type="button" className="w-full border rounded p-3 text-left bg-gray-100 text-gray-700" onClick={() => setDropdown(prev => ({ ...prev, special_finding: !prev.special_finding }))}>
+          {formData.special_finding ? specialFindings.find(opt => opt.value === formData.special_finding)?.label : '選択してください'}
+        </button>
+        {dropdown.special_finding && (
+          <div className="absolute z-10 bg-white border rounded shadow-lg w-full mt-2 max-h-60 overflow-y-auto">
+            {specialFindings.map(opt => (
+              <div
+                key={opt.value}
+                className={`p-2 rounded cursor-pointer flex items-center transition-colors ${formData.special_finding === opt.value ? 'bg-blue-100 font-bold text-blue-700' : 'hover:bg-blue-50'}`}
+                onClick={() => handleSingleSelect('special_finding', opt.value)}
+              >
+                <span>{opt.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 介入の必要性（単一選択） */}
-      <div className="bg-white rounded-xl p-4 shadow-sm">
+      <div className="bg-white rounded-xl p-4 shadow-sm relative">
         <label className="block text-sm font-semibold text-gray-700 mb-3">
           🚨 介入の必要性（単一選択）
         </label>
-        <select
-          value={formData.intervention_required}
-          onChange={e => setFormData({ ...formData, intervention_required: e.target.value })}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white"
-        >
-          {interventionOptions.map(opt => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <button type="button" className="w-full border rounded p-3 text-left bg-gray-100 text-gray-700" onClick={() => setDropdown(prev => ({ ...prev, intervention_required: !prev.intervention_required }))}>
+          {formData.intervention_required ? interventionOptions.find(opt => opt.value === formData.intervention_required)?.label : '選択してください'}
+        </button>
+        {dropdown.intervention_required && (
+          <div className="absolute z-10 bg-white border rounded shadow-lg w-full mt-2 max-h-60 overflow-y-auto">
+            {interventionOptions.map(opt => (
+              <div
+                key={opt.value}
+                className={`p-2 rounded cursor-pointer flex items-center transition-colors ${formData.intervention_required === opt.value ? 'bg-blue-100 font-bold text-blue-700' : 'hover:bg-blue-50'}`}
+                onClick={() => handleSingleSelect('intervention_required', opt.value)}
+              >
+                <span>{opt.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 特記事項 */}
-      <div className="bg-white rounded-xl p-4 shadow-sm">
+      <div className="bg-white rounded-xl p-4 shadow-sm relative">
         <label className="block text-sm font-semibold text-gray-700 mb-3">
           📝 よく使用する特記事項（単一選択）
         </label>
-        <select
-          value={formData.common_note}
-          onChange={e => setFormData({ ...formData, common_note: e.target.value })}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white mb-4"
-        >
-          {commonNotes.map(opt => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <button type="button" className="w-full border rounded p-3 text-left bg-gray-100 text-gray-700" onClick={() => setDropdown(prev => ({ ...prev, common_note: !prev.common_note }))}>
+          {formData.common_note ? commonNotes.find(opt => opt.value === formData.common_note)?.label : '選択してください'}
+        </button>
+        {dropdown.common_note && (
+          <div className="absolute z-10 bg-white border rounded shadow-lg w-full mt-2 max-h-60 overflow-y-auto">
+            {commonNotes.map(opt => (
+              <div
+                key={opt.value}
+                className={`p-2 rounded cursor-pointer flex items-center transition-colors ${formData.common_note === opt.value ? 'bg-blue-100 font-bold text-blue-700' : 'hover:bg-blue-50'}`}
+                onClick={() => handleSingleSelect('common_note', opt.value)}
+              >
+                <span>{opt.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 保存ボタン */}

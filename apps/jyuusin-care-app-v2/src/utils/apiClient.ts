@@ -1,0 +1,4 @@
+function ensurePath(p: string) { return p.startsWith('/') ? p : `/${p}`; }
+function isJson(res: Response) { return (res.headers.get('content-type')||'').includes('application/json'); }
+export async function apiGet<T=any>(path: string): Promise<T> { const url=ensurePath(path); const res=await fetch(url); if(!res.ok){ const text=await res.text().catch(()=>'' ); throw new Error(`[GET ${url}] ${res.status} ${text.slice(0,200)}`);} if(!isJson(res)) throw new Error(`[GET ${url}] not json`); return res.json(); }
+export async function apiPost<T=any>(path: string, body:any): Promise<T> { const url=ensurePath(path); const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); if(!res.ok){ const text=await res.text().catch(()=>'' ); throw new Error(`[POST ${url}] ${res.status} ${text.slice(0,200)}`);} if(!isJson(res)) throw new Error(`[POST ${url}] not json`); return res.json(); }

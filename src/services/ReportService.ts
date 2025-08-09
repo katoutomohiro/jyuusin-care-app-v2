@@ -42,6 +42,8 @@ export class ReportService {
     if (options.includeSeizures) {
       headers.push('発作の有無', '発作時間', '持続時間', '種類', '重症度');
     }
+    // 新たなイベントフィールドもカラム追加
+    headers.push('表情・反応', '体位', '皮膚・口腔ケア', '体調・疾患', '咳・誤嚥', '経管栄養', '服薬', '行動', 'コミュニケーション', 'その他');
     if (options.includeActivities) {
       headers.push('活動内容', '気分', '社会的交流');
     }
@@ -99,6 +101,19 @@ export class ReportService {
             '' // severity情報なし
           );
         }
+        // 新たなイベントフィールドも出力
+        row.push(
+          log.expression ? JSON.stringify(log.expression) : '',
+          log.positioning ? JSON.stringify(log.positioning) : '',
+          log.skin_oral_care ? JSON.stringify(log.skin_oral_care) : '',
+          log.illness ? JSON.stringify(log.illness) : '',
+          log.cough_choke ? JSON.stringify(log.cough_choke) : '',
+          log.tube_feeding ? JSON.stringify(log.tube_feeding) : '',
+          log.medication ? JSON.stringify(log.medication) : '',
+          log.behavioral ? JSON.stringify(log.behavioral) : '',
+          log.communication ? JSON.stringify(log.communication) : '',
+          log.other ? JSON.stringify(log.other) : ''
+        );
         if (options.includeActivities) {
           row.push(
             log.activity?.participation?.join(';') || '',

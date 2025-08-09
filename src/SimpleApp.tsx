@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface User {
   id: string;
@@ -164,7 +164,7 @@ const SimpleApp: React.FC = () => {
   ];
 
   // 事前登録データの初期化
-  React.useEffect(() => {
+  useEffect(() => {
     if (users.length === 0) {
       const preRegisteredUsers: Omit<User, 'id' | 'createdAt'>[] = [
         // 生活介護利用者（14名）

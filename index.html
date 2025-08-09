@@ -1,43 +1,28 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
   <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/icon-512x512.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src  'self' 'unsafe-eval' 'wasm-unsafe-eval' blob: data:;
+        style-src   'self' 'unsafe-inline';
+        img-src     'self' data: blob:;
+        font-src    'self' data:;
+        connect-src 'self' data: blob:;
+        frame-src   'self' blob:;
+        child-src   'self' blob:;
+        worker-src  'self' blob:;
+        object-src  'none';
+        base-uri    'self';
+      "
+    />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>重心ケアアプリ</title>
-    
-    <!-- エラー撲滅用CSP設定 -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self'; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';">
-    
-    <!-- PWA関連メタタグ -->
-    <meta name="description" content="重度障がい者支援施設向けケア管理アプリ" />
-    <meta name="theme-color" content="#0ea5e9" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Jyushin Care" />
-    <link rel="apple-touch-icon" href="/icon-512x512.svg" />
-    <link rel="manifest" href="/manifest.json" />
-    
-    <!-- オフライン対応 -->
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="application-name" content="Jyushin Care" />
-    
-    <!-- 開発安定性のための軽量フィルタ（必要に応じて拡張） -->
-    <script>
-      window.addEventListener('error', function(e) {
-        const msg = e.message || e.error?.message || '';
-        const patterns = ['Extension', 'gallerycdn', 'marketplace'];
-        if (patterns.some(p => msg.includes(p))) {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-      }, true);
-    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    
-  <!-- dev では SW を登録しない（build/preview 時のみ sw.js が活きる想定） -->
   </body>
 </html>

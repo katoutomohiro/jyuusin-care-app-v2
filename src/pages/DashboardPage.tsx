@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { LaurelCrownIcon, SunCloudIcon, SproutIcon } from '../components/icons';
 import { Line } from 'react-chartjs-2';
 import { useData } from '../contexts/DataContext';
-import { MedicalCare, ServiceType } from '../types';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -28,109 +27,7 @@ ChartJS.register(
 );
 
 const DashboardPage: React.FC = () => {
-  let { users } = useData();
-  console.log('DashboardPage loaded', users);
-  // ダミーユーザー（テスト用）
-  if (!Array.isArray(users) || users.length === 0) {
-    users = [
-      {
-        id: '1',
-        name: '山田 太郎',
-        initials: 'YT',
-        age: 25,
-        gender: '男性',
-        disabilityType: '肢体不自由',
-        disabilityLevel: '重度',
-        underlyingDiseases: '脳性麻痺',
-        medicalCare: ['TUBE_FEEDING' as MedicalCare],
-        serviceType: ['LIFE_CARE' as ServiceType],
-        familyContact: { name: '山田一郎', relationship: '父', phone: '090-1111-1111' },
-        notes: '笑顔が多い',
-        certificates: '',
-        careLevel: '重度',
-      },
-      {
-        id: '2',
-        name: '佐藤 花子',
-        initials: 'SH',
-        age: 22,
-        gender: '女性',
-        disabilityType: '知的障害',
-        disabilityLevel: '重度',
-        underlyingDiseases: 'てんかん',
-        medicalCare: ['SEIZURE_MEDICATION' as MedicalCare],
-        serviceType: ['DAY_SERVICE' as ServiceType],
-        familyContact: { name: '佐藤美智子', relationship: '母', phone: '090-2222-2222' },
-        notes: '発作歴あり',
-        certificates: '',
-        careLevel: '重度',
-      },
-      {
-        id: '3',
-        name: '鈴木 一郎',
-        initials: 'SI',
-        age: 28,
-        gender: '男性',
-        disabilityType: '肢体不自由',
-        disabilityLevel: '中度',
-        underlyingDiseases: '筋ジストロフィー',
-        medicalCare: ['TUBE_FEEDING' as MedicalCare],
-        serviceType: ['LIFE_CARE' as ServiceType],
-        familyContact: { name: '鈴木健', relationship: '兄', phone: '090-3333-3333' },
-        notes: '活動的',
-        certificates: '',
-        careLevel: '中度',
-      },
-      {
-        id: '4',
-        name: '田中 美咲',
-        initials: 'TM',
-        age: 20,
-        gender: '女性',
-        disabilityType: '知的障害',
-        disabilityLevel: '軽度',
-        underlyingDiseases: '自閉症',
-        medicalCare: [],
-        serviceType: ['DAY_SERVICE' as ServiceType],
-        familyContact: { name: '田中誠', relationship: '父', phone: '090-4444-4444' },
-        notes: '穏やか',
-        certificates: '',
-        careLevel: '軽度',
-      },
-      {
-        id: '5',
-        name: '高橋 健',
-        initials: 'TK',
-        age: 30,
-        gender: '男性',
-        disabilityType: '肢体不自由',
-        disabilityLevel: '重度',
-        underlyingDiseases: '脳性麻痺',
-        medicalCare: ['SUCTION' as MedicalCare],
-        serviceType: ['LIFE_CARE' as ServiceType],
-        familyContact: { name: '高橋由美', relationship: '母', phone: '090-5555-5555' },
-        notes: '吸引ケア必要',
-        certificates: '',
-        careLevel: '重度',
-      },
-      {
-        id: '6',
-        name: '中村 さくら',
-        initials: 'NS',
-        age: 24,
-        gender: '女性',
-        disabilityType: '知的障害',
-        disabilityLevel: '中度',
-        underlyingDiseases: 'てんかん',
-        medicalCare: ['SEIZURE_MEDICATION' as MedicalCare],
-        serviceType: ['DAY_SERVICE' as ServiceType],
-        familyContact: { name: '中村正', relationship: '父', phone: '090-6666-6666' },
-        notes: '発作注意',
-        certificates: '',
-        careLevel: '中度',
-      }
-    ];
-  }
+  const { users } = useData();
   const [todayRecords, setTodayRecords] = useState<Record<string, number>>({});
   const [kiramekiData, setKiramekiData] = useState({
     name: '',
@@ -381,30 +278,26 @@ const DashboardPage: React.FC = () => {
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {(Array.isArray(users) && users.length > 0) ? (
-                users.slice(0, 6).map((user) => (
-                  <Link
-                    key={user.id}
-                    to={`/daily-log`}
-                    className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all duration-200 flex items-center space-x-3"
-                  >
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
-                      {user.initials || user.name.charAt(0)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-gray-800">{user.name}</div>
-                      <div className="text-sm text-gray-500">{user.age}歳 {user.gender}</div>
-                    </div>
-                    <div className="text-blue-500">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
-                  </Link>
-                ))
-              ) : (
-                <div className="col-span-3 text-center text-gray-400 py-8">利用者データがありません</div>
-              )}
+              {users.slice(0, 6).map((user) => (
+                <Link
+                  key={user.id}
+                  to={`/daily-log`}
+                  className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all duration-200 flex items-center space-x-3"
+                >
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
+                    {user.initials || user.name.charAt(0)}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-800">{user.name}</div>
+                    <div className="text-sm text-gray-500">{user.age}歳 {user.gender}</div>
+                  </div>
+                  <div className="text-blue-500">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </Link>
+              ))}
             </div>
             <div className="mt-4 text-center">
               <p className="text-sm text-gray-600">
@@ -540,7 +433,7 @@ const DashboardPage: React.FC = () => {
             ) : (
               <div className="text-center py-8">
                 <p className="text-gray-500">記録が蓄積されると、成長の変化が表示されます</p>
-                {/* <Line data={growthChartData} />  // react@19未対応のため一時コメントアウト */}
+                <Line data={growthChartData} />
               </div>
             )}
           </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 /**
  * localStorageのキーごとに値を取得・保存・削除できる共通フック
@@ -16,6 +16,20 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (v: T) => 
   };
 
   const [storedValue, setStoredValue] = useState<T>(getStoredValue());
+
+  // 他タブや外部からlocalStorageが変更された場合もstateを同期
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === key) {
+        setStoredValue(getStoredValue());
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
 
   // 保存
   const setValue = (value: T) => {
