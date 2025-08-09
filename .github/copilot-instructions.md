@@ -89,6 +89,22 @@ Specialized form components in `src/components/forms/`:
 // Each form handles specific care event validation and submission
 ```
 
+
+## 413エラー（Request Entity Too Large）対策ガイドライン
+
+### 主な原因
+- 画像やファイル、または大量のJSONデータを一度に送信している場合
+- サーバー側（Vite, Express, Netlify, Vercel等）のリクエストサイズ上限（例: 1MB, 2MBなど）が小さい場合
+- フロントエンドのバグやループで同じリクエストを繰り返し送信し、データが肥大化している場合
+
+### 必須対策
+1. **送信前にデータサイズを必ずチェックし、上限（例: 1MB）超過時は警告・送信中止すること**
+2. 画像やファイルは圧縮・リサイズし、必要最小限のデータのみ送信すること
+3. バグやループによる過剰送信が発生しないよう、送信ロジックにガードを設けること
+4. サーバー側の上限設定が変更できない場合も、フロントエンドで必ず上記を徹底すること
+5. これらの対策はAI・開発者が毎回認識し、実装・レビュー時に必ず確認すること
+
+---
 ## AI-Specific Development Guidelines
 
 ### Medical Care Specialization

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { createContext, useContext, useReducer, useEffect } from 'react';
 import { User, AuthState } from '../../types';
 
 interface AuthContextType extends AuthState {

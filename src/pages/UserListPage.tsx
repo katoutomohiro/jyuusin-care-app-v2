@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { useAdmin } from '../contexts/AdminContext';
-import { ServiceType, MedicalCare } from '../types';
+import { ServiceType, MedicalCare } from '../../types';
 import EditableText from '../components/EditableText';
 
 /**

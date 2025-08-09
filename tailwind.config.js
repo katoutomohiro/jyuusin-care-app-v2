@@ -2,6 +2,7 @@
 export default {
   content: [
     "./index.html",
+    "./public/**/*.html",
     "./src/**/*.{js,ts,jsx,tsx}",
     "./pages/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",
@@ -9,6 +10,9 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      ringColor: {
+        'focus-accessible': '#2563eb', // アクセシビリティ向けfocus色
+      },
       colors: {
         'sky-blue': {
           '50': '#f0f9ff', '100': '#e0f2fe', '200': '#bae6fd',

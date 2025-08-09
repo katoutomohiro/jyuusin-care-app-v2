@@ -1,286 +1,528 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, FC } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useNavigate } from 'react-router-dom';
 import SeizureForm from '../components/forms/SeizureForm';
 import ExpressionForm from '../components/forms/ExpressionForm';
-import VitalSignsInput from '../components/forms/VitalSignsInput';
+import VitalsForm from '../components/forms/VitalsForm';
+import VitalsTile from '../components/tiles/VitalsTile';
 import { HydrationForm } from '../components/forms/HydrationForm';
+import { ExcretionForm } from '../components/forms/ExcretionForm';
+import { ActivityForm } from '../components/forms/ActivityForm';
+import { SkinOralCareForm } from '../components/forms/SkinOralCareForm';
+import TubeFeedingForm from '../components/forms/TubeFeedingForm';
 import ExcretionInput from '../components/forms/ExcretionInput';
 import SleepInput from '../components/forms/SleepInput';
-import ActivityInput from '../components/forms/ActivityInput';
 import CareInput from '../components/forms/CareInput';
 import MedicationInput from '../components/forms/MedicationInput';
 import OtherInput from '../components/forms/OtherInput';
 import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
-import DailyLogExcelExporter from '../components/DailyLogExcelExporter';
-import AIPredictionService from '../../services/AIPredictionService';
+import DailyLogA4Print from '../components/DailyLogA4Print';
+import { exportDailyLog /*, exportDailyLogExcel */ } from '../services/DailyLogExportService';
+import { PDFViewer } from '@react-pdf/renderer';
+import DailyLogPdfDoc from '../components/pdf/DailyLogPdfDoc';
+import PdfPreviewModal from '../components/pdf/PdfPreviewModal';
+// import DailyLogPdfDocument from '../components/DailyLogPdfDocument';
+// import { PDFDownloadLink } from '@react-pdf/renderer';
 import ErrorBoundary from '../components/ErrorBoundary';
 import InlineEditText from '../components/InlineEditText';
 import InlineEditableList from '../components/InlineEditableList';
 import { useData } from '../contexts/DataContext';
-import { useAdmin } from '../contexts/AdminContext';
-import { useConfigurableComponent } from '../../services/DynamicConfigSystem';
+import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
+import { DailyLog, User } from '../types';
+import { useLocation } from 'react-router-dom';
+import { ButtonsRow } from '../components/ButtonsRow';
+import { AllUsersPdfModal } from '../components/AllUsersPdfModal';
+import { RecordTile } from '../components/RecordTile';
+import { CATEGORIES, EventType as CatEventType } from '../utils/eventCategories';
+import { localDateKey } from '../utils/dateKey';
+import PreviewVaultShelf from '../components/PreviewVaultShelf';
 
-const StructuredDailyLogPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { users, addDailyLog, updateUser } = useData();
-  const { isAdminMode, isAuthenticated, autoSaveEnabled } = useAdmin();
-  const { eventTypes, systemSettings, facilityName } = useConfigurableComponent('structuredDailyLog');
-  const [activeEventType, setActiveEventType] = useLocalStorage<string | null>('activeEventType', null);
-  const [isSubmitting, setIsSubmitting] = useLocalStorage<boolean>('isSubmitting', false);
-  const [selectedUserId, setSelectedUserId] = useLocalStorage<string>('selectedUserId', '');
-  const [todayEventCounts, setTodayEventCounts] = useLocalStorage<{ [key: string]: number }>('todayEventCounts', {});
-  const [showAdminWarning, setShowAdminWarning] = useLocalStorage<boolean>('showAdminWarning', false);
-  const [showAIAnalysis, setShowAIAnalysis] = useLocalStorage<boolean>('showAIAnalysis', false);
-  const [showSeizureRiskModal, setShowSeizureRiskModal] = useState(false);
-  const [aiSeizureRiskResult, setAISeizureRiskResult] = useState<{ riskLevel: string; message: string } | null>(null);
-  const [showLogsModal, setShowLogsModal] = useState(false);
-  const [logsJson, setLogsJson] = useState('');
-  const [lastSaved, setLastSaved] = useState<string>('');
-  const [showSaveToast, setShowSaveToast] = useState(false);
-  const [showEventEditor, setShowEventEditor] = useState(false);
-  const [editableEventTypes, setEditableEventTypes] = useState(eventTypes.length > 0 ? eventTypes : []);
-  const [editingEventType, setEditingEventType] = useState<string | null>(null);
+type EventType = 'seizure' | 'expression' | 'vitals' | 'hydration' | 'excretion' | 'sleep' | 'activity' | 'care' | 'skin_oral_care' | 'illness' | 'cough_choke' | 'tube_feeding' | 'medication_administration' | 'behavioral' | 'communication' | 'other' | 'positioning';
 
-  const today = new Date().toISOString().split('T')[0];
-
-  const defaultEventTypes = [
-    { id: 'seizure', name: '発作', icon: '⚡', color: 'bg-red-500' },
-    { id: 'expression', name: '表情・反応', icon: '😊', color: 'bg-blue-500' },
-    { id: 'vital', name: 'バイタル', icon: '🌡️', color: 'bg-green-500' },
-    { id: 'meal', name: '食事・水分', icon: '🍽️', color: 'bg-orange-500' },
-    { id: 'excretion', name: '排泄', icon: '🚽', color: 'bg-purple-500' },
-    { id: 'sleep', name: '睡眠', icon: '😴', color: 'bg-indigo-500' },
-    { id: 'activity', name: '活動', icon: '🎯', color: 'bg-teal-500' },
-    { id: 'care', name: 'ケア', icon: '🤲', color: 'bg-pink-500' },
-    { id: 'medication', name: '服薬', icon: '💊', color: 'bg-cyan-500' },
-    { id: 'other', name: 'その他', icon: '📝', color: 'bg-gray-500' }
-  ];
-
-  const currentEventTypes = eventTypes.length > 0 ? eventTypes : defaultEventTypes;
-  const eventTypeLabels = currentEventTypes.map(t => t.name);
-  const eventTypeIds = currentEventTypes.map(t => t.id);
-  const eventTypeColors = currentEventTypes.map(t => t.color.replace('bg-', '').replace('-500', ''));
-
-  const eventCounts = useMemo(() => {
-    try {
-      const logs = JSON.parse(localStorage.getItem('daily_logs') || '[]');
-      const counts: { [key: string]: number } = {};
-      eventTypeIds.forEach(id => { counts[id] = 0; });
-      logs.forEach((log: any) => {
-        if (log.event_type && counts[log.event_type] !== undefined) {
-          counts[log.event_type]++;
-        }
-      });
-      return eventTypeIds.map(id => counts[id]);
-    } catch {
-      return eventTypeIds.map(() => 0);
-    }
-  }, [showLogsModal]);
-
-  useEffect(() => {
-    const counts: { [key: string]: number } = {};
-    currentEventTypes.forEach(type => {
-      counts[type.id] = 0;
+// generateDailyLog関数を巻き上げ可能な関数宣言として定義
+function generateDailyLog(
+  userId: string | undefined,
+  userName: string,
+  date: string,
+  dailyLogsByUser: Record<string, any[]>
+): DailyLog | null {
+  // 入力検証を強化してbefore-initエラーを防ぐ
+  if (!userId || !userName || !date || !dailyLogsByUser) {
+    if (import.meta.env.DEV) console.warn('generateDailyLog: Invalid input parameters', { userId, userName, date, hasLogs: !!dailyLogsByUser });
+    return null;
+  }
+  
+  try {
+    // dailyLogsByUserから今日のイベントデータを取得（ローカル日付キーで比較）
+    const userLogs = dailyLogsByUser[userId] || [];
+    const todayLogs = userLogs.filter((log: any) => {
+      if (!log || !log.created_at) return false;
+      const logKey = localDateKey(log.created_at);
+      return log.user_id === userId && logKey === date;
     });
-    try {
-      users.forEach(user => {
-        const userRecords = JSON.parse(localStorage.getItem(`dailyLogs_${user.id}`) || '[]');
-        const todayRecords = userRecords.filter((record: any) =>
-          record.timestamp && record.timestamp.split('T')[0] === today
-        );
-        todayRecords.forEach((record: any) => {
-          if (counts[record.event_type] !== undefined) {
-            counts[record.event_type]++;
-          }
-        });
+    
+    if (import.meta.env.DEV) {
+      if (import.meta.env.DEV) console.debug('DEBUG – generateDailyLog for', userId, 'on', date, ':', todayLogs.length, 'events');
+    }
+    
+    // 基本構造を初期化
+    const dailyLog: DailyLog = {
+      userId,
+      userName,
+      date,
+      vitals: null,
+      hydration: [],
+      excretion: [],
+      sleep: null,
+      seizure: [],
+      activity: [],
+      care: [],
+      notes: ''
+    };
+
+    // イベントタイプ別にデータを集計（エラーハンドリング強化）
+    todayLogs.forEach((log: any, index: number) => {
+      try {
+        if (!log || !log.event_type) {
+          if (import.meta.env.DEV) console.warn('generateDailyLog: Invalid log entry at index', index, log);
+          return;
+        }
+        
+        switch (log.event_type) {
+        case 'vitals':
+          dailyLog.vitals = {
+            temperature: parseFloat(log.temperature) || null,
+            pulse: parseInt(log.pulse) || null,
+            spo2: parseInt(log.spo2) || null,
+            blood_pressure_systolic: parseInt(log.blood_pressure_systolic) || null,
+            blood_pressure_diastolic: parseInt(log.blood_pressure_diastolic) || null,
+            respiratory_rate: parseInt(log.respiratory_rate) || null,
+            measurement_time: log.event_timestamp || ''
+          };
+          break;
+          
+        case 'hydration':
+          dailyLog.hydration.push({
+            time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
+            amount: parseInt(log.amount) || 0,
+            type: log.intake_type === 'oral' ? 'oral' : 'tube',
+            content: log.meal_content || ''
+          });
+          break;
+          
+        case 'excretion':
+          dailyLog.excretion.push({
+            time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
+            type: log.record_type === 'urination' ? 'urine' : 'stool',
+            amount: log.urination?.amount || log.defecation?.amount || '',
+            color: log.urination?.color || '',
+            properties: log.defecation?.bristol_scale || '',
+            notes: log.notes || ''
+          });
+          break;
+          
+        case 'seizure':
+          if (!dailyLog.seizure) dailyLog.seizure = [];
+          dailyLog.seizure.push({
+            time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
+            type: log.seizure_type || '',
+            duration: (log.duration_minutes || 0) * 60, // Convert minutes to seconds
+            symptoms: log.seizure_phenomena || [],
+            postIctalState: log.post_ictal_state || '',
+            notes: log.notes || ''
+          });
+          break;
+          
+        case 'activity':
+          if (!dailyLog.activity) dailyLog.activity = [];
+          dailyLog.activity.push({
+            time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
+            title: log.activity_type || '',
+            description: log.notes || '',
+            mood: log.mood_during_activity || ''
+          });
+          break;
+          
+        default:
+          // その他のイベントタイプもcareに追加
+          if (!dailyLog.care) dailyLog.care = [];
+          dailyLog.care.push({
+            time: log.event_timestamp ? log.event_timestamp.substring(11, 16) : '',
+            type: 'other',
+            details: log.notes || `${log.event_type}: ${JSON.stringify(log, null, 2)}`
+          });
+      }
+      } catch (logError) {
+        if (import.meta.env.DEV) console.warn('generateDailyLog: Error processing log entry at index', index, ':', logError, log);
+      }
+    });
+    
+    if (import.meta.env.DEV) {
+      if (import.meta.env.DEV) console.debug('DEBUG - generateDailyLog generated with items:', {
+        vitals: !!dailyLog.vitals,
+        hydration: dailyLog.hydration.length,
+        excretion: dailyLog.excretion.length,
+        seizure: dailyLog.seizure?.length || 0,
+        activity: dailyLog.activity?.length || 0,
+        care: dailyLog.care?.length || 0
       });
-    } catch (error) {
-      // エラー抑制
     }
-    setTodayEventCounts(counts);
-  }, [users, today, currentEventTypes]);
+    
+    return dailyLog;
+    
+  } catch (error) {
+    console.error('generateDailyLog: Critical error generating daily log for', userId, ':', error);
+    return null;
+  }
+}
 
-  useEffect(() => {
-    if (!autoSaveEnabled && !isAdminMode) {
-      setShowAdminWarning(true);
-      const timer = setTimeout(() => setShowAdminWarning(false), 5000);
-      return () => clearTimeout(timer);
+const StructuredDailyLogPage: FC = () => {
+  const navigate = useNavigate();
+  const { users, dailyLogsByUser } = useData();
+  // const { user: currentUser } = useAuth(); // Commented out due to context type issues
+  // const { addNotification } = useNotification(); // Commented out due to context type issues
+  const location = useLocation();
+  
+  // 基本的な状態管理
+  const [selectedUserId, setSelectedUserId] = useLocalStorage<string>('selectedUserId', '');
+  const [activeEventType, setActiveEventType] = useState<EventType>('seizure');
+  const [showEventEditor, setShowEventEditor] = useState(false);
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [allUsersPdfOpen, setAllUsersPdfOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // 現在選択されている利用者
+  const selectedUser = users.find(user => user.id === selectedUserId);
+  
+  // 今日の日付（ローカル日付キーで統一）
+  const today = localDateKey(new Date());
+  
+  // 施設名（データコンテキストから取得、なければデフォルト）
+  const facilityName = "重心ケア施設";
+
+  // logsReady判定: selectedUserIdが存在し、dailyLogsByUserにデータが存在する
+  const logsReady = selectedUserId && dailyLogsByUser[selectedUserId] !== undefined;
+
+  // dailyLogをuseMemoで生成（dailyLogsByUserの変更を購読）
+  const dailyLog = useMemo(() => {
+    if (!selectedUserId || !selectedUser || !logsReady) return null;
+    
+    const generatedLog = generateDailyLog(selectedUserId, selectedUser.name, today, dailyLogsByUser);
+    if (import.meta.env.DEV && generatedLog) {
+      if (import.meta.env.DEV) console.debug('DEBUG – generateDailyLog regenerated, items:', Object.keys(generatedLog).length);
     }
-  }, [autoSaveEnabled, isAdminMode]);
+    return generatedLog;
+  }, [selectedUserId, selectedUser, today, dailyLogsByUser]);
 
-  const handleShowLogs = () => {
+  // 今日の総ログ数を計算
+  const todayLogsCount = useMemo(() => {
+    if (!selectedUserId || !dailyLogsByUser[selectedUserId]) return 0;
+    
+    return dailyLogsByUser[selectedUserId].filter((log: any) => {
+      const logDateKey = localDateKey(log.created_at || new Date());
+      const todayKey = localDateKey(new Date());
+      return logDateKey === todayKey;
+    }).length;
+  }, [selectedUserId, dailyLogsByUser]);
+
+  // 各カテゴリーの件数を計算 - dailyLogsByUserから直接計算して最新の状態を反映
+  const getCategoryCount = useCallback((categoryKey: string): number => {
+    if (!selectedUserId || !dailyLogsByUser[selectedUserId]) return 0;
+    
+    // 今日の日付に該当するログをフィルタリング
+    const todayLogs = dailyLogsByUser[selectedUserId].filter((log: any) => {
+      const logDateKey = localDateKey(log.created_at || new Date());
+      const todayKey = localDateKey(new Date());
+      return logDateKey === todayKey;
+    });
+    
+    // イベントタイプ別にカウント
+    switch (categoryKey) {
+      case 'seizure':
+        return todayLogs.filter((log: any) => log.event_type === 'seizure').length;
+      case 'expression':
+        return todayLogs.filter((log: any) => log.event_type === 'expression').length;
+      case 'vitals':
+        return todayLogs.filter((log: any) => log.event_type === 'vitals').length;
+      case 'hydration':
+        return todayLogs.filter((log: any) => log.event_type === 'hydration').length;
+      case 'excretion':
+        return todayLogs.filter((log: any) => log.event_type === 'excretion').length;
+      case 'activity':
+        return todayLogs.filter((log: any) => log.event_type === 'activity').length;
+      case 'skin_oral_care':
+        return todayLogs.filter((log: any) => log.event_type === 'skin_oral_care').length;
+      case 'tube_feeding':
+        return todayLogs.filter((log: any) => log.event_type === 'tube_feeding').length;
+      case 'positioning':
+        return todayLogs.filter((log: any) => log.event_type === 'positioning').length;
+      case 'medication':
+        return todayLogs.filter((log: any) => log.event_type === 'medication').length;
+      case 'behavioral':
+        return todayLogs.filter((log: any) => log.event_type === 'behavioral').length;
+      case 'communication':
+        return todayLogs.filter((log: any) => log.event_type === 'communication').length;
+      case 'illness':
+        return todayLogs.filter((log: any) => log.event_type === 'illness').length;
+      case 'sleep':
+        return todayLogs.filter((log: any) => log.event_type === 'sleep').length;
+      case 'cough_choke':
+        return todayLogs.filter((log: any) => log.event_type === 'cough_choke').length;
+      default:
+        return 0;
+    }
+  }, [selectedUserId, dailyLogsByUser, today]);
+
+  // Excel Export Handler (一時無効化 - PDFが主力出力)
+  const handleExportExcel = async () => {
+    alert('Excel出力は一時的に無効化されています。PDF出力をご利用ください。');
+    /* 
+    console.time('exportExcel');
+    if (import.meta.env.DEV) console.debug('Excel export started');
     try {
-      const logs = localStorage.getItem('daily_logs');
-      setLogsJson(logs ? JSON.stringify(JSON.parse(logs), null, 2) : 'データなし');
-      const savedAt = localStorage.getItem('daily_logs_saved_at');
-      setLastSaved(savedAt ? new Date(savedAt).toLocaleString('ja-JP') : '未保存');
-    } catch (e) {
-      setLogsJson('取得エラー');
-      setLastSaved('取得エラー');
+      if (!selectedUser || !dailyLog || !logsReady) {
+        alert('利用者データの準備ができていません。少しお待ちください。');
+        return;
+      }
+      
+      if (import.meta.env.DEV) console.debug('Generated dailyLog:', dailyLog);
+      
+      await exportDailyLogExcel(dailyLog, selectedUser, today);
+      if (import.meta.env.DEV) console.debug('Excel export completed successfully');
+      
+      alert('Excel ファイルを生成しました');
+    } catch (error) {
+      console.error('Excel export error:', error);
+      alert('Excel出力に失敗しました: ' + (error as Error).message);
     }
-    setShowLogsModal(true);
+    console.timeEnd('exportExcel');
+    */
   };
 
-  const showSaveCompleteToast = () => {
-    setShowSaveToast(true);
-    setTimeout(() => setShowSaveToast(false), 3000);
+  // Event Tile Click Handler
+  const handleTileClick = (eventType: CatEventType) => {
+    if (import.meta.env.DEV) console.debug('Tile clicked:', eventType);
+    setActiveEventType(eventType as EventType);
+    setShowEventEditor(true);
   };
 
+  // Handle Save Event (from forms) - DataContextのaddDailyLogを使用
+  const { addDailyLog } = useData(); // フック呼び出しをコンポーネント最上位に移動
+  
   const handleSaveEvent = async (eventData: any) => {
-    if (!selectedUserId) return;
     setIsSubmitting(true);
+    
+    const newEvent = {
+      id: Date.now().toString(),
+      user_id: selectedUserId,
+      userId: selectedUserId,
+      event_type: activeEventType,
+      created_at: new Date().toISOString(),
+      event_timestamp: new Date().toISOString(),
+      ...eventData
+    };
+    
     try {
-      const logData = {
-        userId: selectedUserId,
-        staff_id: 'current-staff',
-        author: '記録者',
-        authorId: 'current-staff',
-        record_date: today,
-        recorder_name: '記録者',
-        weather: '記録なし',
-        mood: [],
-        meal_intake: {
-          breakfast: '記録なし',
-          lunch: '記録なし',
-          snack: '記録なし',
-          dinner: '記録なし'
-        },
-        hydration: 0,
-        toileting: [],
-        activity: {
-          participation: ['記録なし'],
-          mood: '記録なし',
-          notes: ''
-        },
-        special_notes: [{
-          category: activeEventType || 'general',
-          details: JSON.stringify({
-            event_type: activeEventType,
-            timestamp: new Date().toISOString(),
-            data: eventData,
-            notes: eventData.notes || '',
-            admin_created: isAdminMode && isAuthenticated
-          })
-        }]
-      };
-      await addDailyLog(logData);
-      const eventKey = `${activeEventType}_records_${today}`;
-      const existingRecords = JSON.parse(localStorage.getItem(eventKey) || '[]');
-      const newRecord = {
-        id: Date.now().toString(),
-        user_id: selectedUserId,
-        event_type: activeEventType,
-        created_at: new Date().toISOString(),
-        timestamp: new Date().toISOString(),
-        data: eventData,
-        notes: eventData.notes || '',
-        admin_created: isAdminMode && isAuthenticated,
-        auto_saved: autoSaveEnabled && !isAdminMode
-      };
-      existingRecords.push(newRecord);
-      localStorage.setItem(eventKey, JSON.stringify(existingRecords));
-      const allLogs = JSON.parse(localStorage.getItem('daily_logs') || '[]');
-      allLogs.push(newRecord);
-      localStorage.setItem('daily_logs', JSON.stringify(allLogs));
-      localStorage.setItem('daily_logs_saved_at', new Date().toISOString());
-      showSaveCompleteToast();
-      setActiveEventType(null);
-      setTodayEventCounts({
-        ...todayEventCounts,
-        [activeEventType!]: (todayEventCounts[activeEventType!] || 0) + 1
-      });
+      // DataContextのaddDailyLogを呼び出し（自動的にUI更新）
+      await addDailyLog(newEvent);
+      
+      if (import.meta.env.DEV) {
+        console.info('[daily-log][saved]', { 
+          id: newEvent?.id, 
+          dateKey: localDateKey(newEvent?.created_at ?? Date.now()) 
+        });
+      }
+      
+      setIsSubmitting(false);
+      setShowEventEditor(false);
     } catch (error) {
-      alert('記録の保存中にエラーが発生しました');
-    } finally {
+      console.error('Failed to save event:', error);
       setIsSubmitting(false);
     }
   };
 
-  // --- JSX return部 ---
+  // DEBUG: State monitoring
+  useEffect(() => {
+    if (import.meta.env.DEV) console.debug('DEBUG - selectedUserId:', selectedUserId, 'selectedUser:', selectedUser);
+  }, [selectedUserId, selectedUser]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-2 sm:p-4">
-      {/* 保存完了トースト通知 */}
-      {showSaveToast && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white px-6 py-3 rounded-lg shadow-lg z-50 text-lg font-semibold print:hidden">
-          ✅ 全日誌データをローカルストレージに保存しました
-        </div>
-      )}
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="text-center mb-4 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">📋 構造化日誌入力</h1>
           <p className="text-gray-600 text-sm sm:text-base">{facilityName} - 利用者の日常記録を構造化して記録します</p>
         </div>
-        {/* 利用者一覧 */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-8">
-          {users.map(u => (
-            <button
-              key={u.id}
-              className={`border rounded-lg p-4 text-center shadow hover:bg-blue-100 transition-all ${selectedUserId === u.id ? 'bg-blue-200 border-blue-500' : 'bg-white'}`}
-              onClick={() => setSelectedUserId(u.id)}
-            >
-              <div className="font-bold text-lg mb-1">{u.name}</div>
-              <div className="text-xs text-gray-500">{u.serviceType?.join(', ')}</div>
-              <div className="mt-2 text-xs text-gray-400">{u.medicalCare?.join(', ')}</div>
-            </button>
-          ))}
-        </div>
-        {/* 本日のイベント集計 */}
-        {selectedUserId && (
-          <div className="mb-6">
-            <h2 className="font-semibold text-base mb-2">本日の記録件数</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-              {currentEventTypes.map((type, idx) => (
-                <div key={type.id} className={`rounded px-2 py-1 text-xs font-bold text-white ${type.color}`}>
-                  {type.icon} {type.name}: {todayEventCounts[type.id] || 0}
-                </div>
+
+        {/* 利用者選択エリア */}
+        {!selectedUserId && (
+          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">📝 記録する利用者を選択</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              {users.map(user => (
+                <button
+                  key={user.id}
+                  onClick={() => setSelectedUserId(user.id)}
+                  className="p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 rounded-lg border border-blue-200 transition-all duration-200 text-left"
+                >
+                  <div className="font-semibold text-gray-800">{user.name}</div>
+                  <div className="text-sm text-gray-500">記録を開始</div>
+                </button>
               ))}
             </div>
           </div>
         )}
-        {/* イベントフォーム群 */}
-        {selectedUserId && (
-          <div className="space-y-4">
-            <SeizureForm onSave={handleSaveEvent} />
-            <ExpressionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-            <VitalSignsInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-            <HydrationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-            <ExcretionInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-            <SleepInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-            <ActivityInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-            <CareInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-            <MedicationInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-            <OtherInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+
+        {/* メインコンテンツ */}
+        {selectedUserId && selectedUser && (
+          <div className="space-y-4 sm:space-y-6">
+            {/* 利用者情報表示 */}
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 space-y-2 sm:space-y-0">
+                <button
+                  onClick={() => setSelectedUserId('')}
+                  className="inline-flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <span>←</span>
+                  <span>利用者選択に戻る</span>
+                </button>
+              </div>
+              
+              <div className="border-l-4 border-blue-500 pl-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-800">{selectedUser.name}</h2>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <p>年齢: {selectedUser.age}歳 ({selectedUser.gender})</p>
+                  <p>サービス: {selectedUser.serviceType?.join(', ')}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* PDF/Excel ボタン */}
+            <ButtonsRow
+              dailyLog={dailyLog}
+              logsReady={logsReady}
+              todayLogsCount={todayLogsCount}
+              disabled={!todayLogsCount}
+              onPdf={() => setPdfPreviewOpen(true)}
+              onAllUsersPdf={() => setAllUsersPdfOpen(true)}
+              onExcel={handleExportExcel}
+              showExcel={false} // Excelボタンを非表示
+              showAllUsers={true} // 全員分PDFボタンを表示
+            />
+
+            {!logsReady && (
+              <p className="text-sm text-gray-500 text-center">構造化日誌の変換を準備中…</p>
+            )}
+
+            {logsReady && (!dailyLog || Object.keys(dailyLog).length === 0) && (
+              <p className="text-sm text-orange-500 text-center">まだ記録がありません。下のタイルから入力してください。</p>
+            )}
+
+            {/* 記録入力タイルグリッド */}
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">📝 記録入力</h3>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {CATEGORIES.map(category => (
+                  category.key === 'vitals' ? (
+                    <VitalsTile
+                      key={category.key}
+                      userId={selectedUser?.id || ''}
+                      date={today}
+                      onSaved={(vital) => {
+                        const eventData = {
+                          event_type: 'vitals',
+                          event_timestamp: vital.time,
+                          temperature: vital.tempC,
+                          blood_pressure_systolic: vital.bpSys,
+                          blood_pressure_diastolic: vital.bpDia,
+                          spo2: vital.spo2,
+                          pulse: vital.hr,
+                          respiratory_rate: vital.rr,
+                          notes: vital.note,
+                        };
+                        handleSaveEvent(eventData);
+                      }}
+                    />
+                  ) : (
+                    <RecordTile
+                      key={category.key}
+                      icon={category.icon}
+                      label={category.label}
+                      onClick={() => handleTileClick(category.key)}
+                      count={getCategoryCount(category.key)}
+                    />
+                  )
+                ))}
+              </div>
+              {/* 経管栄養の直後にストック棚を1回だけ表示 */}
+              <div className="mt-4">
+                <PreviewVaultShelf userId={selectedUser.id} />
+              </div>
+            </div>
           </div>
         )}
-      </div>
-      {/* AI分析表示 */}
-      {showAIAnalysis && selectedUserId && (
-        <AIAnalysisDisplay
-          user={users.find(u => u.id === selectedUserId)!}
-          isVisible={showAIAnalysis}
-          onClose={() => setShowAIAnalysis(false)}
+
+        {/* Form Modals */}
+        {showEventEditor && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold">
+                  {CATEGORIES.find(c => c.key === activeEventType)?.label || activeEventType} 入力
+                </h3>
+                <button
+                  onClick={() => setShowEventEditor(false)}
+                  className="text-gray-500 hover:text-gray-700 text-xl"
+                >
+                  ×
+                </button>
+              </div>
+              
+              {/* Form Components */}
+              {activeEventType === 'seizure' && <SeizureForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+              {activeEventType === 'expression' && <ExpressionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+              {activeEventType === 'vitals' && <VitalsForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+              {activeEventType === 'hydration' && <HydrationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+              {activeEventType === 'excretion' && <ExcretionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+              {activeEventType === 'activity' && <ActivityForm userId={selectedUserId} onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+              {activeEventType === 'skin_oral_care' && <SkinOralCareForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+              {activeEventType === 'tube_feeding' && <TubeFeedingForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+              
+              {/* ダミーフォーム表示（まだ実装していないもの） */}
+              {!['seizure', 'expression', 'vitals', 'hydration', 'excretion', 'activity', 'skin_oral_care', 'tube_feeding'].includes(activeEventType) && (
+                <div className="text-center text-gray-500 py-8">
+                  <p>🚧 {CATEGORIES.find(c => c.key === activeEventType)?.label || activeEventType} フォームは準備中です</p>
+                  <button
+                    onClick={() => setShowEventEditor(false)}
+                    className="mt-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                  >
+                    閉じる
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* PDF Preview Modal */}
+        {selectedUserId && selectedUser && (
+          <PdfPreviewModal
+            open={pdfPreviewOpen}
+            onClose={() => setPdfPreviewOpen(false)}
+            dailyLog={dailyLog}
+            user={selectedUser}
+          />
+        )}
+
+        {/* All Users PDF Modal */}
+        <AllUsersPdfModal
+          isOpen={allUsersPdfOpen}
+          onClose={() => setAllUsersPdfOpen(false)}
+          date={today}
         />
-      )}
-      {/* 印刷用CSS */}
-      <style>{`
-        @media print {
-          body * { visibility: hidden !important; }
-          .print\:static, .print\:p-0, .print\:shadow-none, .print\:max-w-full, .print\:w-full, .print\:rounded-none, .print\:overflow-visible, .print\:text-xs, .print\:bg-white {
-            visibility: visible !important;
-            position: static !important;
-            box-shadow: none !important;
-            max-width: 100% !important;
-            width: 100% !important;
-            border-radius: 0 !important;
-            overflow: visible !important;
-            font-size: 12px !important;
-            background: #fff !important;
-            color: #222 !important;
-          }
-          .print\:hidden { display: none !important; }
-        }
-      `}</style>
+      </div>
     </div>
   );
 };

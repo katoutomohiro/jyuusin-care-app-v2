@@ -1,14 +1,15 @@
-import React from 'react';
-import { Fragment } from 'react';
+import { Fragment, useState, FC, useEffect } from 'react';
 
 interface HydrationFormProps {
   onSave: (data: any) => void;
   isSubmitting: boolean;
+  draftData?: any;
+  handleDraftChange?: (data: any) => void;
 }
 
-export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitting }) => {
+export const HydrationForm: FC<HydrationFormProps> = ({ onSave, isSubmitting, draftData, handleDraftChange }) => {
   // バリデーション用エラー状態
-  const [errorMsg, setErrorMsg] = React.useState<string>('');
+  const [errorMsg, setErrorMsg] = useState<string>('');
   // 正確な現在時刻を取得する関数
   const getCurrentDateTime = () => {
     const now = new Date();
@@ -18,11 +19,10 @@ export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitti
   };
 
   // 所要時間計測用
-  const [startTime, setStartTime] = React.useState<Date | null>(null);
-  const [duration, setDuration] = React.useState<number | null>(null);
+  const [startTime, setStartTime] = useState<Date | null>(null);
+  const [duration, setDuration] = useState<number | null>(null);
 
-  // フォームデータ
-  const [formData, setFormData] = React.useState({
+  const initialFormData = {
     event_timestamp: getCurrentDateTime(),
     intake_type: '',
     meal_content: '',
@@ -39,10 +39,13 @@ export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitti
     amount: [],
     duration: '',
     notes: ''
-  });
+  };
 
-  // ドロップダウン表示制御
-  const [dropdown, setDropdown] = React.useState({
+  // フォームデータ
+  const [formData, setFormData] = useState(draftData || initialFormData);
+  
+  // ドロップダウンの表示状態
+  const [dropdown, setDropdown] = useState({
     intake_type: false,
     meal_content: false,
     texture: false,
@@ -57,6 +60,19 @@ export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitti
     intervention: false,
     amount: false
   });
+
+  useEffect(() => {
+    if (handleDraftChange) {
+      handleDraftChange(formData);
+    }
+  }, [formData, handleDraftChange]);
+
+  // ドロップダウン表示制御
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  const toggleDropdown = (name: string) => {
+    setActiveDropdown(prev => (prev === name ? null : name));
+  };
 
   // 選択肢リスト
   const intakeTypes = [
@@ -231,7 +247,7 @@ export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitti
   // 単一選択用（ラジオボタン）
   const handleSingleSelect = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    setDropdown(prev => ({ ...prev, [field]: false }));
+    setActiveDropdown(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -270,7 +286,7 @@ export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitti
   };
 
   return (
-    <React.Fragment>
+    <Fragment>
       <form onSubmit={handleSubmit} className="space-y-6">
       {errorMsg && (
         <div className="bg-red-100 text-red-700 p-3 rounded mb-2 text-center font-bold">
@@ -661,6 +677,6 @@ export const HydrationForm: React.FC<HydrationFormProps> = ({ onSave, isSubmitti
         </button>
       </div>
     </form>
-    </React.Fragment>
+    </Fragment>
   );
 };

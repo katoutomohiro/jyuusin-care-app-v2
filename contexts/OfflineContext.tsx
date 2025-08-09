@@ -62,14 +62,14 @@ export const OfflineProvider: React.FC<OfflineProviderProps> = ({ children }) =>
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      console.log('オンラインに復帰しました');
+      if (import.meta.env.DEV) console.debug('オンラインに復帰しました');
       // オンライン復帰時に自動同期
       syncData();
     };
 
     const handleOffline = () => {
       setIsOnline(false);
-      console.log('オフラインになりました');
+      if (import.meta.env.DEV) console.debug('オフラインになりました');
     };
 
     window.addEventListener('online', handleOnline);
@@ -145,7 +145,7 @@ export const OfflineProvider: React.FC<OfflineProviderProps> = ({ children }) =>
       ...prev,
       pendingLogs: [...prev.pendingLogs, log]
     }));
-    console.log('オフラインログを追加:', log);
+      if (import.meta.env.DEV) console.debug('オフラインログを追加:', log);
   }, []);
 
   const addPendingUpdate = useCallback((

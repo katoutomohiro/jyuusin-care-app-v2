@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { AnalysisResult, AnalysisPeriod, DisabilityAnalysisAI } from '../../services/DisabilityAnalysisAI';
 import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
-import { User } from '../types';
+import { User } from '../../types';
 
 const AIAnalysisDashboard: React.FC = () => {
   const { users } = useData();

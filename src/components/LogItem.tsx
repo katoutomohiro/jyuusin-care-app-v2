@@ -1,10 +1,10 @@
 import React from 'react';
-import { Calendar, Clock, User, Edit, Trash2, Eye } from 'lucide-react';
-import { DailyLog, User as UserType, MedicalCare } from '../../types';
+import { Calendar, Clock, User as UserIcon, Edit, Trash2, Eye } from 'lucide-react';
+import { DailyLog, User, MedicalCare } from '../../types';
 
 interface LogItemProps {
   log: DailyLog;
-  user: UserType;
+  user: User;
   onEdit?: (log: DailyLog) => void;
   onDelete?: (logId: string) => void;
   onView?: (log: DailyLog) => void;

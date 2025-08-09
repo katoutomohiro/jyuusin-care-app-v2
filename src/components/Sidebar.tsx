@@ -12,7 +12,6 @@ const Sidebar: React.FC = () => {
   const navigation = [
     { name: 'ダッシュボード', subtitle: '魂の物語', href: '/', icon: Home },
     { name: '利用者一覧', subtitle: '大切な仲間たち', href: '/users', icon: Users },
-    { name: '構造化日誌入力', subtitle: '現場記録の本丸', href: '/daily-log', icon: FileText },
     { name: '日誌入力', subtitle: 'きらめきの記録', href: '/daily-log/input', icon: Plus },
     { name: '日誌一覧', subtitle: '日々のきらめき', href: '/daily-log/list', icon: FileText },
     { name: 'レポート', subtitle: '魂の分析', href: '/reports', icon: BarChart3 },
