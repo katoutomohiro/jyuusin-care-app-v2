@@ -3,25 +3,12 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
+import { unregisterSWInDev } from './dev/unregister-sw';
 
-// ========== 最強エラー撲滅システム v2.0 ==========
+// 開発時に既存 SW を確実に解除（HMR 有効化のため WebSocket を殺さない）
+unregisterSWInDev();
 
-// 1. Service Worker を完全無効化
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(function(registrations) {
-    for(let registration of registrations) {
-      registration.unregister();
-    }
-  });
-}
-
-// 2. WebSocket関連を完全無効化
-(window as any).WebSocket = undefined;
-(window as any).EventSource = undefined;
-(window as any).Worker = undefined;
-(window as any).SharedWorker = undefined;
-
-// 3. コンソールエラーをフィルタリング（超強力版）
+// コンソールエラーをフィルタリング（必要最低限に縮小可能）
 const originalError = console.error;
 const originalWarn = console.warn;
 const originalLog = console.log;
@@ -71,10 +58,7 @@ console.info = function(...args) {
   }
 };
 
-console.debug = function(...args) {
-  // debug は完全に無効化
-  return;
-};
+console.debug = function(..._args) { /* noop */ };
 
 // 8. グローバルエラーハンドラー強化版
 const handleGlobalError = (event: any) => {

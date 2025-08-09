@@ -22,46 +22,22 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="application-name" content="Jyushin Care" />
     
-    <!-- 究極のエラー抑制システム -->
+    <!-- 開発安定性のための軽量フィルタ（必要に応じて拡張） -->
     <script>
-      // グローバルエラーハンドラー（最優先）
       window.addEventListener('error', function(e) {
         const msg = e.message || e.error?.message || '';
-        const patterns = ['WebSocket', 'Extension', 'tunnel', 'github.dev', 'service-worker', 'vscs:sw', 'HttpClient', 'gallerycdn', 'marketplace', 'User-Agent', 'Content Security Policy', 'TrustedTypePolicy', 'listener LEAK', '[@octokit/request]', 'deprecated', 'sandbox', 'iframe'];
+        const patterns = ['Extension', 'gallerycdn', 'marketplace'];
         if (patterns.some(p => msg.includes(p))) {
           e.preventDefault();
           e.stopPropagation();
-          return false;
         }
       }, true);
-      
-      // Service Worker完全無効化
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker = undefined;
-      }
-      
-      // WebSocket完全無効化
-      window.WebSocket = undefined;
-      window.EventSource = undefined;
     </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     
-    <!-- Service Worker登録 -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
-            });
-        });
-      }
-    </script>
+  <!-- dev では SW を登録しない（build/preview 時のみ sw.js が活きる想定） -->
   </body>
 </html>
