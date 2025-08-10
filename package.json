@@ -29,7 +29,15 @@
     "type-check": "tsc --noEmit --skipLibCheck",
     "ci:full": "npm run type-check && npm run lint && npm run test:coverage && npm run build",
     "ci:critical": "npm run type-check && npm run test:critical && npm run build",
-    "pre-commit": "npm run lint && npm run test:critical"
+    "pre-commit": "npm run lint && npm run test:critical",
+
+    "typecheck": "tsc -p tsconfig.json --noEmit --pretty",
+    "build:quick": "vite build",
+    "guard:precommit": "npm run typecheck && node scripts/smoke-check.mjs",
+    "backup:zip": "powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/backup.ps1",
+    "snapshot": "node scripts/snapshot.mjs",
+    "rollback": "node scripts/rollback.mjs",
+    "dev:safe": "npm run backup:zip && npm run snapshot && npm run dev"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
