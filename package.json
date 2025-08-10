@@ -36,8 +36,9 @@
     "guard:precommit": "npm run typecheck && node scripts/smoke-check.mjs",
     "backup:zip": "powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/backup.ps1",
     "snapshot": "node scripts/snapshot.mjs",
-    "rollback": "node scripts/rollback.mjs",
-    "dev:safe": "npm run backup:zip && npm run snapshot && npm run dev"
+  "rollback": "node scripts/rollback.mjs",
+  "dev:safe": "npm run backup:zip && npm run snapshot && npm run dev",
+  "commit:sync": "powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/commit-sync.ps1"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
