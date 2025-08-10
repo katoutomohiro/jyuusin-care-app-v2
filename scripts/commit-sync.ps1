@@ -92,14 +92,16 @@ npm install --no-audit --no-fund
 npm run guard:precommit
 if ($LASTEXITCODE -ne 0) { Write-Host "[FAIL] guard:precommit failed"; exit 1 }
 
-npm run dev
+Start-Job -Name DevServer -ScriptBlock { npm run dev }
 
-# A-7) Rewrite served commit file & print latest commit for manual compare
-try {
-  $HEAD2 = (git rev-parse --short HEAD).Trim()
-  $stamp3 = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
-  "commit=$HEAD2`ndatetime=$stamp3" | Out-File -FilePath .\public\__diag_commit.txt -Encoding utf8 -Force
-  Write-Host ("[A] updated __diag_commit.txt => commit={0}" -f $HEAD2)
-  Write-Host "[A] Open http://localhost:3005/__diag_commit.txt and confirm commit matches below:"
-  git log --oneline -n 1
-} catch { Write-Host "[A][WARN] finalize diag: $($_.Exception.Message)" }
+# A-7) Background job to rewrite served commit file after slight delay
+Start-Job -Name DiagRefresh -ScriptBlock {
+  Start-Sleep -Seconds 3
+  try {
+    $HEAD2 = (git rev-parse --short HEAD).Trim()
+    $stamp3 = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+    "commit=$HEAD2`ndatetime=$stamp3" | Out-File -FilePath .\public\__diag_commit.txt -Encoding utf8 -Force
+    Write-Host ("[A][BG] updated __diag_commit.txt => commit={0}" -f $HEAD2)
+  } catch { Write-Host "[A][BG][WARN] finalize diag: $($_.Exception.Message)" }
+}
+Write-Host "[A] Dev starting in background (Job: DevServer); diag file will refresh (Job: DiagRefresh)."
