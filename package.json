@@ -38,7 +38,9 @@
     "snapshot": "node scripts/snapshot.mjs",
   "rollback": "node scripts/rollback.mjs",
   "dev:safe": "npm run backup:zip && npm run snapshot && npm run dev",
-  "commit:sync": "powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/commit-sync.ps1"
+  "commit:sync": "powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/commit-sync.ps1",
+  "port:free": "powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/free-port-3005.ps1",
+  "dev:staff": "powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/start-staff.ps1"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

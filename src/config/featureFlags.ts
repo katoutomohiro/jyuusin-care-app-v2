@@ -4,6 +4,9 @@ export const featureFlags = {
   newVitalsPerUser: false,
   newPdfLayout: false,
   analyticsMonthly: false,
+  // スタッフ用：アプリ復旧ボタン（デフォルトOFF）
+  enableAutoRecoverBtn: true,
+  enablePdfFont: false, // PDFフォント埋め込み機能（デフォルトOFF）
 };
 
 export type FeatureFlagKey = keyof typeof featureFlags;
