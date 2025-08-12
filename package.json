@@ -15,8 +15,8 @@
   "author": "Jyushin Care Team",
   "license": "MIT",
   "scripts": {
-  "dev": "vite --host 127.0.0.1 --port 3005 --force",
-  "dev:stable": "vite --host 127.0.0.1 --port 3005",
+  "dev": "vite --host 127.0.0.1 --port 3005",
+  "dev:force": "vite --host 127.0.0.1 --port 3005 --force",
     "build": "vite build --logLevel error",
     "build:with-check": "tsc --noEmit && vite build --logLevel error",
   "preview": "vite preview --port 3005",
