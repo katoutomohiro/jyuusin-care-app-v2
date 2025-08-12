@@ -385,7 +385,7 @@ const DashboardPage: React.FC = () => {
                 users.slice(0, 6).map((user) => (
                   <Link
                     key={user.id}
-                    to={`/daily-log`}
+                    to={`/daily-log/${user.id}`}
                     className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all duration-200 flex items-center space-x-3"
                   >
                     <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
