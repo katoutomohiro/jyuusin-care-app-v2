@@ -6,7 +6,7 @@ export const featureFlags = {
   analyticsMonthly: true, // dev: 月次分析有効化
   // スタッフ用：アプリ復旧ボタン（デフォルトOFF）
   enableAutoRecoverBtn: true,
-  enablePdfFont: false, // PDFフォント埋め込み機能（デフォルトOFF）
+  enablePdfFont: true, // PDFフォント埋め込み機能（dev: ONで新UI確認）
 };
 
 export type FeatureFlagKey = keyof typeof featureFlags;
