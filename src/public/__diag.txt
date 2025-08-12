@@ -1,0 +1,5 @@
+﻿repo_path=C:\dev\jyuusin-care-app-v2
+branch=sync-latest-20250812-1640
+HEAD=362200c95bfa8cf3f66493f546d80d4f5328ecce
+commit=362200c 2025-08-11 12:06:41 +0900 譛譁ｰ繧｢繝励Μ蠕ｩ譌ｧ螳溯｣・ｸｭ
+generated=2025-08-12 17:45:31
