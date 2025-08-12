@@ -6,6 +6,16 @@ export default defineConfig({
   server: {
     host: '127.0.0.1',
     port: 3005,
+    strictPort: true,
+    hmr: {
+      protocol: 'ws',
+      host: '127.0.0.1',
+      port: 3005,
+      clientPort: 3005,
+    },
+  },
+  optimizeDeps: {
+    force: true,
   },
   plugins: [
     react(),
@@ -13,10 +23,12 @@ export default defineConfig({
       name: 'dev-diag-middleware',
       apply: 'serve',
       configureServer(server) {
-        const opts = { timeout: 1000 };
         const safe = (cmd) => {
-          try { return execSync(cmd, { ...opts }).toString().trim(); }
-          catch { return 'unknown'; }
+          try {
+            return execSync(cmd, { timeout: 1000 }).toString().trim();
+          } catch {
+            return 'unknown';
+          }
         };
         server.middlewares.use('/__diag.txt', (_req, res) => {
           const repoPath = process.cwd();
@@ -32,7 +44,7 @@ generated=${generated}`;
           res.setHeader('Content-Type', 'text/plain; charset=utf-8');
           res.end(content);
         });
-      }
-    }
+      },
+    },
   ],
 });
