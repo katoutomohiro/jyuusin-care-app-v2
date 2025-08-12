@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { execSync } from 'node:child_process';
 
 export default defineConfig({
   server: {
@@ -12,10 +13,9 @@ export default defineConfig({
       name: 'dev-diag-middleware',
       apply: 'serve',
       configureServer(server) {
-        const cp = require('node:child_process');
         const opts = { timeout: 1000 };
         const safe = (cmd) => {
-          try { return cp.execSync(cmd, { ...opts }).toString().trim(); }
+          try { return execSync(cmd, { ...opts }).toString().trim(); }
           catch { return 'unknown'; }
         };
         server.middlewares.use('/__diag.txt', (_req, res) => {
