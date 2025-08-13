@@ -1,3 +1,3 @@
 /* dev stub */
-export function exportDailyLog() {}
-export function exportDailyLogExcel() {}
+export const exportDailyLog = () => {};
+export const exportDailyLogExcel = () => {};

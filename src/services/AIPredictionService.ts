@@ -1,2 +1,3 @@
-/* dev stub */
-export const AIPredictionService = { predictSeizureRisk: () => ({ riskLevel: 'low' }) };
+export const AIPredictionService = {
+    predictSeizureRisk: () => ({ riskLevel: 'low' })
+};
