@@ -8,14 +8,10 @@ import Dashboard from './pages/DashboardPage';
 export default function App() {
   return (
     <Routes>
-      {import.meta.env.DEV && (
-        <Route path="/daily-log/__probe" element={<div>OK</div>} />
-      )}
+      {import.meta.env.DEV && <Route path="/daily-log/__probe" element={<div>OK</div>} />}
       <Route path="/daily-log/:userId" element={<StructuredDailyLogEditor />} />
       <Route path="/daily-log" element={<StructuredDailyLogPage />} />
-      {import.meta.env.DEV && (
-        <Route path="/" element={<Navigate to="/daily-log" replace />} />
-      )}
+      {import.meta.env.DEV && <Route path="/" element={<Navigate to="/daily-log" replace />} />}
       <Route path="*" element={<Dashboard />} />
     </Routes>
   );
