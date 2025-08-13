@@ -1,3 +1,5 @@
+/* dev adapter: use the restored Page as editor until the historical editor resurfaces */
 import * as React from 'react';
-const StructuredDailyLogEditor: React.FC = () => <div data-page="daily-log-editor">DailyLogEditor(dev stub)</div>;
+import StructuredDailyLogPage from './StructuredDailyLogPage';
+const StructuredDailyLogEditor: React.FC = () => <StructuredDailyLogPage />;
 export default StructuredDailyLogEditor;
