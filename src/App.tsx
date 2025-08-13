@@ -8,13 +8,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* /daily-log系を最上段に配置 */}
-        <Route path="/daily-log" element={<StructuredDailyLogPage data-page="daily-log" />} />
-        <Route path="/daily-log/:userId" element={<StructuredDailyLogEditor />} />
         {import.meta.env.DEV && <Route path="/daily-log/__probe" element={<div>OK</div>} />}
-        {/* DEV専用: / から /daily-log へ自動リダイレクト */}
-        {import.meta.env.DEV && <Route path="/" element={<Navigate to="/daily-log" replace />} />}
-        {/* 既存UI（ダッシュボード等）は/daily-log以外のルートで表示 */}
+        <Route path="/daily-log/:userId" element={<StructuredDailyLogEditor />} />
+        <Route path="/daily-log" element={<StructuredDailyLogPage data-page="daily-log" />} />
+        {/* 既存UIはcatch-allで維持 */}
         <Route path="*" element={
           <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
             <header style={{ 
