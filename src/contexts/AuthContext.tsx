@@ -2,10 +2,9 @@
 import * as React from "react";
 export function useAuth() {
   return {
-    user: { id: "", name: "", email: "" },
-    login: async (email: string, password: string) => {},
+    user: {},
+    login: () => {},
     logout: () => {},
-    isAuthenticated: true,
-    isLoading: false,
+    isAuthenticated: false,
   };
 }
