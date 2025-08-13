@@ -1,5 +1,5 @@
 repo_path=C:\dev\jyuusin-care-app-v2
 branch=restore-new-ui-20250813-0900
-HEAD=99dc8e4802845d6869ca39cf39562248e201dbab
-commit=99dc8e4 2025-08-13 09:26:39 +0900 fix: restore types.ts from feat/type-safety-foundation
-generated=2025-08-13T00:41:08.162Z
+HEAD=7d053180d3227753b4e8eaa70a1eeb7f134a27fd
+commit=7d05318 2025-08-13 10:21:30 +0900 fix: drop stray Routers outside of entry (single-router rule)
+generated=2025-08-13T01:21:34.499Z

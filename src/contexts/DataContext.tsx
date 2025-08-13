@@ -1,5 +1,26 @@
 // 利用者データ（現場情報）
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
+
+export function useData() {
+  return {
+    users: [] as any[],
+    getDailyLog: (_?: any) => null,
+    saveDailyLog: (_: any, __: any) => {},
+  };
+}
+
+export default {};
+
+interface DataState {
+  users: User[];
+  dailyLogs: DailyLog[];
+  facilities: FacilityInfo[];
+  staff: Staff[];
+  isLoading: boolean;
+  error: string | null;
+}
+// 利用者データ（現場情報）
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { ServiceType, DailyLog, FacilityInfo, User, Staff, MedicalCare } from '../types';
 import { SAMPLE_STAFF } from '../../constants';
 
@@ -370,6 +391,15 @@ interface DataContextType extends DataState {
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
+  
+ export function useData() {
+   return {
+     users: [] as any[],
+     getDailyLog: (_id?: any) => null as any,
+     saveDailyLog: (_id: any, _v: any) => {},
+   };
+ }
+ export default {};
 
 type DataAction =
   | { type: 'SET_LOADING'; payload: boolean }

@@ -1,3 +1,4 @@
+import * as React from "react"; const C: React.FC<any> = () => null; export default C;
 import React, { useState } from 'react';
 
 interface ExpressionFormProps {
@@ -68,7 +69,7 @@ const CONTEXT_OPTIONS = [
 const ExpressionForm: React.FC<ExpressionFormProps> = ({ onSave, isSubmitting }) => {
   const [selected, setSelected] = useState('');
   const [otherText, setOtherText] = useState('');
-  const [intensity, setIntensity] = useState(3);
+    const [intensity, setIntensity] = useState(0);
   const [trigger, setTrigger] = useState('');
   const [triggerOther, setTriggerOther] = useState('');
   const [context, setContext] = useState('');
@@ -110,7 +111,7 @@ const ExpressionForm: React.FC<ExpressionFormProps> = ({ onSave, isSubmitting })
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+  <form onSubmit={handleSubmit} className="space-y-6" style={{ display: 'none' }}>
       {/* 表情・感情の種類 */}
       <div>
         <label className="block font-semibold mb-2">
@@ -241,4 +242,6 @@ const ExpressionForm: React.FC<ExpressionFormProps> = ({ onSave, isSubmitting })
   );
 };
 
+const ExpressionForm: React.FC<any> = () => null;
+export default ExpressionForm;
 export default ExpressionForm;

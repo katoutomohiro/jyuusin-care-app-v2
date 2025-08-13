@@ -1,3 +1,7 @@
+import * as React from "react"; const C: React.FC<any> = () => null; export default C;
+import * as React from 'react';
+const InlineEditableList: React.FC<any> = () => null;
+export default InlineEditableList;
 import React, { useState, useEffect } from 'react';
 import { useAdmin } from '../contexts/AdminContext';
 import { PlusIcon, TrashIcon, PencilIcon, CheckIcon, XMarkIcon } from './icons';

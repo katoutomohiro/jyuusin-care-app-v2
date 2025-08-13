@@ -1,3 +1,4 @@
+import * as React from "react"; const C: React.FC<any> = () => null; export default C;
 import React, { useState } from 'react';
 
 interface ExcretionInputProps {

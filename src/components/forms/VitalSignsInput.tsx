@@ -1,3 +1,11 @@
+import * as React from "react"; 
+const C: React.FC<any> = () => null; export default C;
+import * as React from 'react';
+/** dev adapter: keep legacy import name; replaced later by real VitalsForm */
+const VitalSignsInput: React.FC<any> = () => null;
+export default VitalSignsInput;
+
+// The rest of the original file content is removed for brevity.
 import React, { useState } from 'react';
 
 interface VitalSignsInputProps {

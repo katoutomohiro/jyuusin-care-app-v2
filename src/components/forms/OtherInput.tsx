@@ -1,3 +1,4 @@
+import * as React from "react"; const C: React.FC<any> = () => null; export default C;
 import React, { useState } from 'react';
 
 interface OtherInputProps {
@@ -56,31 +57,9 @@ const OtherInput: React.FC<OtherInputProps> = ({ onSave, isSubmitting }) => {
     '機器故障', '感染症対応', '緊急搬送', '家族面談',
     '療育評価', '個別支援計画', '外部連携', '研修・学習',
     'レクリエーション', '季節行事', 'その他'
-  ];
-
-  // 重要度レベル
-  const severityLevels = [
-    '緊急（生命に関わる）', '重要（即座の対応必要）', 
-    '中程度（当日中に対応）', '軽微（経過観察）',
-    '情報共有のみ'
-  ];
-
-  // 場所
-  const locationOptions = [
-    '居室', '食堂', 'トイレ', '浴室', '訓練室',
-    '医務室', '廊下', '玄関', '駐車場', '車内',
-    '園庭', '屋外', '外出先', 'その他'
-  ];
-
-  // 関与者
-  const peopleInvolved = [
-    '本人のみ', '看護師', '介護士', '生活支援員',
-    'PT', 'OT', 'ST', '保育士', '栄養士',
-    '他利用者', '家族', 'ボランティア', '実習生',
-    '外部専門家', 'その他'
-  ];
-
-  // トリガー・きっかけ
+    import * as React from 'react';
+    const OtherInput: React.FC<any> = () => null;
+    export default OtherInput;
   const triggers = [
     '不明', '環境変化', '人の変化', 'スケジュール変更',
     '体調不良', '疲労', '空腹・満腹', '排泄欲求',

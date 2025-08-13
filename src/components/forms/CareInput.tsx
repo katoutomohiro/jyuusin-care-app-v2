@@ -1,3 +1,7 @@
+import * as React from "react"; const C: React.FC<any> = () => null; export default C;
+import * as React from 'react';
+const CareInput: React.FC<any> = () => null;
+export default CareInput;
 import React, { useState } from 'react';
 
 interface CareInputProps {

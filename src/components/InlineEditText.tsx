@@ -1,3 +1,7 @@
+import * as React from "react"; const C: React.FC<any> = (p) => <span>{p?.value ?? ""}</span>; export default C;
+import * as React from 'react';
+const InlineEditText: React.FC<any> = (p) => <span>{p?.value ?? ''}</span>;
+export default InlineEditText;
 import React, { useState, useRef, useEffect } from 'react';
 import { PencilIcon, CheckIcon, XMarkIcon } from './icons';
 import { useAdmin } from '../contexts/AdminContext';

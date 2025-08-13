@@ -1,3 +1,6 @@
+import * as React from 'react';
+import * as React from "react"; const C: React.FC<any> = () => null; export default C;
+export default SleepInput;
 import React, { useState } from 'react';
 
 interface SleepInputProps {

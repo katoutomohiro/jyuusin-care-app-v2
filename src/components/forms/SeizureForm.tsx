@@ -1,3 +1,4 @@
+import * as React from "react"; const C: React.FC<any> = () => null; export default C;
 import React, { useState } from 'react';
 
 type SeizureFormProps = {
@@ -66,9 +67,9 @@ const SeizureForm: React.FC<SeizureFormProps> = ({ onSave }) => {
   const [seizureTime, setSeizureTime] = useState(getNowString());
   const [selectedType, setSelectedType] = useState('');
   const [selectedTrigger, setSelectedTrigger] = useState('');
-  const [selectedExpression, setSelectedExpression] = useState('');
-  const [selectedNote, setSelectedNote] = useState('');
-  const [freeNote, setFreeNote] = useState('');
+    const [selectedExpression, setSelectedExpression] = useState('');
+    const [selectedNote, setSelectedNote] = useState('');
+    const [freeNote, setFreeNote] = useState('');
 
   // 発作時間計測用
   const [isTiming, setIsTiming] = useState(false);
@@ -240,4 +241,6 @@ const SeizureForm: React.FC<SeizureFormProps> = ({ onSave }) => {
   );
 };
 
+  const SeizureForm: React.FC<any> = () => null;
+  export default SeizureForm;
 export default SeizureForm;

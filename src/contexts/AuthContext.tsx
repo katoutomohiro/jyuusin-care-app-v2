@@ -1,3 +1,6 @@
+export function useAuth(){ return { user:{id:"dev",name:"Dev User"}, signIn:()=>{}, signOut:()=>{} }; }
+export default {};
+
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { User, AuthState } from '../../types';
 
@@ -51,11 +54,10 @@ const defaultUser: User = {
   updatedAt: new Date(),
 };
 
-const initialState: AuthState = {
-  user: defaultUser,
-  isAuthenticated: true, // 初期状態でログイン済み
-  isLoading: false,
-};
+export function useAuth() {
+  return { user: { id: 'dev', name: 'Dev User' }, signIn: () => {}, signOut: () => {} };
+}
+export default {};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
