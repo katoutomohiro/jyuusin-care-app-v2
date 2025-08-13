@@ -1,10 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { User, ServiceType } from '../types';
 import { PencilIcon, TrashIcon, DocumentTextIcon, PlusIcon, UsersIcon } from './icons'; 
-import InlineEditText from './InlineEditText';
-import { useAdmin } from '../contexts/AdminContext';
-import { useData } from '../contexts/DataContext';
 
 interface UserCardProps {
   user: User;
@@ -24,20 +21,6 @@ const ServiceTag: React.FC<{ service: ServiceType }> = ({ service }) => {
 };
 
 export const UserCard: React.FC<UserCardProps & { className?: string }> = ({ user, onEdit, onDelete, className = '' }) => {
-  const { isAdminMode } = useAdmin();
-  const { updateUser } = useData();
-  const [isEditing, setIsEditing] = useState(false);
-
-  // インライン編集のハンドラー
-  const handleInlineUpdate = (field: keyof User, value: string) => {
-    const updatedUser = { ...user, [field]: value };
-    updateUser(user.id, updatedUser);
-  };
-
-  const handleEditToggle = () => {
-    if (!isAdminMode) return;
-    setIsEditing(!isEditing);
-  };
   return (
     <div className={`bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full hover:shadow-xl transition-shadow duration-300 ${className}`}>
       <div className="p-5 flex-grow">
@@ -49,58 +32,12 @@ export const UserCard: React.FC<UserCardProps & { className?: string }> = ({ use
               </span>
             </Link>
             <div>
-              {/* インライン編集可能な利用者名 */}
-              {isEditing ? (
-                <InlineEditText
-                  value={user.name || ''}
-                  onSave={(value) => handleInlineUpdate('name', value)}
-                  className="text-xl font-bold text-gray-800"
-                  placeholder="利用者名を入力"
-                  adminOnly={true}
-                />
-              ) : (
-                <Link to={`/users/${user.id}`} className="text-xl font-bold text-gray-800 hover:text-sky-600" data-testid="user-fullname">
-                  {user.name || '-'}
-                  {isAdminMode && (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleEditToggle();
-                      }}
-                      className="ml-2 p-1 text-gray-400 hover:text-blue-600 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="管理者編集"
-                    >
-                      <PencilIcon className="h-4 w-4" />
-                    </button>
-                  )}
-                </Link>
-              )}
-              <div className="flex items-center space-x-2">
-                {isEditing ? (
-                  <>
-                    <InlineEditText
-                      value={user.age?.toString() || ''}
-                      onSave={(value) => handleInlineUpdate('age', value)}
-                      className="text-sm text-gray-500"
-                      placeholder="年齢"
-                      adminOnly={true}
-                    />
-                    <span className="text-sm text-gray-500">歳 •</span>
-                    <InlineEditText
-                      value={user.gender || ''}
-                      onSave={(value) => handleInlineUpdate('gender', value)}
-                      className="text-sm text-gray-500"
-                      placeholder="性別"
-                      adminOnly={true}
-                    />
-                  </>
-                ) : (
-                  <p className="text-sm text-gray-500">
-                    {user.age ?? '-'}歳 • {user.gender || '-'}
-                  </p>
-                )}
-              </div>
+              <Link to={`/users/${user.id}`} className="text-xl font-bold text-gray-800 hover:text-sky-600" data-testid="user-fullname">
+                {user.name || '-'}
+              </Link>
+              <p className="text-sm text-gray-500">
+                {user.age ?? '-'}歳 • {user.gender || '-'}
+              </p>
             </div>
           </div>
           {(onEdit || onDelete) && (
@@ -128,137 +65,38 @@ export const UserCard: React.FC<UserCardProps & { className?: string }> = ({ use
         </div>
 
         <div className="space-y-2 my-4">
-          {/* インライン編集可能な各項目 */}
-          <div className="flex items-center">
-            <span className="text-xs font-semibold text-gray-500 mr-2 min-w-[80px]">障害種別:</span>
-            {isEditing ? (
-              <InlineEditText
-                value={user.disabilityType || ''}
-                onSave={(value) => handleInlineUpdate('disabilityType', value)}
-                className="text-sm text-gray-700 flex-1"
-                placeholder="障害種別を入力"
-                adminOnly={true}
-              />
-            ) : (
-              <span className="text-sm text-gray-700">{user.disabilityType || '-'}</span>
-            )}
+          <div>
+            <span className="text-xs font-semibold text-gray-500 mr-2">障害種別:</span>
+            <span className="text-sm text-gray-700">{user.disabilityType || '-'}</span>
           </div>
-          
-          <div className="flex items-center">
-            <span className="text-xs font-semibold text-gray-500 mr-2 min-w-[80px]">障がい程度区分:</span>
-            {isEditing ? (
-              <InlineEditText
-                value={user.disabilityLevel || ''}
-                onSave={(value) => handleInlineUpdate('disabilityLevel', value)}
-                className="text-sm text-gray-700 flex-1"
-                placeholder="障がい程度区分を入力"
-                adminOnly={true}
-              />
-            ) : (
-              <span className="text-sm text-gray-700">{user.disabilityLevel || '-'}</span>
-            )}
+          <div>
+            <span className="text-xs font-semibold text-gray-500 mr-2">障がい程度区分:</span>
+            <span className="text-sm text-gray-700">{user.disabilityLevel || '-'}</span>
           </div>
-          
-          <div className="flex items-center">
-            <span className="text-xs font-semibold text-gray-500 mr-2 min-w-[80px]">基礎疾患:</span>
-            {isEditing ? (
-              <InlineEditText
-                value={user.underlyingDiseases || ''}
-                onSave={(value) => handleInlineUpdate('underlyingDiseases', value)}
-                className="text-sm text-gray-700 flex-1"
-                placeholder="基礎疾患を入力"
-                adminOnly={true}
-                multiline={true}
-              />
-            ) : (
-              <span className="text-sm text-gray-700">{user.underlyingDiseases || '-'}</span>
-            )}
+          <div>
+            <span className="text-xs font-semibold text-gray-500 mr-2">基礎疾患:</span>
+            <span className="text-sm text-gray-700">{user.underlyingDiseases || '-'}</span>
           </div>
-          
-          <div className="flex items-center">
-            <span className="text-xs font-semibold text-gray-500 mr-2 min-w-[80px]">医療ケア:</span>
-            {isEditing ? (
-              <InlineEditText
-                value={Array.isArray(user.medicalCare) ? user.medicalCare.join(', ') : user.medicalCare || ''}
-                onSave={(value) => handleInlineUpdate('medicalCare', value)}
-                className="text-sm text-gray-700 flex-1"
-                placeholder="医療ケアを入力"
-                adminOnly={true}
-                multiline={true}
-              />
-            ) : (
-              <span className="text-sm text-gray-700">
-                {Array.isArray(user.medicalCare) ? user.medicalCare.join(', ') : user.medicalCare || '-'}
-              </span>
-            )}
+          <div>
+            <span className="text-xs font-semibold text-gray-500 mr-2">医療ケア:</span>
+            <span className="text-sm text-gray-700">{user.medicalCare || '-'}</span>
           </div>
-          
-          <div className="flex items-center">
-            <span className="text-xs font-semibold text-gray-500 mr-2 min-w-[80px]">手帳等:</span>
-            {isEditing ? (
-              <InlineEditText
-                value={user.certificates || ''}
-                onSave={(value) => handleInlineUpdate('certificates', value)}
-                className="text-sm text-gray-700 flex-1"
-                placeholder="手帳等を入力"
-                adminOnly={true}
-              />
-            ) : (
-              <span className="text-sm text-gray-700">{user.certificates || '-'}</span>
-            )}
+          <div>
+            <span className="text-xs font-semibold text-gray-500 mr-2">手帳等:</span>
+            <span className="text-sm text-gray-700">{user.certificates || '-'}</span>
           </div>
-          
-          <div className="flex items-center">
-            <span className="text-xs font-semibold text-gray-500 mr-2 min-w-[80px]">介助状況:</span>
-            {isEditing ? (
-              <InlineEditText
-                value={user.careLevel || ''}
-                onSave={(value) => handleInlineUpdate('careLevel', value)}
-                className="text-sm text-gray-700 flex-1"
-                placeholder="介助状況を入力"
-                adminOnly={true}
-              />
-            ) : (
-              <span className="text-sm text-gray-700">{user.careLevel || '-'}</span>
-            )}
+          <div>
+            <span className="text-xs font-semibold text-gray-500 mr-2">介助状況:</span>
+            <span className="text-sm text-gray-700">{user.careLevel || '-'}</span>
           </div>
-          
-          <div className="flex items-center">
-            <span className="text-xs font-semibold text-gray-500 mr-2 min-w-[80px]">利用サービス:</span>
+          <div>
+            <span className="text-xs font-semibold text-gray-500 mr-2">利用サービス:</span>
             <span className="text-sm text-gray-700">{user.serviceType?.map(service => service === ServiceType.LIFE_CARE ? '生活介護' : '放課後等デイサービス').join(', ') || '-'}</span>
           </div>
-          
-          {(user.notes || isEditing) && (
-            <div className="flex items-start">
-              <span className="text-xs font-semibold text-gray-500 mr-2 min-w-[80px] mt-1">特記事項:</span>
-              {isEditing ? (
-                <InlineEditText
-                  value={user.notes || ''}
-                  onSave={(value) => handleInlineUpdate('notes', value)}
-                  className="text-sm text-gray-700 flex-1"
-                  placeholder="特記事項を入力"
-                  adminOnly={true}
-                  multiline={true}
-                />
-              ) : (
-                <span className="text-sm text-gray-700">{user.notes || ''}</span>
-              )}
-            </div>
-          )}
-          
-          {/* 編集モード切り替えボタン */}
-          {isAdminMode && (
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={handleEditToggle}
-                className={`px-3 py-1 text-xs rounded ${
-                  isEditing 
-                    ? 'bg-green-100 text-green-700 hover:bg-green-200' 
-                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                }`}
-              >
-                {isEditing ? '編集完了' : '詳細編集'}
-              </button>
+          {user.notes && (
+            <div>
+              <span className="text-xs font-semibold text-gray-500 mr-2">特記事項:</span>
+              <span className="text-sm text-gray-700">{user.notes || ''}</span>
             </div>
           )}
         </div>
