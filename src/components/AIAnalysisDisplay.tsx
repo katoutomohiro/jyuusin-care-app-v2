@@ -1,4 +1,4 @@
 /* dev stub */
 import * as React from "react";
-const C: React.FC<any> = () => null;
-export default C;
+const AIAnalysisDisplay: React.FC<any> = () => null;
+export default AIAnalysisDisplay;
