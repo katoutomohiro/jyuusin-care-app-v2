@@ -24,7 +24,7 @@ const UserListPage: React.FC = () => {
     medicalCare: [] as MedicalCare[],
     allergies: [] as string[],
     medications: [] as string[],
-    emergencyContact: '',
+  emergencyContact: { name: '', relationship: '', phone: '', emergencyPhone: '' },
     notes: ''
   });
 
@@ -57,7 +57,7 @@ const UserListPage: React.FC = () => {
       careLevel: newUser.careLevel,
       medicalCare: newUser.medicalCare,
       certificates: '',
-      emergencyContact: newUser.emergencyContact,
+  emergencyContact: newUser.emergencyContact,
       notes: newUser.notes,
       initials: newUser.name.charAt(0)
     };
@@ -72,7 +72,7 @@ const UserListPage: React.FC = () => {
       medicalCare: [],
       allergies: [],
       medications: [],
-      emergencyContact: '',
+    emergencyContact: { name: '', relationship: '', phone: '', emergencyPhone: '' },
       notes: ''
     });
     setIsAddingUser(false);
@@ -233,13 +233,38 @@ const UserListPage: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">緊急連絡先</label>
-                  <input
-                    type="text"
-                    value={newUser.emergencyContact}
-                    onChange={(e) => setNewUser({ ...newUser, emergencyContact: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="090-1234-5678（お母様）"
-                  />
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={newUser.emergencyContact.name}
+                      onChange={e => setNewUser({ ...newUser, emergencyContact: { ...newUser.emergencyContact, name: e.target.value } })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="氏名（例：お母様）"
+                    />
+                    <input
+                      type="text"
+                      value={newUser.emergencyContact.relationship}
+                      onChange={e => setNewUser({ ...newUser, emergencyContact: { ...newUser.emergencyContact, relationship: e.target.value } })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="続柄（例：母）"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      value={newUser.emergencyContact.phone}
+                      onChange={e => setNewUser({ ...newUser, emergencyContact: { ...newUser.emergencyContact, phone: e.target.value } })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="電話番号（例：090-1234-5678）"
+                    />
+                    <input
+                      type="text"
+                      value={newUser.emergencyContact.emergencyPhone}
+                      onChange={e => setNewUser({ ...newUser, emergencyContact: { ...newUser.emergencyContact, emergencyPhone: e.target.value } })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="緊急時連絡先（任意）"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">特記事項</label>

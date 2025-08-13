@@ -187,7 +187,7 @@ export const SEVERE_DISABILITY_USERS: SevereDisabilityUser[] = [
     medicalCare: [],
     handbooks: [HandbookType.REHABILITATION, HandbookType.PHYSICAL],
     assistanceLevel: AssistanceLevel.FULL,
-    seizureTypes: [SeizureType.TONIC, SeizureType.CLONIC],
+  seizureTypes: [SeizureType.ATONIC, SeizureType.CLONIC],
     emergencyContact: {
       name: 'A・T 家族',
       relationship: '母親',

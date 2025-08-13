@@ -1,0 +1,5 @@
+repo_path=C:\dev\jyuusin-care-app-v2
+branch=restore-new-ui-20250813-0900
+HEAD=99dc8e4802845d6869ca39cf39562248e201dbab
+commit=99dc8e4 2025-08-13 09:26:39 +0900 fix: restore types.ts from feat/type-safety-foundation
+generated=2025-08-13T00:41:08.162Z

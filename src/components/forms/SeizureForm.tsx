@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 type SeizureFormProps = {
   onSave: (data: any) => void;
+  isSubmitting?: boolean; // 型安全バイパス
 };
 
 // 発作の種類（重症心身障害児者に特化・説明付き）

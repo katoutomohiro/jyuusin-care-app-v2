@@ -6,6 +6,7 @@ if (import.meta.env.DEV) {
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
+import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 import { unregisterSWInDev } from './dev/unregister-sw';
 
@@ -137,8 +138,10 @@ window.fetch = function(url, options) {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </ErrorBoundary>
   </React.StrictMode>,
 );
