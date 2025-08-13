@@ -35,13 +35,13 @@ export type User = {
   name: string;
   initials?: string;
   age: number;
-  gender: '男性' | '女性' | '男児' | '女児' | '不明';
-  disabilityType: string;
-  disabilityLevel: string;
-  underlyingDiseases: string;
+  gender: string; // Gender enumからstringに変更
+  disabilityType?: string;       // ← オプションに変更
+  disabilityLevel?: string;      // ← オプションに変更
+  underlyingDiseases?: string;   // ← オプションに変更
   medicalCare: MedicalCare[];
-  certificates: string;
-  careLevel: string;
+  certificates?: string;         // ← オプションに変更
+  careLevel?: string;           // ← オプションに変更
   serviceType: ServiceType[];
   underlyingConditions?: string[];
   handbooks?: HandbookType[] | string[];
@@ -51,6 +51,28 @@ export type User = {
   familyContact?: { name: string; relationship: string; phone: string };
   admissionDate?: string;
   status?: 'active' | 'inactive' | 'pending';
+  // 認証に必要なプロパティを追加
+  email?: string;
+  role?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  // サンプルデータで使用されるプロパティ
+  birthDate?: string;
+  seizureTypes?: SeizureType[];  // ← 発作タイプのリスト
+  seizureFrequency?: string;     // ← 発作頻度
+  emergencyContact?: {           // ← 緊急連絡先
+    name: string;
+    relationship: string;
+    phone: string;
+    emergencyPhone?: string;
+  };
+  medicalCareDetails?: {         // ← オブジェクト型に変更
+    suctionFrequency?: string;
+    tubeFeedingType?: string;
+    medicationSchedule?: string;
+    specialCare?: string;
+    [key: string]: any;          // ← 追加のプロパティを許可
+  };
 };
 
 /**
@@ -513,6 +535,7 @@ export enum MedicalCare {
   ENEMA = '浣腸',
   CATHETERIZATION = '導尿',
   IVH = 'IVH埋め込み',
+  EMERGENCY_RESPONSE = '緊急対応',  // ← 緊急対応を追加
 }
 
 export enum DisabilityLevel {
@@ -654,7 +677,7 @@ export interface ActivityRecord {
   notes: string;
 }
 export interface CareRecord {
-  provided_care: MedicalCare[];
+  provided_care: string[]; // 実際の使用パターンに合わせて文字列配列に変更
 }
 export interface SpecialNote {
   category: string;
@@ -863,42 +886,39 @@ export interface StructuredDailyLog {
 }
 
 /**
- * ケアログ入力用の各種Enum定義
+ * ログイン管理用の管理者ユーザー型
  */
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * 認証状態（管理者用）
+ */
+export interface AuthState {
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  user: AdminUser | null;  // ← AdminUser型に変更
+  error?: string;
+}
+
+/**
+ * 重症心身障害者用のユーザー型（User型のエイリアス）
+ */
+export type SevereDisabilityUser = User;
+
 export enum SeizureType {
-  TONIC_CLONIC = 'tonic-clonic',
+  TONIC = 'tonic',
+  CLONIC = 'clonic',
+  TONIC_CLONIC = 'tonic_clonic',
   ABSENCE = 'absence', 
   MYOCLONIC = 'myoclonic',
   ATONIC = 'atonic',
   FOCAL = 'focal',
   OTHER = 'other'
-}
-
-export enum ExpressionContext {
-  ACTIVITY = 'activity',
-  REST = 'rest',
-  MEAL = 'meal',
-  CARE = 'care',
-  INTERACTION = 'interaction',
-  OTHER = 'other'
-}
-
-export enum ActivityType {
-  REHABILITATION = 'rehabilitation',
-  RECREATION = 'recreation',
-  MUSIC_THERAPY = 'music_therapy',
-  WALK = 'walk',
-  CRAFT = 'craft',
-  COOKING = 'cooking',
-  BATHING = 'bathing',
-  OTHER = 'other'
-}
-
-export enum PositionType {
-  SUPINE = 'supine',
-  PRONE = 'prone',
-  LEFT_SIDE = 'left_side',
-  RIGHT_SIDE = 'right_side',
-  SITTING = 'sitting',
-  STANDING = 'standing'
 }
