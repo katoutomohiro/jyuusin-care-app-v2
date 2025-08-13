@@ -1,8 +1,5 @@
 import React from 'react';
-// DEV限定: クリック遮蔽バイパス
-if (import.meta.env.DEV) {
-  import('./dev/overlayBypass.dev');
-}
+import './dev/overlayBypass.dev';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
