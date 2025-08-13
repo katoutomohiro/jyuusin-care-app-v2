@@ -1,1 +1,4 @@
-import * as React from "react"; export const DailyLogPdfDoc: React.FC<any> = () => null; export default DailyLogPdfDoc;
+/* dev stub */
+import * as React from "react";
+const C: React.FC<any> = () => null;
+export default C;

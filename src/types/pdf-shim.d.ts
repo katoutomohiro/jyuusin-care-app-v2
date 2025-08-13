@@ -1,5 +1,4 @@
 /** augment @react-pdf/renderer for dev */
-declare module "@react-pdf/renderer" { export const PDFViewer: any; }
-}
+declare module "@react-pdf/renderer" {
   export const PDFViewer: any;
 }

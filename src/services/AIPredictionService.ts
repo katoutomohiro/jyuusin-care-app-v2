@@ -1,4 +1,2 @@
-export class AIPredictionService {
-  async predict(_: any) { return { ok: true, result: null }; }
-}
-export default AIPredictionService;
+/* dev stub */
+export const AIPredictionService = { predictSeizureRisk: () => ({ riskLevel: 'low' }) };

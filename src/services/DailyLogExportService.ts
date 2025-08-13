@@ -1,2 +1,3 @@
-export async function exportDailyLog(_:any){ return true; }
-export async function exportDailyLogExcel(_:any){ return true; }
+/* dev stub */
+export function exportDailyLog() {}
+export function exportDailyLogExcel() {}
