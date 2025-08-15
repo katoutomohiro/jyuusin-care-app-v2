@@ -1,195 +1,132 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useRef } from 'react';
+import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
+import DailyLogA4Print from '../components/DailyLogA4Print';
+import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
 import SeizureForm from '../components/forms/SeizureForm';
 import ExpressionForm from '../components/forms/ExpressionForm';
-import VitalSignsInput from '../components/forms/VitalSignsInput';
 import { HydrationForm } from '../components/forms/HydrationForm';
-import ExcretionInput from '../components/forms/ExcretionInput';
+import { PositioningForm } from '../components/forms/PositioningForm';
+import { ActivityForm } from '../components/forms/ActivityForm';
+import { ExcretionForm } from '../components/forms/ExcretionForm';
+import { SkinOralCareForm } from '../components/forms/SkinOralCareForm';
+import IllnessForm from '../components/forms/IllnessForm';
 import SleepInput from '../components/forms/SleepInput';
-import ActivityInput from '../components/forms/ActivityInput';
-import CareInput from '../components/forms/CareInput';
-import MedicationInput from '../components/forms/MedicationInput';
 import OtherInput from '../components/forms/OtherInput';
-import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
-import DailyLogExcelExporter from '../components/DailyLogExcelExporter';
-import AIPredictionService from '../../services/AIPredictionService';
-import ErrorBoundary from '../components/ErrorBoundary';
-import InlineEditText from '../components/InlineEditText';
-import InlineEditableList from '../components/InlineEditableList';
-import { useData } from '../contexts/DataContext';
-import { useAdmin } from '../contexts/AdminContext';
-import { useConfigurableComponent } from '../../services/DynamicConfigSystem';
+import VitalSignsInput from '../components/forms/VitalSignsInput';
+import MedicationForm from '../components/forms/MedicationForm';
+import CommunicationForm from '../components/forms/CommunicationForm';
+import RehabilitationForm from '../components/forms/RehabilitationForm';
+import { exportDailyLogPdf } from '../services/DailyLogExportService';
+
+// 型定義例（実際はtypes.tsからimportすること）
+type LogEntry = any;
+
+
+// 主要なイベント種別（必要に応じてアイコンや色を調整）
+const eventTypes = [
+  { id: 'seizure', name: '発作', icon: '⚡', color: 'bg-red-500', description: 'てんかん等の発作' },
+  { id: 'expression', name: '表情・反応', icon: '😊', color: 'bg-yellow-500', description: '表情や反応の変化' },
+  { id: 'hydration', name: '水分', icon: '💧', color: 'bg-blue-400', description: '水分摂取' },
+  { id: 'positioning', name: '体位', icon: '🛏️', color: 'bg-purple-400', description: '体位変換・姿勢' },
+  { id: 'activity', name: '活動', icon: '🏃', color: 'bg-green-500', description: '活動・レクリエーション' },
+  { id: 'excretion', name: '排泄', icon: '🚽', color: 'bg-pink-400', description: '排泄記録' },
+  { id: 'skin_oral_care', name: '皮膚・口腔ケア', icon: '🦷', color: 'bg-orange-400', description: '皮膚・口腔ケア' },
+  { id: 'illness', name: '体調・発熱', icon: '🤒', color: 'bg-red-300', description: '体調不良・発熱' },
+  { id: 'sleep', name: '睡眠', icon: '😴', color: 'bg-indigo-400', description: '睡眠・休息' },
+  { id: 'cough_choke', name: '咳・誤嚥', icon: '🤧', color: 'bg-yellow-700', description: '咳・誤嚥' },
+  { id: 'tube_feeding', name: '経管栄養', icon: '🥤', color: 'bg-blue-700', description: '経管栄養' },
+  { id: 'medication', name: '投薬', icon: '💊', color: 'bg-pink-600', description: '投薬記録' },
+  { id: 'vitals', name: 'バイタル', icon: '🩺', color: 'bg-green-700', description: 'バイタルサイン' },
+  { id: 'behavioral', name: '行動', icon: '🗣️', color: 'bg-gray-500', description: '行動・様子' },
+  { id: 'communication', name: 'コミュニケーション', icon: '💬', color: 'bg-blue-300', description: '意思疎通・発語' },
+  { id: 'rehabilitation', name: 'リハビリ', icon: '🦾', color: 'bg-green-300', description: 'リハビリ・訓練' },
+  { id: 'other', name: 'その他', icon: '📝', color: 'bg-gray-400', description: 'その他' },
+];
 
 const StructuredDailyLogPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { users, addDailyLog, updateUser } = useData();
-  const { isAdminMode, isAuthenticated, autoSaveEnabled } = useAdmin();
-  const { eventTypes, systemSettings, facilityName } = useConfigurableComponent('structuredDailyLog');
-  const [activeEventType, setActiveEventType] = useLocalStorage<string | null>('activeEventType', null);
-  const [isSubmitting, setIsSubmitting] = useLocalStorage<boolean>('isSubmitting', false);
-  const [selectedUserId, setSelectedUserId] = useLocalStorage<string>('selectedUserId', '');
-  const [todayEventCounts, setTodayEventCounts] = useLocalStorage<{ [key: string]: number }>('todayEventCounts', {});
-  const [showAdminWarning, setShowAdminWarning] = useLocalStorage<boolean>('showAdminWarning', false);
-  const [showAIAnalysis, setShowAIAnalysis] = useLocalStorage<boolean>('showAIAnalysis', false);
-  const [showSeizureRiskModal, setShowSeizureRiskModal] = useState(false);
-  const [aiSeizureRiskResult, setAISeizureRiskResult] = useState<{ riskLevel: string; message: string } | null>(null);
-  const [showLogsModal, setShowLogsModal] = useState(false);
-  const [logsJson, setLogsJson] = useState('');
-  const [lastSaved, setLastSaved] = useState<string>('');
+  const { users } = useData();
+  const { isAuthenticated } = useAuth();
+    // 通知機能は未使用
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [activeEventType, setActiveEventType] = useState<string | null>(null);
+  const [todayEventCounts, setTodayEventCounts] = useState<{ [key: string]: number }>({});
   const [showSaveToast, setShowSaveToast] = useState(false);
-  const [showEventEditor, setShowEventEditor] = useState(false);
-  const [editableEventTypes, setEditableEventTypes] = useState(eventTypes.length > 0 ? eventTypes : []);
-  const [editingEventType, setEditingEventType] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAIAnalysis, setShowAIAnalysis] = useState(false);
+  const printDivRef = useRef<HTMLDivElement>(null);
+  const today = new Date().toISOString().slice(0, 10);
+  const facilityName = '重心多機能型事業所';
+  const currentEventTypes = eventTypes; // 実際はユーザーやサービス種別でフィルタ
+  const isAdminMode = false; // 必要に応じて
+  const autoSaveEnabled = true;
 
-  const today = new Date().toISOString().split('T')[0];
-
-  const defaultEventTypes = [
-    { id: 'seizure', name: '発作', icon: '⚡', color: 'bg-red-500' },
-    { id: 'expression', name: '表情・反応', icon: '😊', color: 'bg-blue-500' },
-    { id: 'vital', name: 'バイタル', icon: '🌡️', color: 'bg-green-500' },
-    { id: 'meal', name: '食事・水分', icon: '🍽️', color: 'bg-orange-500' },
-    { id: 'excretion', name: '排泄', icon: '🚽', color: 'bg-purple-500' },
-    { id: 'sleep', name: '睡眠', icon: '😴', color: 'bg-indigo-500' },
-    { id: 'activity', name: '活動', icon: '🎯', color: 'bg-teal-500' },
-    { id: 'care', name: 'ケア', icon: '🤲', color: 'bg-pink-500' },
-    { id: 'medication', name: '服薬', icon: '💊', color: 'bg-cyan-500' },
-    { id: 'other', name: 'その他', icon: '📝', color: 'bg-gray-500' }
-  ];
-
-  const currentEventTypes = eventTypes.length > 0 ? eventTypes : defaultEventTypes;
-  const eventTypeLabels = currentEventTypes.map(t => t.name);
-  const eventTypeIds = currentEventTypes.map(t => t.id);
-  const eventTypeColors = currentEventTypes.map(t => t.color.replace('bg-', '').replace('-500', ''));
-
-  const eventCounts = useMemo(() => {
-    try {
-      const logs = JSON.parse(localStorage.getItem('daily_logs') || '[]');
-      const counts: { [key: string]: number } = {};
-      eventTypeIds.forEach(id => { counts[id] = 0; });
-      logs.forEach((log: any) => {
-        if (log.event_type && counts[log.event_type] !== undefined) {
-          counts[log.event_type]++;
-        }
-      });
-      return eventTypeIds.map(id => counts[id]);
-    } catch {
-      return eventTypeIds.map(() => 0);
-    }
-  }, [showLogsModal]);
-
-  useEffect(() => {
-    const counts: { [key: string]: number } = {};
-    currentEventTypes.forEach(type => {
-      counts[type.id] = 0;
-    });
-    try {
-      users.forEach(user => {
-        const userRecords = JSON.parse(localStorage.getItem(`dailyLogs_${user.id}`) || '[]');
-        const todayRecords = userRecords.filter((record: any) =>
-          record.timestamp && record.timestamp.split('T')[0] === today
-        );
-        todayRecords.forEach((record: any) => {
-          if (counts[record.event_type] !== undefined) {
-            counts[record.event_type]++;
-          }
-        });
-      });
-    } catch (error) {
-      // エラー抑制
-    }
-    setTodayEventCounts(counts);
-  }, [users, today, currentEventTypes]);
-
-  useEffect(() => {
-    if (!autoSaveEnabled && !isAdminMode) {
-      setShowAdminWarning(true);
-      const timer = setTimeout(() => setShowAdminWarning(false), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [autoSaveEnabled, isAdminMode]);
-
-  const handleShowLogs = () => {
-    try {
-      const logs = localStorage.getItem('daily_logs');
-      setLogsJson(logs ? JSON.stringify(JSON.parse(logs), null, 2) : 'データなし');
-      const savedAt = localStorage.getItem('daily_logs_saved_at');
-      setLastSaved(savedAt ? new Date(savedAt).toLocaleString('ja-JP') : '未保存');
-    } catch (e) {
-      setLogsJson('取得エラー');
-      setLastSaved('取得エラー');
-    }
-    setShowLogsModal(true);
-  };
-
+  // 保存完了トースト表示
   const showSaveCompleteToast = () => {
     setShowSaveToast(true);
-    setTimeout(() => setShowSaveToast(false), 3000);
+    setTimeout(() => setShowSaveToast(false), 2000);
   };
 
+  // 印刷
+  const handlePrint = () => {
+    if (printDivRef.current) {
+      const printContents = printDivRef.current.innerHTML;
+      const win = window.open('', '', 'width=800,height=600');
+      if (win) {
+        win.document.write('<html><head><title>印刷</title></head><body>' + printContents + '</body></html>');
+        win.document.close();
+        win.print();
+      }
+    }
+  };
+
+  // イベント保存
+
+  const { addDailyLog, getDailyLogsByUser } = useData();
   const handleSaveEvent = async (eventData: any) => {
-    if (!selectedUserId) return;
     setIsSubmitting(true);
     try {
-      const logData = {
+      if (!selectedUserId || !activeEventType) return;
+      const today = new Date().toISOString().slice(0, 10);
+      // バイタルの場合はvitalsフィールドもセット
+      let extraFields = {};
+      if (activeEventType === 'vitals') {
+        // eventDataの型変換
+        const vitals = {
+          temperature: Number(eventData.temperature),
+          pulse: Number(eventData.pulse),
+          spO2: Number(eventData.spo2),
+          bloodPressure: {
+            systolic: Number(eventData.blood_pressure_systolic),
+            diastolic: Number(eventData.blood_pressure_diastolic),
+          },
+        };
+        extraFields = { vitals };
+      }
+      await addDailyLog({
         userId: selectedUserId,
-        staff_id: 'current-staff',
-        author: '記録者',
-        authorId: 'current-staff',
+        staff_id: '',
+        author: '',
+        authorId: '',
         record_date: today,
-        recorder_name: '記録者',
-        weather: '記録なし',
+        recorder_name: '',
+        weather: '',
         mood: [],
-        meal_intake: {
-          breakfast: '記録なし',
-          lunch: '記録なし',
-          snack: '記録なし',
-          dinner: '記録なし'
-        },
+        meal_intake: { breakfast: '', lunch: '', snack: '', dinner: '' },
         hydration: 0,
         toileting: [],
-        activity: {
-          participation: ['記録なし'],
-          mood: '記録なし',
-          notes: ''
-        },
-        special_notes: [{
-          category: activeEventType || 'general',
-          details: JSON.stringify({
-            event_type: activeEventType,
-            timestamp: new Date().toISOString(),
-            data: eventData,
-            notes: eventData.notes || '',
-            admin_created: isAdminMode && isAuthenticated
-          })
-        }]
-      };
-      await addDailyLog(logData);
-      const eventKey = `${activeEventType}_records_${today}`;
-      const existingRecords = JSON.parse(localStorage.getItem(eventKey) || '[]');
-      const newRecord = {
-        id: Date.now().toString(),
-        user_id: selectedUserId,
-        event_type: activeEventType,
-        created_at: new Date().toISOString(),
-        timestamp: new Date().toISOString(),
-        data: eventData,
-        notes: eventData.notes || '',
-        admin_created: isAdminMode && isAuthenticated,
-        auto_saved: autoSaveEnabled && !isAdminMode
-      };
-      existingRecords.push(newRecord);
-      localStorage.setItem(eventKey, JSON.stringify(existingRecords));
-      const allLogs = JSON.parse(localStorage.getItem('daily_logs') || '[]');
-      allLogs.push(newRecord);
-      localStorage.setItem('daily_logs', JSON.stringify(allLogs));
-      localStorage.setItem('daily_logs_saved_at', new Date().toISOString());
+        activity: { participation: [], mood: '', notes: '' },
+        special_notes: [
+          {
+            category: activeEventType,
+            details: JSON.stringify(eventData),
+          },
+        ],
+        ...extraFields,
+      });
       showSaveCompleteToast();
       setActiveEventType(null);
-      setTodayEventCounts({
-        ...todayEventCounts,
-        [activeEventType!]: (todayEventCounts[activeEventType!] || 0) + 1
-      });
     } catch (error) {
       alert('記録の保存中にエラーが発生しました');
     } finally {
@@ -230,27 +167,125 @@ const StructuredDailyLogPage: React.FC = () => {
           <div className="mb-6">
             <h2 className="font-semibold text-base mb-2">本日の記録件数</h2>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-              {currentEventTypes.map((type, idx) => (
-                <div key={type.id} className={`rounded px-2 py-1 text-xs font-bold text-white ${type.color}`}>
-                  {type.icon} {type.name}: {todayEventCounts[type.id] || 0}
-                </div>
-              ))}
+              {currentEventTypes.map((type, idx) => {
+                const logs = getDailyLogsByUser(selectedUserId).filter(l => l.record_date === today && l.special_notes?.some(note => note.category === type.id));
+                return (
+                  <div key={type.id} className={`rounded px-2 py-1 text-xs font-bold text-white ${type.color}`}>
+                    {type.icon} {type.name}: {logs.length}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
-        {/* イベントフォーム群 */}
+        {/* 今日の記録サマリー＋PDF/印刷ボタン */}
         {selectedUserId && (
-          <div className="space-y-4">
-            <SeizureForm onSave={handleSaveEvent} />
-            <ExpressionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-            <VitalSignsInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-            <HydrationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-            <ExcretionInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-            <SleepInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-            <ActivityInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-            <CareInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-            <MedicationInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
-            <OtherInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+          <div className="mt-10">
+            <h2 className="font-bold text-lg mb-2">今日の記録サマリー</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {(() => {
+                const logs = getDailyLogsByUser(selectedUserId).filter(l => l.record_date === today);
+                if (logs.length === 0) return <div className="text-gray-500 col-span-3">まだ記録がありません</div>;
+                return logs.map((log, idx) => {
+                  const note = log.special_notes?.[0];
+                  const eventType = currentEventTypes.find(t => t.id === note?.category);
+                  return (
+                    <div key={log.id} className="rounded shadow p-4 bg-white border">
+                      <div className="font-bold mb-1">{eventType?.name || note?.category}</div>
+                      <div className="text-xs text-gray-500 mb-2">{log.createdAt?.slice(0,16).replace('T',' ')}</div>
+                      <div className="text-xs break-all">{note?.details}</div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+            {/* PDF/印刷ボタン */}
+            <div className="flex gap-2 mt-4">
+              <button onClick={handlePrint} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">印刷</button>
+              <button
+                onClick={async () => {
+                  if (!selectedUserId) return;
+                  const logs = getDailyLogsByUser(selectedUserId).filter(l => l.record_date === today);
+                  if (!logs.length) return;
+                  const userObj = users.find((u: any) => u.id === selectedUserId);
+                  const payload = {
+                    user: userObj,
+                    date: today,
+                    entries: logs,
+                    notes: '',
+                  };
+                  await exportDailyLogPdf(payload);
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >PDF保存</button>
+            </div>
+            {/* 印刷用hidden領域 */}
+            <div style={{ display: 'none' }} ref={printDivRef}>
+              <DailyLogA4Print
+                user={users.find((u: any) => u.id === selectedUserId) || { id: '', name: '不明', age: 0, gender: '不明', disabilityType: '', disabilityLevel: '', underlyingDiseases: '', medicalCare: [], certificates: '', careLevel: '', serviceType: [] }}
+                log={{
+                  id: '',
+                  userId: selectedUserId,
+                  staff_id: '',
+                  author: '',
+                  authorId: '',
+                  record_date: today,
+                  recorder_name: '',
+                  weather: '',
+                  mood: [],
+                  meal_intake: { breakfast: '', lunch: '', snack: '', dinner: '' },
+                  hydration: 0,
+                  toileting: [],
+                  activity: { participation: [], mood: '', notes: '' },
+                  special_notes: [],
+                }}
+              />
+            </div>
+          </div>
+        )}
+        {/* イベントカテゴリカード一覧 or フォーム */}
+        {selectedUserId && !activeEventType && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-8">
+            {currentEventTypes.map(type => (
+              <button
+                key={type.id}
+                className={`rounded-lg shadow p-4 flex flex-col items-center border-2 hover:scale-105 transition-all ${type.color} text-white`}
+                onClick={() => setActiveEventType(type.id)}
+              >
+                <span className="text-3xl mb-2">{type.icon}</span>
+                <span className="font-bold text-base mb-1">{type.name}</span>
+                <span className="text-xs opacity-80">{type.description}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        {/* 選択カテゴリのフォーム表示 */}
+        {selectedUserId && activeEventType && (
+          <div className="bg-white rounded-lg shadow p-4 max-w-2xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{currentEventTypes.find(t => t.id === activeEventType)?.icon}</span>
+                <span className="font-bold text-lg">{currentEventTypes.find(t => t.id === activeEventType)?.name}</span>
+              </div>
+              <button className="text-sm text-blue-600 underline" onClick={() => setActiveEventType(null)}>キャンセル</button>
+            </div>
+            {/* カテゴリごとにフォームを切り替え（未実装はOtherInput等で代用） */}
+            {activeEventType === 'seizure' && <SeizureForm onSave={handleSaveEvent} />}
+            {activeEventType === 'expression' && <ExpressionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+            {activeEventType === 'hydration' && <HydrationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+            {activeEventType === 'positioning' && <PositioningForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+            {activeEventType === 'activity' && <ActivityForm userId={selectedUserId} onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+            {activeEventType === 'excretion' && <ExcretionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+            {activeEventType === 'skin_oral_care' && <SkinOralCareForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+            {activeEventType === 'illness' && <IllnessForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+            {activeEventType === 'sleep' && <SleepInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+            {activeEventType === 'tube_feeding' && <OtherInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+            {activeEventType === 'vitals' && <VitalSignsInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+            {activeEventType === 'medication' && <MedicationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+            {activeEventType === 'behavioral' && <OtherInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+            {activeEventType === 'communication' && <CommunicationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+            {activeEventType === 'rehabilitation' && <RehabilitationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+            {activeEventType === 'other' && <OtherInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
           </div>
         )}
       </div>
@@ -283,6 +318,6 @@ const StructuredDailyLogPage: React.FC = () => {
       `}</style>
     </div>
   );
-};
+}
 
 export default StructuredDailyLogPage;

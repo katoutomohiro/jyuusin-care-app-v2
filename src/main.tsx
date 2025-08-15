@@ -101,55 +101,19 @@ window.addEventListener('unhandledrejection', handleGlobalError, true);
 window.addEventListener('rejectionhandled', handleGlobalError, true);
 
 // 9. DOM変更の監視を制限
-const originalCreateElement = document.createElement;
-document.createElement = function(tagName: any, options?: any) {
-  const element = originalCreateElement.apply(this, arguments);
-  
-  // script要素の外部ソースをブロック
-  if (tagName.toLowerCase() === 'script') {
-    const originalSetAttribute = element.setAttribute;
-    element.setAttribute = function(name: string, value: string) {
-      if (name === 'src' && (
-        value.includes('gstatic') ||
-        value.includes('translate_http') ||
-        value.includes('gallerycdn') ||
-        value.includes('marketplace')
-      )) {
-        return; // 外部スクリプトをブロック
-      }
-      return originalSetAttribute.apply(this, arguments);
-    };
-  }
-  
-  return element;
-};
 
-// 7. Fetch API を制限
-const originalFetch = window.fetch;
-window.fetch = function(url, options) {
-  if (typeof url === 'string') {
-    if (url.includes('gallerycdn.azure.cn') || 
-        url.includes('marketplace.visualstudio.com') ||
-        url.includes('tunnel') ||
-        url.includes('github.dev') ||
-        url.includes('api.github.com') ||
-        url.includes('vscs:sw') ||
-        url.includes('translate_http') ||
-        url.includes('gstatic.com') ||
-        url.includes('assets.github.dev') ||
-        url.includes('vscode-cdn.net')) {
-      return Promise.reject(new Error('外部通信がブロックされました'));
-    }
-  }
-  return originalFetch.apply(this, arguments);
-};
-
-// ========== アプリケーション起動 ==========
+// Service Worker の登録/解除（本番のみ登録、開発時はunregister）
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  navigator.serviceWorker.register('/sw.js');
+}
+if ('serviceWorker' in navigator && import.meta.env.DEV) {
+  navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <HashRouter>
       <App />
     </HashRouter>
-  </React.StrictMode>,
+  </React.StrictMode>
 );
