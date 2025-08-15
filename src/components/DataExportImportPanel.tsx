@@ -107,16 +107,6 @@ const DataExportImportPanel: React.FC = () => {
           <input type="file" accept="application/json" ref={fileInputRef} onChange={handleImportJSON} className="block mt-1" />
         </label>
       </div>
-// --- 画面への組み込みサンプル ---
-// import DataExportImportPanel from './components/DataExportImportPanel';
-// function SettingsPage() {
-//   return (
-//     <div>
-//       <h1>設定</h1>
-//       <DataExportImportPanel />
-//     </div>
-//   );
-// }
       <div className="text-xs text-gray-500 mt-2">※インポート後はページを再読み込みしてください</div>
     </section>
   );
