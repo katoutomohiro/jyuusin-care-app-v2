@@ -1,8 +1,8 @@
 import React from "react";
-import DailyLogPreview from "@/features/daily-log/DailyLogPreview";
-// 予備（@ が解決できない環境向けの相対パス案。コメントのまま残す）
-// import DailyLogPreview from "../../src/features/daily-log/DailyLogPreview";
+import StructuredDailyLogPage from "@/pages/StructuredDailyLogPage";
+// 予備: @ が解決できない場合の相対パス案（コメントのまま残す）
+// import StructuredDailyLogPage from "../../src/pages/StructuredDailyLogPage";
 
 export default function Page() {
-  return <DailyLogPreview />;
+  return <StructuredDailyLogPage />;
 }

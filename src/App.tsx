@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { AdminProvider } from './contexts/AdminContext';
-import StructuredDailyLogPage from './pages/StructuredDailyLogPage';
-import DailyLogInputPage from './pages/DailyLogInputPage';
-import DailyLogListPage from './pages/DailyLogListPage';
+import StructuredDailyLogPage from "./pages/StructuredDailyLogPage"; // import StructuredDailyLogPage from "@/pages/StructuredDailyLogPage";
+import DailyLogInputPage from "./pages/DailyLogInputPage";
+import DailyLogListPage from "./pages/DailyLogListPage";
 import DashboardPage from './pages/DashboardPage';
 import UserListPage from './pages/UserListPage';
 import UserDetailPage from './pages/UserDetailPage';
@@ -105,7 +105,7 @@ const App: React.FC = () => {
                     <Route path="/daily-log" element={<StructuredDailyLogPage />} />
                     <Route path="/daily-log/input" element={<DailyLogInputPage />} />
                     <Route path="/daily-log/list" element={<DailyLogListPage />} />
-                    <Route path="/daily-log/:userId" element={<StructuredDailyLogPage />} />
+                    <Route path="*" element={<Navigate to="/daily-log" replace />} />
                     <Route path="/qr-access" element={<QRAccessPage />} />
                     <Route path="/ai-analysis" element={<AIAnalysisDashboard />} />
                     <Route path="/admin-config" element={<AdminAppConfigPage />} />
