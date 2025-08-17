@@ -1,132 +1,387 @@
-import React, { useState, useRef } from 'react';
-import { useData } from '../contexts/DataContext';
-import { useAuth } from '../contexts/AuthContext';
-import { useNotification } from '../contexts/NotificationContext';
-import DailyLogA4Print from '../components/DailyLogA4Print';
-import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useNavigate } from 'react-router-dom';
 import SeizureForm from '../components/forms/SeizureForm';
 import ExpressionForm from '../components/forms/ExpressionForm';
-import { HydrationForm } from '../components/forms/HydrationForm';
-import { PositioningForm } from '../components/forms/PositioningForm';
-import { ActivityForm } from '../components/forms/ActivityForm';
-import { ExcretionForm } from '../components/forms/ExcretionForm';
-import { SkinOralCareForm } from '../components/forms/SkinOralCareForm';
-import IllnessForm from '../components/forms/IllnessForm';
-import SleepInput from '../components/forms/SleepInput';
-import OtherInput from '../components/forms/OtherInput';
 import VitalSignsInput from '../components/forms/VitalSignsInput';
-import MedicationForm from '../components/forms/MedicationForm';
-import CommunicationForm from '../components/forms/CommunicationForm';
-import RehabilitationForm from '../components/forms/RehabilitationForm';
-import { exportDailyLogPdf } from '../services/DailyLogExportService';
+import { HydrationForm } from '../components/forms/HydrationForm';
+import ExcretionInput from '../components/forms/ExcretionInput';
+import SleepInput from '../components/forms/SleepInput';
+import ActivityInput from '../components/forms/ActivityInput';
+import CareInput from '../components/forms/CareInput';
+import MedicationInput from '../components/forms/MedicationInput';
+import OtherInput from '../components/forms/OtherInput';
+import AIAnalysisDisplay from '../components/AIAnalysisDisplay';
+import DailyLogExcelExporter from '../components/DailyLogExcelExporter';
+import AIPredictionService from '../../services/AIPredictionService';
+import ErrorBoundary from '../components/ErrorBoundary';
+import InlineEditText from '../components/InlineEditText';
+import InlineEditableList from '../components/InlineEditableList';
+import DailyLogA4SheetNM from "../components/print/DailyLogA4SheetNM";
+import DailyLogA4SheetNM from "../components/print/DailyLogA4SheetNM";
+import { useData } from '../contexts/DataContext';
+import { useAdmin } from '../contexts/AdminContext';
+import { useConfigurableComponent } from '../../services/DynamicConfigSystem';
 
-// 型定義例（実際はtypes.tsからimportすること）
-type LogEntry = any;
+/** localStorageから "◯◯_records_YYYY-MM-DD" を集約し、指定userのA4サマリ行(string[])を返す */
+function collectA4RowsFromLocalStorage(userId: string, dateISO: string): string[] {
+  const rows: string[] = [];
+  const keys = Object.keys(localStorage).filter(k => k.endsWith(`_records_${dateISO}`));
 
+  // カテゴリ推定: key 先頭のプレフィクス → 日本語ラベル
+  const labelMap: Record<string, string> = {
+    seizure: "発作",
+    expression: "表情・反応",
+    hydration: "水分",
+    positioning: "体位",
+    activity: "活動",
+    excretion: "排泄",
+    skin_oral_care: "皮膚・口腔ケア",
+    illness: "体調・発熱",
+    sleep: "睡眠",
+    cough_choke: "咳・誤嚥",
+    tube_feeding: "経管栄養",
+    medication: "投薬",
+    vitals: "バイタル",
+    behavioral: "行動",
+    communication: "コミュニケーション",
+    rehabilitation: "リハビリ",
+    other: "その他",
+    // 安全側: 不明プレフィクス
+    null: "その他", unknown: "その他"
+  };
 
-// 主要なイベント種別（必要に応じてアイコンや色を調整）
-const eventTypes = [
-  { id: 'seizure', name: '発作', icon: '⚡', color: 'bg-red-500', description: 'てんかん等の発作' },
-  { id: 'expression', name: '表情・反応', icon: '😊', color: 'bg-yellow-500', description: '表情や反応の変化' },
-  { id: 'hydration', name: '水分', icon: '💧', color: 'bg-blue-400', description: '水分摂取' },
-  { id: 'positioning', name: '体位', icon: '🛏️', color: 'bg-purple-400', description: '体位変換・姿勢' },
-  { id: 'activity', name: '活動', icon: '🏃', color: 'bg-green-500', description: '活動・レクリエーション' },
-  { id: 'excretion', name: '排泄', icon: '🚽', color: 'bg-pink-400', description: '排泄記録' },
-  { id: 'skin_oral_care', name: '皮膚・口腔ケア', icon: '🦷', color: 'bg-orange-400', description: '皮膚・口腔ケア' },
-  { id: 'illness', name: '体調・発熱', icon: '🤒', color: 'bg-red-300', description: '体調不良・発熱' },
-  { id: 'sleep', name: '睡眠', icon: '😴', color: 'bg-indigo-400', description: '睡眠・休息' },
-  { id: 'cough_choke', name: '咳・誤嚥', icon: '🤧', color: 'bg-yellow-700', description: '咳・誤嚥' },
-  { id: 'tube_feeding', name: '経管栄養', icon: '🥤', color: 'bg-blue-700', description: '経管栄養' },
-  { id: 'medication', name: '投薬', icon: '💊', color: 'bg-pink-600', description: '投薬記録' },
-  { id: 'vitals', name: 'バイタル', icon: '🩺', color: 'bg-green-700', description: 'バイタルサイン' },
-  { id: 'behavioral', name: '行動', icon: '🗣️', color: 'bg-gray-500', description: '行動・様子' },
-  { id: 'communication', name: 'コミュニケーション', icon: '💬', color: 'bg-blue-300', description: '意思疎通・発語' },
-  { id: 'rehabilitation', name: 'リハビリ', icon: '🦾', color: 'bg-green-300', description: 'リハビリ・訓練' },
-  { id: 'other', name: 'その他', icon: '📝', color: 'bg-gray-400', description: 'その他' },
-];
+  for (const key of keys) {
+    let arr: any[] = [];
+    try {
+      const v = JSON.parse(localStorage.getItem(key) || "null");
+      if (Array.isArray(v)) arr = v;
+      else if (v && typeof v === "object" && Array.isArray(v.data)) arr = v.data;
+      else if (v && typeof v === "object" && Array.isArray(v.records)) arr = v.records;
+    } catch {/* ignore */}
+    if (!arr.length) continue;
+
+    // 推定カテゴリラベル
+    const prefix = key.split("_records_")[0] || "other";
+    const label = labelMap[prefix as keyof typeof labelMap] || "その他";
+
+    for (const item of arr) {
+      try {
+        if (item?.user_id && item.user_id !== userId) continue;
+
+        // 簡易フォーマッタ（カテゴリ別に代表的な項目だけ拾う。無ければ自由文/JSONの一部）
+        const parts: string[] = [];
+
+        // 発作
+        if (prefix === "seizure") {
+          if (item.seizureType) parts.push(String(item.seizureType));
+          if (item.seizurePhenomenon) parts.push(String(item.seizurePhenomenon));
+          if (item.seizureDuration) parts.push(`発作 ${item.seizureDuration}`);
+        }
+
+        // バイタル
+        if (prefix === "vitals") {
+          if (item.bodyTemperature) parts.push(`体温 ${item.bodyTemperature}`);
+          if (item.spo2) parts.push(`SpO₂ ${item.spo2}`);
+          if (item.heartRate) parts.push(`脈拍 ${item.heartRate}`);
+          if (item.bpSystolic && item.bpDiastolic) parts.push(`血圧 ${item.bpSystolic}/${item.bpDiastolic}`);
+        }
+
+        // 共通の自由記述
+        const free = item.notes || item.note || item.comment || item.freeText || item.event_notes;
+        if (free && String(free).trim()) parts.push(String(free).trim());
+
+        // 何も拾えなければ id だけ落とす簡易要約（長文防止）
+        if (!parts.length) {
+          const pick = (k: string) => (item?.[k] ? `${k}:${String(item[k])}` : "");
+          const skim = [pick("type"), pick("status"), pick("value")].filter(Boolean).join(" / ");
+          parts.push(skim || "記述あり");
+        }
+
+        const line = `【${label}】 ${parts.join(" / ")}`;
+        rows.push(line);
+      } catch {/* ignore */}
+    }
+  }
+
+  // 重複除去＆短文化
+  return Array.from(new Set(rows)).map(s => s.length > 120 ? s.slice(0, 117) + "…" : s);
+}
+
+// --- A4 rows helpers (collision-free, local only) ---
+type A4Rows = string[];
+
+function _a4_getSelectedDateISO(): string {
+  const el = document.querySelector('input[type="date"]') as HTMLInputElement | null;
+  const v = (el?.value || '').trim();
+  if (v && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  const d = new Date();
+  const pad = (n:number)=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function _a4_uniq<T>(arr: T[]): T[] {
+  return Array.from(new Set(arr));
+}
+
+function _a4_buildRowsFromPacked(userId: string, dateISO: string): A4Rows {
+  const rows: string[] = [];
+  try {
+    const raw = localStorage.getItem(`null_records_${dateISO}`);
+    const parsed = raw ? JSON.parse(raw) : null;
+    const items: any[] =
+      Array.isArray(parsed) ? parsed :
+      (parsed && Array.isArray(parsed.data) ? parsed.data : []);
+
+    const mine = items.filter(it => (it.user_id || it.userId) === userId);
+
+    // seizure
+    mine.filter(it =>
+      it.category === 'seizure' ||
+      it.seizureType || it.seizure_type || it.seizure_start || it.seizure_duration
+    ).forEach(it => {
+      const t1 = it.seizureType || it.seizure_type;
+      const t2 = it.seizure_phenomenon || it.phenomenon;
+      const t3 = it.seizure_start || it.start || it.time;
+      const t4 = it.seizure_duration || it.duration;
+      const txt = ['発作', t1, t2, t3, t4].filter(Boolean).join(' / ');
+      rows.push(`【発作】${txt}`);
+    });
+
+    // vitals
+    mine.filter(it =>
+      it.category === 'vitals' || it.bt || it.bp || it.hr || it.rr || it.spo2
+    ).forEach(it => {
+      const bt = it.bt ? `体温:${it.bt}` : '';
+      const bp = it.bp ? `血圧:${it.bp}` : '';
+      const hr = it.hr ? `脈拍:${it.hr}` : '';
+      const rr = it.rr ? `呼吸:${it.rr}` : '';
+      const sp = it.spo2 ? `SpO2:${it.spo2}` : '';
+      const txt = [bt,bp,hr,rr,sp].filter(Boolean).join(' / ');
+      rows.push(`【バイタル】${txt || '記入あり'}`);
+    });
+  } catch (e) {
+    console.debug('#A4 packed parse error', e);
+  }
+  return _a4_uniq(rows);
+}
 
 const StructuredDailyLogPage: React.FC = () => {
-  const { users } = useData();
-  const { isAuthenticated } = useAuth();
-    // 通知機能は未使用
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [activeEventType, setActiveEventType] = useState<string | null>(null);
-  const [todayEventCounts, setTodayEventCounts] = useState<{ [key: string]: number }>({});
-  const [showSaveToast, setShowSaveToast] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showAIAnalysis, setShowAIAnalysis] = useState(false);
-  const printDivRef = useRef<HTMLDivElement>(null);
-  const today = new Date().toISOString().slice(0, 10);
-  const facilityName = '重心多機能型事業所';
-  const currentEventTypes = eventTypes; // 実際はユーザーやサービス種別でフィルタ
-  const isAdminMode = false; // 必要に応じて
-  const autoSaveEnabled = true;
+  // ...既存のstate/useEffect...
 
-  // 保存完了トースト表示
+  // --- A4データ作成ボタン用ハンドラ（localStorage集約→window.__A4_set）---
+  function handleBuildA4Rows() {
+    try {
+      const userId = selectedUserId || "user-01";
+      const user = users.find(u => u.id === userId);
+      const dateISO = today; // 日付選択がなければtodayで代用
+      const rows = collectA4RowsFromLocalStorage(userId, dateISO);
+
+      // window.__A4_setをanyで吸収
+      if (typeof window !== "undefined" && typeof (window as any).__A4_set === "function") {
+        (window as any).__A4_set({
+          date: new Date(dateISO),
+          user: { id: userId, name: user?.name || "（選択中の利用者）" },
+          logs: [],
+          rows
+        });
+        console.debug("#A4 rows", dateISO, userId, rows.length, rows.slice(0,3));
+      }
+    } catch (e) {
+      console.error("handleBuildA4Rows failed", e);
+    }
+  }
+
+  // --- A4 re-render hook (minimal) ---
+  const [, __forceA4Rerender] = useState(0);
+  useEffect(() => {
+    // グローバル helper: コンソール等から window.__A4_set({...}) を呼べば再描画される
+    (window as any).__A4_set = (payload: any) => {
+      (window as any).__A4 = payload;
+      __forceA4Rerender(v => v + 1);
+    };
+  }, []);
+  // --- /A4 re-render hook ---
+
+  // --- A4 build handler (collision-free) ---
+  const _a4_handleBuild = () => {
+    try {
+      const userId = (selectedUserId || 'user-01');
+      const dateISO = _a4_getSelectedDateISO();
+      const rows = _a4_buildRowsFromPacked(userId, dateISO);
+      (window as any).__A4 = { userId, dateISO, rows };
+      console.info('#A4 built', { userId, dateISO, count: rows.length, sample: rows.slice(0,3) });
+      alert(`A4データ作成: ${rows.length}件`);
+    } catch {}
+  };
+  const navigate = useNavigate();
+  const { users, addDailyLog, updateUser } = useData();
+  const { isAdminMode, isAuthenticated, autoSaveEnabled } = useAdmin();
+  const { eventTypes, systemSettings, facilityName } = useConfigurableComponent('structuredDailyLog');
+  const [activeEventType, setActiveEventType] = useLocalStorage<string | null>('activeEventType', null);
+  const [isSubmitting, setIsSubmitting] = useLocalStorage<boolean>('isSubmitting', false);
+  const [selectedUserId, setSelectedUserId] = useLocalStorage<string>('selectedUserId', '');
+  const [todayEventCounts, setTodayEventCounts] = useLocalStorage<{ [key: string]: number }>('todayEventCounts', {});
+  const [showAdminWarning, setShowAdminWarning] = useLocalStorage<boolean>('showAdminWarning', false);
+  const [showAIAnalysis, setShowAIAnalysis] = useLocalStorage<boolean>('showAIAnalysis', false);
+  const [showSeizureRiskModal, setShowSeizureRiskModal] = useState(false);
+  const [aiSeizureRiskResult, setAISeizureRiskResult] = useState<{ riskLevel: string; message: string } | null>(null);
+  const [showLogsModal, setShowLogsModal] = useState(false);
+  const [logsJson, setLogsJson] = useState('');
+  const [lastSaved, setLastSaved] = useState<string>('');
+  const [showSaveToast, setShowSaveToast] = useState(false);
+  const [showEventEditor, setShowEventEditor] = useState(false);
+  const [editableEventTypes, setEditableEventTypes] = useState(eventTypes.length > 0 ? eventTypes : []);
+  const [editingEventType, setEditingEventType] = useState<string | null>(null);
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const defaultEventTypes = [
+    { id: 'seizure', name: '発作', icon: '⚡', color: 'bg-red-500' },
+    { id: 'expression', name: '表情・反応', icon: '😊', color: 'bg-blue-500' },
+    { id: 'vital', name: 'バイタル', icon: '🌡️', color: 'bg-green-500' },
+    { id: 'meal', name: '食事・水分', icon: '🍽️', color: 'bg-orange-500' },
+    { id: 'excretion', name: '排泄', icon: '🚽', color: 'bg-purple-500' },
+    { id: 'sleep', name: '睡眠', icon: '😴', color: 'bg-indigo-500' },
+    { id: 'activity', name: '活動', icon: '🎯', color: 'bg-teal-500' },
+    { id: 'care', name: 'ケア', icon: '🤲', color: 'bg-pink-500' },
+    { id: 'medication', name: '服薬', icon: '💊', color: 'bg-cyan-500' },
+    { id: 'other', name: 'その他', icon: '📝', color: 'bg-gray-500' }
+  ];
+
+  const currentEventTypes = eventTypes.length > 0 ? eventTypes : defaultEventTypes;
+  const eventTypeLabels = currentEventTypes.map(t => t.name);
+  const eventTypeIds = currentEventTypes.map(t => t.id);
+  const eventTypeColors = currentEventTypes.map(t => t.color.replace('bg-', '').replace('-500', ''));
+
+  const eventCounts = useMemo(() => {
+    try {
+      const logs = JSON.parse(localStorage.getItem('daily_logs') || '[]');
+      const counts: { [key: string]: number } = {};
+      eventTypeIds.forEach(id => { counts[id] = 0; });
+      logs.forEach((log: any) => {
+        if (log.event_type && counts[log.event_type] !== undefined) {
+          counts[log.event_type]++;
+        }
+      });
+      return eventTypeIds.map(id => counts[id]);
+    } catch {
+      return eventTypeIds.map(() => 0);
+    }
+  }, [showLogsModal]);
+
+  useEffect(() => {
+    const counts: { [key: string]: number } = {};
+    currentEventTypes.forEach(type => {
+      counts[type.id] = 0;
+    });
+    try {
+      users.forEach(user => {
+        const userRecords = JSON.parse(localStorage.getItem(`dailyLogs_${user.id}`) || '[]');
+        const todayRecords = userRecords.filter((record: any) =>
+          record.timestamp && record.timestamp.split('T')[0] === today
+        );
+        todayRecords.forEach((record: any) => {
+          if (counts[record.event_type] !== undefined) {
+            counts[record.event_type]++;
+          }
+        });
+      });
+    } catch (error) {
+      // エラー抑制
+    }
+    setTodayEventCounts(counts);
+  }, [users, today, currentEventTypes]);
+
+  useEffect(() => {
+    if (!autoSaveEnabled && !isAdminMode) {
+      setShowAdminWarning(true);
+      const timer = setTimeout(() => setShowAdminWarning(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [autoSaveEnabled, isAdminMode]);
+
+  const handleShowLogs = () => {
+    try {
+      const logs = localStorage.getItem('daily_logs');
+      setLogsJson(logs ? JSON.stringify(JSON.parse(logs), null, 2) : 'データなし');
+      const savedAt = localStorage.getItem('daily_logs_saved_at');
+      setLastSaved(savedAt ? new Date(savedAt).toLocaleString('ja-JP') : '未保存');
+    } catch (e) {
+      setLogsJson('取得エラー');
+      setLastSaved('取得エラー');
+    }
+    setShowLogsModal(true);
+  };
+
   const showSaveCompleteToast = () => {
     setShowSaveToast(true);
-    setTimeout(() => setShowSaveToast(false), 2000);
+    setTimeout(() => setShowSaveToast(false), 3000);
   };
 
-  // 印刷
-  const handlePrint = () => {
-    if (printDivRef.current) {
-      const printContents = printDivRef.current.innerHTML;
-      const win = window.open('', '', 'width=800,height=600');
-      if (win) {
-        win.document.write('<html><head><title>印刷</title></head><body>' + printContents + '</body></html>');
-        win.document.close();
-        win.print();
-      }
-    }
-  };
-
-  // イベント保存
-
-  const { addDailyLog, getDailyLogsByUser } = useData();
   const handleSaveEvent = async (eventData: any) => {
+    if (!selectedUserId) return;
     setIsSubmitting(true);
     try {
-      if (!selectedUserId || !activeEventType) return;
-      const today = new Date().toISOString().slice(0, 10);
-      // バイタルの場合はvitalsフィールドもセット
-      let extraFields = {};
-      if (activeEventType === 'vitals') {
-        // eventDataの型変換
-        const vitals = {
-          temperature: Number(eventData.temperature),
-          pulse: Number(eventData.pulse),
-          spO2: Number(eventData.spo2),
-          bloodPressure: {
-            systolic: Number(eventData.blood_pressure_systolic),
-            diastolic: Number(eventData.blood_pressure_diastolic),
-          },
-        };
-        extraFields = { vitals };
-      }
-      await addDailyLog({
+      const logData = {
         userId: selectedUserId,
-        staff_id: '',
-        author: '',
-        authorId: '',
+        staff_id: 'current-staff',
+        author: '記録者',
+        authorId: 'current-staff',
         record_date: today,
-        recorder_name: '',
-        weather: '',
+        recorder_name: '記録者',
+        weather: '記録なし',
         mood: [],
-        meal_intake: { breakfast: '', lunch: '', snack: '', dinner: '' },
+        meal_intake: {
+          breakfast: '記録なし',
+          lunch: '記録なし',
+          snack: '記録なし',
+          dinner: '記録なし'
+        },
         hydration: 0,
         toileting: [],
-        activity: { participation: [], mood: '', notes: '' },
-        special_notes: [
-          {
-            category: activeEventType,
-            details: JSON.stringify(eventData),
-          },
-        ],
-        ...extraFields,
-      });
+        activity: {
+          participation: ['記録なし'],
+          mood: '記録なし',
+          notes: ''
+        },
+        special_notes: [{
+          category: activeEventType || 'general',
+          details: JSON.stringify({
+            event_type: activeEventType,
+            timestamp: new Date().toISOString(),
+            data: eventData,
+            notes: eventData.notes || '',
+            admin_created: isAdminMode && isAuthenticated
+          })
+        }]
+      };
+      await addDailyLog(logData);
+      const eventKey = `${activeEventType}_records_${today}`;
+      const existingRecords = JSON.parse(localStorage.getItem(eventKey) || '[]');
+      const newRecord = {
+        id: Date.now().toString(),
+        user_id: selectedUserId,
+        event_type: activeEventType,
+        created_at: new Date().toISOString(),
+        timestamp: new Date().toISOString(),
+        data: eventData,
+        notes: eventData.notes || '',
+        admin_created: isAdminMode && isAuthenticated,
+        auto_saved: autoSaveEnabled && !isAdminMode
+      };
+      existingRecords.push(newRecord);
+      localStorage.setItem(eventKey, JSON.stringify(existingRecords));
+      const allLogs = JSON.parse(localStorage.getItem('daily_logs') || '[]');
+      allLogs.push(newRecord);
+      localStorage.setItem('daily_logs', JSON.stringify(allLogs));
+      localStorage.setItem('daily_logs_saved_at', new Date().toISOString());
       showSaveCompleteToast();
       setActiveEventType(null);
+      setTodayEventCounts({
+        ...todayEventCounts,
+        [activeEventType!]: (todayEventCounts[activeEventType!] || 0) + 1
+      });
     } catch (error) {
       alert('記録の保存中にエラーが発生しました');
     } finally {
@@ -137,6 +392,10 @@ const StructuredDailyLogPage: React.FC = () => {
   // --- JSX return部 ---
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-2 sm:p-4">
+      {/* --- A4データ作成ボタン（印刷/PDFの直前）--- */}
+      <div className="flex flex-row gap-2 mb-2">
+        <button onClick={_a4_handleBuild} className="btn a4-build">A4データ作成</button>
+      </div>
       {/* 保存完了トースト通知 */}
       {showSaveToast && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white px-6 py-3 rounded-lg shadow-lg z-50 text-lg font-semibold print:hidden">
@@ -164,128 +423,44 @@ const StructuredDailyLogPage: React.FC = () => {
         </div>
         {/* 本日のイベント集計 */}
         {selectedUserId && (
-          <div className="mb-6">
-            <h2 className="font-semibold text-base mb-2">本日の記録件数</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-              {currentEventTypes.map((type, idx) => {
-                const logs = getDailyLogsByUser(selectedUserId).filter(l => l.record_date === today && l.special_notes?.some(note => note.category === type.id));
-                return (
-                  <div key={type.id} className={`rounded px-2 py-1 text-xs font-bold text-white ${type.color}`}>
-                    {type.icon} {type.name}: {logs.length}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-        {/* 今日の記録サマリー＋PDF/印刷ボタン */}
-        {selectedUserId && (
-          <div className="mt-10">
-            <h2 className="font-bold text-lg mb-2">今日の記録サマリー</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {(() => {
-                const logs = getDailyLogsByUser(selectedUserId).filter(l => l.record_date === today);
-                if (logs.length === 0) return <div className="text-gray-500 col-span-3">まだ記録がありません</div>;
-                return logs.map((log, idx) => {
-                  const note = log.special_notes?.[0];
-                  const eventType = currentEventTypes.find(t => t.id === note?.category);
-                  return (
-                    <div key={log.id} className="rounded shadow p-4 bg-white border">
-                      <div className="font-bold mb-1">{eventType?.name || note?.category}</div>
-                      <div className="text-xs text-gray-500 mb-2">{log.createdAt?.slice(0,16).replace('T',' ')}</div>
-                      <div className="text-xs break-all">{note?.details}</div>
-                    </div>
-                  );
-                });
-              })()}
-            </div>
-            {/* PDF/印刷ボタン */}
-            <div className="flex gap-2 mt-4">
-              <button onClick={handlePrint} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">印刷</button>
-              <button
-                onClick={async () => {
-                  if (!selectedUserId) return;
-                  const logs = getDailyLogsByUser(selectedUserId).filter(l => l.record_date === today);
-                  if (!logs.length) return;
-                  const userObj = users.find((u: any) => u.id === selectedUserId);
-                  const payload = {
-                    user: userObj,
-                    date: today,
-                    entries: logs,
-                    notes: '',
-                  };
-                  await exportDailyLogPdf(payload);
-                }}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              >PDF保存</button>
-            </div>
-            {/* 印刷用hidden領域 */}
-            <div style={{ display: 'none' }} ref={printDivRef}>
-              <DailyLogA4Print
-                user={users.find((u: any) => u.id === selectedUserId) || { id: '', name: '不明', age: 0, gender: '不明', disabilityType: '', disabilityLevel: '', underlyingDiseases: '', medicalCare: [], certificates: '', careLevel: '', serviceType: [] }}
-                log={{
-                  id: '',
-                  userId: selectedUserId,
-                  staff_id: '',
-                  author: '',
-                  authorId: '',
-                  record_date: today,
-                  recorder_name: '',
-                  weather: '',
-                  mood: [],
-                  meal_intake: { breakfast: '', lunch: '', snack: '', dinner: '' },
-                  hydration: 0,
-                  toileting: [],
-                  activity: { participation: [], mood: '', notes: '' },
-                  special_notes: [],
-                }}
-              />
-            </div>
-          </div>
-        )}
-        {/* イベントカテゴリカード一覧 or フォーム */}
-        {selectedUserId && !activeEventType && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-8">
-            {currentEventTypes.map(type => (
-              <button
-                key={type.id}
-                className={`rounded-lg shadow p-4 flex flex-col items-center border-2 hover:scale-105 transition-all ${type.color} text-white`}
-                onClick={() => setActiveEventType(type.id)}
-              >
-                <span className="text-3xl mb-2">{type.icon}</span>
-                <span className="font-bold text-base mb-1">{type.name}</span>
-                <span className="text-xs opacity-80">{type.description}</span>
-              </button>
-            ))}
-          </div>
-        )}
-        {/* 選択カテゴリのフォーム表示 */}
-        {selectedUserId && activeEventType && (
-          <div className="bg-white rounded-lg shadow p-4 max-w-2xl mx-auto">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">{currentEventTypes.find(t => t.id === activeEventType)?.icon}</span>
-                <span className="font-bold text-lg">{currentEventTypes.find(t => t.id === activeEventType)?.name}</span>
+          <>
+            {/* --- A4プレビュー（本日の記録件数の直前）--- */}
+            {typeof window !== "undefined" && !!(Array.isArray((window as any).__A4?.rows) && (window as any).__A4?.rows?.length) && (
+              <div style={{ marginBottom: "16px" }}>
+                <DailyLogA4SheetNM
+                  user={((window as any).__A4?.user ?? ({})) as any}
+                  logs={((window as any).__A4?.logs ?? []) as any[]}
+                  date={(window as any).__A4?.date ?? new Date().toISOString().slice(0, 10)}
+                  rows={((window as any).__A4?.rows as string[]) || undefined}
+                />
               </div>
-              <button className="text-sm text-blue-600 underline" onClick={() => setActiveEventType(null)}>キャンセル</button>
+            )}
+            {/* --- /A4プレビュー --- */}
+            <div className="mb-6">
+              <h2 className="font-semibold text-base mb-2">本日の記録件数</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {currentEventTypes.map((type, idx) => (
+                  <div key={type.id} className={`rounded px-2 py-1 text-xs font-bold text-white ${type.color}`}>
+                    {type.icon} {type.name}: {todayEventCounts[type.id] || 0}
+                  </div>
+                ))}
+              </div>
             </div>
-            {/* カテゴリごとにフォームを切り替え（未実装はOtherInput等で代用） */}
-            {activeEventType === 'seizure' && <SeizureForm onSave={handleSaveEvent} />}
-            {activeEventType === 'expression' && <ExpressionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
-            {activeEventType === 'hydration' && <HydrationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
-            {activeEventType === 'positioning' && <PositioningForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
-            {activeEventType === 'activity' && <ActivityForm userId={selectedUserId} onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
-            {activeEventType === 'excretion' && <ExcretionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
-            {activeEventType === 'skin_oral_care' && <SkinOralCareForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
-            {activeEventType === 'illness' && <IllnessForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
-            {activeEventType === 'sleep' && <SleepInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
-            {activeEventType === 'tube_feeding' && <OtherInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
-            {activeEventType === 'vitals' && <VitalSignsInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
-            {activeEventType === 'medication' && <MedicationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
-            {activeEventType === 'behavioral' && <OtherInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
-            {activeEventType === 'communication' && <CommunicationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
-            {activeEventType === 'rehabilitation' && <RehabilitationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
-            {activeEventType === 'other' && <OtherInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />}
+          </>
+        )}
+        {/* イベントフォーム群 */}
+        {selectedUserId && (
+          <div className="space-y-4">
+            <SeizureForm onSave={handleSaveEvent} />
+            <ExpressionForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+            <VitalSignsInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+            <HydrationForm onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+            <ExcretionInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+            <SleepInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+            <ActivityInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+            <CareInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+            <MedicationInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
+            <OtherInput onSave={handleSaveEvent} isSubmitting={isSubmitting} />
           </div>
         )}
       </div>
@@ -318,6 +493,6 @@ const StructuredDailyLogPage: React.FC = () => {
       `}</style>
     </div>
   );
-}
+};
 
 export default StructuredDailyLogPage;
