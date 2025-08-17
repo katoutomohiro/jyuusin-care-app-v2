@@ -38,6 +38,26 @@
    cd jyushin-care-app
    ```
 
+
+## 🤖 OpenAI API 連携
+
+1. ルートに `.env` を作成し、以下のように OpenAI API キーを設定してください。
+   ```env
+   OPENAI_API_KEY=sk-xxxxxxx
+   ```
+2. モデル一覧を取得:
+   ```bash
+   npm run ai:models
+   ```
+   → 利用可能なモデルID一覧が表示されます
+3. 簡単な応答テスト:
+   ```bash
+   npm run ai:test
+   ```
+   → "Say hello from jyuusin-care-app-v2" の応答が表示されます
+
+※ `.env` は `.gitignore` で除外されています。APIキーは絶対に公開しないでください。
+
 2. **依存関係のインストール**
    ```bash
    npm install
