@@ -1,24 +1,25 @@
-name: Daily OpenAI Models Report
+name: post-models-report
 
 on:
+  workflow_dispatch: {}      # 手動実行ボタン
   schedule:
-    # GitHub Actions は UTC。9:00 JST は 00:00 UTC
-    - cron: "0 0 * * *"
-  workflow_dispatch: {}
+    - cron: "0 0 * * *"      # 毎日00:00 UTC（JST 09:00）
+
+permissions:
+  contents: read
+  issues: write              # Issue作成・コメントに必要
 
 jobs:
   report:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
       - run: npm ci || npm i
-
-      - run: npm run ai:post
+      - name: Post OpenAI models report
+        run: node scripts/post-models-report.mjs
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # リポジトリに自動付与
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
