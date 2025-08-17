@@ -91,3 +91,4 @@ jobs:
     - name: Deploy ready notification
       run: |
         echo "✅ デプロイ準備完了！現場で壊れて困る部分は全て守られています。" 
+# kick: no-op line for PR diff
