@@ -5,7 +5,17 @@ import { DataProvider } from './contexts/DataContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { AdminProvider } from './contexts/AdminContext';
 import StructuredDailyLogPage from './pages/StructuredDailyLogPage';
+import { Outlet } from 'react-router-dom';
+// /daily-log配下の子ルートを正しく動作させるためのラッパー
+const StructuredDailyLogPageWithOutlet = (props: any) => (
+  <ErrorBoundary excelOnly>
+    <StructuredDailyLogPage {...props} />
+    <Outlet />
+  </ErrorBoundary>
+);
 import DailyLogListPage from './pages/DailyLogListPage';
+import DailyLogPreviewPage from './pages/DailyLogPreviewPage';
+import DailyLogYearlyStockPage from './pages/DailyLogYearlyStockPage';
 import DashboardPage from './pages/DashboardPage';
 import UserListPage from './pages/UserListPage';
 import UserDetailPage from './pages/UserDetailPage';
@@ -100,8 +110,11 @@ return (
                   <Route path="/users/:id" element={<UserDetailPage />} />
                   {/* 利用者編集ページ */}
                   <Route path="/users/edit/:userId" element={<UserEditPage />} />
-                  <Route path="/daily-log" element={<ErrorBoundary excelOnly><StructuredDailyLogPage /></ErrorBoundary>} />
-                  <Route path="/daily-log/:userId" element={<ErrorBoundary excelOnly><StructuredDailyLogPage /></ErrorBoundary>} />
+                  <Route path="/daily-log" element={<StructuredDailyLogPageWithOutlet />}>
+                    <Route path="preview" element={<DailyLogPreviewPage />} />
+                    <Route path="preview/yearly" element={<DailyLogYearlyStockPage />} />
+                  </Route>
+                  <Route path="/daily-log/:userId" element={<ErrorBoundary excelOnly><StructuredDailyLogPage />} />
                   <Route path="/daily-log-list" element={<DailyLogListPage />} />
                   <Route path="/qr-access" element={<QRAccessPage />} />
                   <Route path="/ai-analysis" element={<AIAnalysisDashboard />} />

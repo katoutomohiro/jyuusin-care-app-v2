@@ -14,6 +14,8 @@ const Sidebar: React.FC = () => {
     { name: '利用者一覧', subtitle: '大切な仲間たち', href: '/users', icon: Users },
     { name: '日誌入力', subtitle: 'きらめきの記録', href: '/daily-log/input', icon: Plus },
     { name: '日誌一覧', subtitle: '日々のきらめき', href: '/daily-log/list', icon: FileText },
+    { name: 'A4プレビュー', subtitle: '本日分A4印刷', href: '/daily-log/preview', icon: FileText },
+    { name: '年間ストック', subtitle: '年別集計・要約', href: '/daily-log/preview/yearly', icon: BarChart3 },
     { name: 'レポート', subtitle: '魂の分析', href: '/reports', icon: BarChart3 },
   ];
 
