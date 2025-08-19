@@ -1,22 +1,10 @@
 import React, { useRef } from 'react';
 import { LocalStorageService } from '../hooks/useLocalStorage';
 import { exportToExcel } from './ExcelExportUtil';
-  // 日誌データのエクスポート（Excel）
-  const handleExportExcel = () => {
-    const logs = LocalStorageService.get('daily_logs') || [];
-    exportToExcel(logs, `jyushin_care_daily_logs_${new Date().toISOString().slice(0,10)}.xlsx`);
-  };
 
-  // 利用者データのエクスポート（Excel）
-  const handleExportUsersExcel = () => {
-    const users = LocalStorageService.get('users') || [];
-    exportToExcel(users, `jyushin_care_users_${new Date().toISOString().slice(0,10)}.xlsx`);
-  };
-
-// CSV変換ユーティリティ
 function toCSV(data: any[]): string {
-  if (!data.length) return '';
-  const keys = Object.keys(data[0]);
+  if (!Array.isArray(data) || data.length === 0) return '';
+  const keys = Object.keys(data[0] || {});
   const csvRows = [keys.join(',')];
   for (const row of data) {
     csvRows.push(keys.map(k => JSON.stringify(row[k] ?? '')).join(','));
@@ -27,7 +15,16 @@ function toCSV(data: any[]): string {
 const DataExportImportPanel: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 日誌データのエクスポート（CSV）
+  const handleExportExcel = () => {
+    const logs = LocalStorageService.get('daily_logs') || [];
+    exportToExcel(logs, `jyushin_care_daily_logs_${new Date().toISOString().slice(0,10)}.xlsx`);
+  };
+
+  const handleExportUsersExcel = () => {
+    const users = LocalStorageService.get('users') || [];
+    exportToExcel(users, `jyushin_care_users_${new Date().toISOString().slice(0,10)}.xlsx`);
+  };
+
   const handleExportCSV = () => {
     const logs = LocalStorageService.get('daily_logs') || [];
     const csv = toCSV(logs);
@@ -42,7 +39,6 @@ const DataExportImportPanel: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  // 利用者データのエクスポート（CSV）
   const handleExportUsersCSV = () => {
     const users = LocalStorageService.get('users') || [];
     const csv = toCSV(users);
@@ -57,7 +53,6 @@ const DataExportImportPanel: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  // 全データのエクスポート（JSON）
   const handleExportJSON = () => {
     const allData = LocalStorageService.getAll();
     const json = JSON.stringify(allData, null, 2);
@@ -72,21 +67,20 @@ const DataExportImportPanel: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  // インポート（JSON）
   const handleImportJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = evt => {
+    reader.onload = (evt) => {
       try {
         const data = JSON.parse(evt.target?.result as string);
-        if (typeof data === 'object') {
+        if (typeof data === 'object' && data !== null) {
           Object.entries(data).forEach(([k, v]) => {
-            LocalStorageService.set(k, v);
+            LocalStorageService.set(k, v as any);
           });
           alert('データをインポートしました。ページを再読み込みしてください。');
         }
-      } catch {
+      } catch (err) {
         alert('インポート失敗: ファイル形式が不正です');
       }
     };
@@ -107,16 +101,6 @@ const DataExportImportPanel: React.FC = () => {
           <input type="file" accept="application/json" ref={fileInputRef} onChange={handleImportJSON} className="block mt-1" />
         </label>
       </div>
-// --- 画面への組み込みサンプル ---
-// import DataExportImportPanel from './components/DataExportImportPanel';
-// function SettingsPage() {
-//   return (
-//     <div>
-//       <h1>設定</h1>
-//       <DataExportImportPanel />
-//     </div>
-//   );
-// }
       <div className="text-xs text-gray-500 mt-2">※インポート後はページを再読み込みしてください</div>
     </section>
   );

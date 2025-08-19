@@ -12,14 +12,3 @@ const DailyLogYearlyStockPage = () => {
 };
 
 export default DailyLogYearlyStockPage;
-            </tr>
-          </thead>
-          <tbody>
-            {summary.map(row => (
-              <tr key={row.month}>
-                <td className="border px-2 py-1">{row.month}月</td>
-                <td className="border px-2 py-1">{row.count}</td>
-                <td className="border px-2 py-1">
-                  {Object.entries(row.categoryCounts).map(([cat, cnt]) => (
-                    <span key={cat} className="inline-block mr-2">{cat}: {cnt}</span>
-// 不要な残骸を削除済み（ダミーのみ）

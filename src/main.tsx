@@ -4,7 +4,6 @@ import App from './App'
 import './index.css'
 
 import { BrowserRouter } from 'react-router-dom'
-import './index.css';
 import { AuthProvider } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -28,6 +27,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
+    {/* BrowserRouter must be top-level once */}
     <BrowserRouter>
       <ErrorBoundary>
         <AuthProvider>

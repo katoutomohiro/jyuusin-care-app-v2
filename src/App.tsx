@@ -1,24 +1,19 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import RouteBoundary from './components/RouteBoundary';
-import { AuthProvider } from './contexts/AuthContext';
-import { DataProvider } from './contexts/DataContext';
-import { NotificationProvider } from './contexts/NotificationContext';
-import { AdminProvider } from './contexts/AdminContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import StructuredDailyLogPage from './pages/StructuredDailyLogPage';
 import { Outlet } from 'react-router-dom';
+import Layout from './components/Layout';
 // /daily-log配下の子ルートを正しく動作させるためのラッパー
 const StructuredDailyLogPageWithOutlet = (props: any) => (
   <>
     <StructuredDailyLogPage {...props} />
-    <Outlet />
   </>
 );
-import Layout from './components/Layout';
 import DailyLogListPage from './pages/DailyLogListPage';
 import DailyLogInputPage from './pages/DailyLogInputPage';
 import DailyLogPreviewPage from './pages/DailyLogPreviewPage';
-import { Navigate } from 'react-router-dom';
 import DailyLogYearlyStockPage from './pages/DailyLogYearlyStockPage';
 import DashboardPage from './pages/DashboardPage';
 import UserListPage from './pages/UserListPage';
@@ -76,60 +71,51 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <BrowserRouter>
-    <AuthProvider>
-      <DataProvider>
-        <NotificationProvider>
-          <AdminProvider>
-            <div className="flex min-h-screen">
-              {/* サイドナビ */}
-              <nav className="w-64 bg-white border-r p-6 flex flex-col gap-4 overflow-y-auto">
-                <h2 className="text-xl font-bold mb-6">魂の器ナビゲーション</h2>
-                {/* 管理者認証コンポーネント */}
-                <AdminAuthComponent />
-                {navItems
-                  .filter(item => item.visible && (!item.adminOnly || true))
-                  .sort((a, b) => a.order - b.order)
-                  .map(item => (
-                    <Link key={item.path} to={item.path} className="py-2 px-4 rounded hover:bg-yellow-100 font-semibold flex flex-col">
-                      <span className="flex items-center space-x-2">
-                        {item.icon && <span>{item.icon}</span>}
-                        <span>{item.label}</span>
-                      </span>
-                      <span style={{ fontSize: '0.85em', color: '#888888', fontWeight: 400 }}>{item.subtitle}</span>
-                    </Link>
-                  ))}
-              </nav>
-              {/* メインコンテンツ */}
-                <main className="flex-1 bg-gray-50 p-8 overflow-y-auto">
-                  <Routes>
-                    <Route element={<Layout />}>
-                      <Route path="/" element={<Navigate to="/daily-log" replace />} />
-                      <Route path="/daily-log">
-                        <Route index element={<StructuredDailyLogPage />} />
-                        <Route path="input" element={<DailyLogInputPage />} />
-                        <Route path="list" element={<DailyLogListPage />} />
-                        <Route path="preview" element={<DailyLogPreviewPage />} />
-                        <Route path="preview/yearly" element={<DailyLogYearlyStockPage />} />
-                      </Route>
-                      <Route path="*" element={<div style={{padding:24}}>404 Not Found</div>} />
-                    </Route>
-                    <Route path="/kaizen" element={<RouteBoundary><KaizenPage /></RouteBoundary>} />
-                    <Route path="/learning" element={<RouteBoundary><LearningHubPage /></RouteBoundary>} />
-                    <Route path="/supplies" element={<RouteBoundary><SuppliesStatusPage /></RouteBoundary>} />
-                    <Route path="/reports" element={<RouteBoundary><ReportEnginePage /></RouteBoundary>} />
-                    <Route path="/settings" element={<RouteBoundary><SettingsPage /></RouteBoundary>} />
-                    {/* 設定ページ内のサブルートとしてアプリ設定管理ページを追加 */}
-                    <Route path="/settings/app-config" element={<RouteBoundary><AdminAppConfigPage /></RouteBoundary>} />
-                    <Route path="/daily-reports" element={<RouteBoundary><DailyReportPage /></RouteBoundary>} />
-                  </Routes>
-                </main>
-              </div>
-          </AdminProvider>
-        </NotificationProvider>
-      </DataProvider>
-    </AuthProvider>
-  </BrowserRouter>
+    <Routes>
+      <Route element={<Layout />}>
+        <Route path="/" element={<Navigate to="/daily-log" replace />} />
+
+  {/* protect daily-log routes */}
+  <Route path="/daily-log" element={<ProtectedRoute><Outlet /></ProtectedRoute>}>
+          <Route index element={<StructuredDailyLogPage />} />
+          {/* only import these pages if they exist - they are present in the project */}
+          <Route path="input" element={
+            // DailyLogInputPage present in src/pages
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            require('./pages/DailyLogInputPage').default
+          } />
+          <Route path="list" element={
+            // DailyLogListPage
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            require('./pages/DailyLogListPage').default
+          } />
+          <Route path="preview" element={
+            // DailyLogPreviewPage
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            require('./pages/DailyLogPreviewPage').default
+          } />
+          <Route path="preview/yearly" element={
+            // DailyLogYearlyStockPage
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            require('./pages/DailyLogYearlyStockPage').default
+          } />
+          <Route path="*" element={<Navigate to="/daily-log" replace />} />
+        </Route>
+
+        {/* users and dashboard */}
+        <Route path="/users" element={<ProtectedRoute>{
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          require('./pages/UserListPage').default
+        }</ProtectedRoute>} />
+        <Route path="/dashboard" element={
+          // DashboardPage exists
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          require('./pages/DashboardPage').default
+        } />
+
+        <Route path="*" element={<Navigate to="/daily-log" replace />} />
+      </Route>
+    </Routes>
   );
 };
 
