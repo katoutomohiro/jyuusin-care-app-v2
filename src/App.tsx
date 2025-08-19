@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import RouteBoundary from './components/RouteBoundary';
 import { AuthProvider } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -8,13 +9,16 @@ import StructuredDailyLogPage from './pages/StructuredDailyLogPage';
 import { Outlet } from 'react-router-dom';
 // /daily-log配下の子ルートを正しく動作させるためのラッパー
 const StructuredDailyLogPageWithOutlet = (props: any) => (
-  <ErrorBoundary excelOnly>
+  <>
     <StructuredDailyLogPage {...props} />
     <Outlet />
-  </ErrorBoundary>
+  </>
 );
+import Layout from './components/Layout';
 import DailyLogListPage from './pages/DailyLogListPage';
+import DailyLogInputPage from './pages/DailyLogInputPage';
 import DailyLogPreviewPage from './pages/DailyLogPreviewPage';
+import { Navigate } from 'react-router-dom';
 import DailyLogYearlyStockPage from './pages/DailyLogYearlyStockPage';
 import DashboardPage from './pages/DashboardPage';
 import UserListPage from './pages/UserListPage';
@@ -71,13 +75,8 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // ナビゲーション設定変更のハンドラー
-  const handleNavItemsChange = (newNavItems: any[]) => {
-    setNavItems(newNavItems);
-    localStorage.setItem('customNavItems', JSON.stringify(newNavItems));
-  };
-
-return (
+  return (
+    <BrowserRouter>
     <AuthProvider>
       <DataProvider>
         <NotificationProvider>
@@ -102,41 +101,35 @@ return (
                   ))}
               </nav>
               {/* メインコンテンツ */}
-              <main className="flex-1 bg-gray-50 overflow-y-auto">
-                <Routes>
-                  <Route path="/" element={<DashboardPage />} />
-                  <Route path="/users" element={<UserListPage />} />
-                  {/* 利用者詳細ページ */}
-                  <Route path="/users/:id" element={<UserDetailPage />} />
-                  {/* 利用者編集ページ */}
-                  <Route path="/users/edit/:userId" element={<UserEditPage />} />
-                  <Route path="/daily-log" element={<StructuredDailyLogPageWithOutlet />}>
-                    <Route path="preview" element={<DailyLogPreviewPage />} />
-                    <Route path="preview/yearly" element={<DailyLogYearlyStockPage />} />
-                  </Route>
-                  <Route path="/daily-log/:userId" element={<ErrorBoundary excelOnly><StructuredDailyLogPage />} />
-                  <Route path="/daily-log-list" element={<DailyLogListPage />} />
-                  <Route path="/qr-access" element={<QRAccessPage />} />
-                  <Route path="/ai-analysis" element={<AIAnalysisDashboard />} />
-                  <Route path="/admin-config" element={<AdminAppConfigPage />} />
-                  <Route path="/navigation-editor" element={<NavigationEditorPage />} />
-                  <Route path="/staff-schedule" element={<StaffSchedulePage />} />
-                  <Route path="/transport-plan" element={<TransportPlanPage />} />
-                  <Route path="/kaizen" element={<KaizenPage />} />
-                  <Route path="/learning" element={<LearningHubPage />} />
-                  <Route path="/supplies" element={<SuppliesStatusPage />} />
-                  <Route path="/reports" element={<ReportEnginePage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
-                  {/* 設定ページ内のサブルートとしてアプリ設定管理ページを追加 */}
-                  <Route path="/settings/app-config" element={<AdminAppConfigPage />} />
-                  <Route path="/daily-reports" element={<DailyReportPage />} />
-                </Routes>
-              </main>
-            </div>
+                <main className="flex-1 bg-gray-50 p-8 overflow-y-auto">
+                  <Routes>
+                    <Route element={<Layout />}>
+                      <Route path="/" element={<Navigate to="/daily-log" replace />} />
+                      <Route path="/daily-log">
+                        <Route index element={<StructuredDailyLogPage />} />
+                        <Route path="input" element={<DailyLogInputPage />} />
+                        <Route path="list" element={<DailyLogListPage />} />
+                        <Route path="preview" element={<DailyLogPreviewPage />} />
+                        <Route path="preview/yearly" element={<DailyLogYearlyStockPage />} />
+                      </Route>
+                      <Route path="*" element={<div style={{padding:24}}>404 Not Found</div>} />
+                    </Route>
+                    <Route path="/kaizen" element={<RouteBoundary><KaizenPage /></RouteBoundary>} />
+                    <Route path="/learning" element={<RouteBoundary><LearningHubPage /></RouteBoundary>} />
+                    <Route path="/supplies" element={<RouteBoundary><SuppliesStatusPage /></RouteBoundary>} />
+                    <Route path="/reports" element={<RouteBoundary><ReportEnginePage /></RouteBoundary>} />
+                    <Route path="/settings" element={<RouteBoundary><SettingsPage /></RouteBoundary>} />
+                    {/* 設定ページ内のサブルートとしてアプリ設定管理ページを追加 */}
+                    <Route path="/settings/app-config" element={<RouteBoundary><AdminAppConfigPage /></RouteBoundary>} />
+                    <Route path="/daily-reports" element={<RouteBoundary><DailyReportPage /></RouteBoundary>} />
+                  </Routes>
+                </main>
+              </div>
           </AdminProvider>
         </NotificationProvider>
       </DataProvider>
     </AuthProvider>
+  </BrowserRouter>
   );
 };
 

@@ -1,3 +1,24 @@
+import { Home, Users, FileText, Plus, BarChart3 } from 'lucide-react';
+
+export const navigation = [
+  { name: 'ダッシュボード', subtitle: '魂の物語', href: '/', icon: Home },
+  { name: '利用者一覧', subtitle: '大切な仲間たち', href: '/users', icon: Users },
+  { name: '日誌入力', subtitle: 'きらめきの記録', href: '/daily-log/input', icon: Plus },
+  { name: '日誌一覧', subtitle: '日々のきらめき', href: '/daily-log/list', icon: FileText },
+  {
+    name: 'A4プレビュー',
+    subtitle: '本日のA4日誌（ダミー）',
+    href: '/daily-log/preview',
+    icon: FileText
+  },
+  {
+    name: '年間ストック',
+    subtitle: '年別集計（ダミー）',
+    href: '/daily-log/preview/yearly',
+    icon: BarChart3
+  },
+  { name: 'レポート', subtitle: '魂の分析', href: '/reports', icon: BarChart3 },
+];
 import { Gender, ServiceType, DisabilityLevel, HandbookType, AssistanceLevel, School, SeizureType, MedicalCare } from './types';
 import type { User, Staff, FacilityInfo, DailyLog, ActivityRecord, SpecialNote, SevereDisabilityUser } from './types';
 

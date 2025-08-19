@@ -8,17 +8,9 @@ import {
   BarChart3
 } from 'lucide-react';
 
-const Sidebar: React.FC = () => {
-  const navigation = [
-    { name: 'ダッシュボード', subtitle: '魂の物語', href: '/', icon: Home },
-    { name: '利用者一覧', subtitle: '大切な仲間たち', href: '/users', icon: Users },
-    { name: '日誌入力', subtitle: 'きらめきの記録', href: '/daily-log/input', icon: Plus },
-    { name: '日誌一覧', subtitle: '日々のきらめき', href: '/daily-log/list', icon: FileText },
-    { name: 'A4プレビュー', subtitle: '本日分A4印刷', href: '/daily-log/preview', icon: FileText },
-    { name: '年間ストック', subtitle: '年別集計・要約', href: '/daily-log/preview/yearly', icon: BarChart3 },
-    { name: 'レポート', subtitle: '魂の分析', href: '/reports', icon: BarChart3 },
-  ];
+import { navigation } from '../constants';
 
+const Sidebar: React.FC = () => {
   return (
     <div className="w-64 bg-white shadow-sm border-r border-gray-200 min-h-screen">
       <nav className="mt-8">
