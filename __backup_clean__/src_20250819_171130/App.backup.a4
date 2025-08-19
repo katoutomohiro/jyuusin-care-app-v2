@@ -1,0 +1,30 @@
+﻿import React from "react";
+import { Routes, Route } from "react-router-dom";
+
+import Layout from "./components/Layout";
+
+import DashboardPage from "./pages/DashboardPage";
+import StructuredDailyLogPage from "./pages/StructuredDailyLogPage";
+import DailyLogInputPage from "./pages/DailyLogInputPage";
+
+import DailyLogPreviewPage from "./pages/DailyLogPreviewPage";
+import DailyLogYearlyStockPage from "./pages/DailyLogYearlyStockPage";
+
+export default function App() {
+  return (
+    <Routes>
+      <Route element={<Layout />}>
+        <Route path="/" element={<DashboardPage />} />
+
+        <Route path="/daily-log">
+          <Route index element={<StructuredDailyLogPage />} />
+          <Route path="input" element={<DailyLogInputPage />} />
+          <Route path="preview" element={<DailyLogPreviewPage />} />
+          <Route path="preview/yearly" element={<DailyLogYearlyStockPage />} />
+        </Route>
+
+        <Route path="*" element={<div style={{padding:24}}>404 Not Found</div>} />
+      </Route>
+    </Routes>
+  );
+}

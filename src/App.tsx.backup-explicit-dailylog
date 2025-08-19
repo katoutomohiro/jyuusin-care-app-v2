@@ -1,0 +1,14 @@
+﻿import React from "react";
+import { Routes, Route } from "react-router-dom";
+import DailyLogPreviewPage from "./pages/DailyLogPreviewPage";
+import DailyLogYearlyStockPage from "./pages/DailyLogYearlyStockPage";
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/daily-log/preview" element={<DailyLogPreviewPage />} />
+      <Route path="/daily-log/preview/yearly" element={<DailyLogYearlyStockPage />} />
+      <Route path="*" element={<div style={{padding:24}}>OK: Router alive</div>} />
+    </Routes>
+  );
+}
