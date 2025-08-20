@@ -28,6 +28,42 @@ export type User = {
   medicalCareDetails?: Record<string, any>;
 };
 
+// --- Minimal enums/string unions to match existing constants usage ---
+export enum Gender {
+  MALE = 'MALE',
+  FEMALE = 'FEMALE',
+  BOY = 'BOY',
+  GIRL = 'GIRL',
+  UNKNOWN = 'UNKNOWN'
+}
+
+export enum HandbookType {
+  PHYSICAL = 'PHYSICAL',
+  REHABILITATION = 'REHABILITATION',
+  MENTAL = 'MENTAL'
+}
+
+export enum AssistanceLevel {
+  FULL = 'FULL',
+  PARTIAL = 'PARTIAL',
+  NONE = 'NONE'
+}
+
+export enum School {
+  SPECIAL_SUPPORT = 'SPECIAL_SUPPORT',
+  NONE = 'NONE'
+}
+
+export enum MedicalCare {
+  SUCTION = 'SUCTION',
+  TUBE_FEEDING = 'TUBE_FEEDING',
+  VENTILATOR = 'VENTILATOR',
+  IVH = 'IVH',
+  INHALATION = 'INHALATION',
+  CATHETERIZATION = 'CATHETERIZATION'
+}
+
+
 // ==================================================================
 // PDFおよび日誌データ構造の型定義
 // ==================================================================

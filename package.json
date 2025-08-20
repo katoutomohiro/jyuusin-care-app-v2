@@ -15,7 +15,7 @@
   "author": "Jyushin Care Team",
   "license": "MIT",
   "scripts": {
-    "dev": "next dev -p 3005",
+  "dev": "vite --host localhost --port 3005 --force",
     "build": "next build",
     "start": "next start -p 3005",
     "dev:silent": "next dev -p 3005",
@@ -31,6 +31,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --quiet",
     "lint:fix": "eslint . --ext ts,tsx --fix --quiet",
     "type-check": "tsc --noEmit --skipLibCheck",
+  "type-check:focused": "tsc -p tsconfig.focus.json --noEmit",
     "ci:full": "npm run type-check && npm run lint && npm run test:coverage && npm run build",
     "ci:critical": "npm run type-check && npm run test:critical && npm run build",
     "pre-commit": "npm run lint && npm run test:critical"

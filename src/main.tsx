@@ -27,19 +27,18 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    {/* BrowserRouter must be top-level once */}
-    <BrowserRouter>
-      <ErrorBoundary>
-        <AuthProvider>
-          <DataProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <DataProvider>
+          <BrowserRouter>
             <NotificationProvider>
               <AdminProvider>
                 <App />
               </AdminProvider>
             </NotificationProvider>
-          </DataProvider>
-        </AuthProvider>
-      </ErrorBoundary>
-    </BrowserRouter>
+          </BrowserRouter>
+        </DataProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );

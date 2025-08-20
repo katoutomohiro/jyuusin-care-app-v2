@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { navigation } from '../constants';
+import { navigation } from '../../constants';
 
 type NavItem = { name: string; subtitle?: string; href: string; icon?: any };
 
