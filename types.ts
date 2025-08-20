@@ -5,6 +5,8 @@ export enum AssistanceLevel {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high'
+  // Backwards-compat aliases used in constants.ts
+  ,FULL = 'high'
 }
 
 // DisabilityLevel: 障害区分レベル（仮定義）
@@ -22,6 +24,9 @@ export enum Gender {
   MALE = 'male',
   FEMALE = 'female',
   OTHER = 'other'
+  // alias
+  ,GIRL = 'female',
+  BOY = 'male'
 }
 
 
@@ -33,6 +38,9 @@ export enum HandbookType {
   LIFE = 'life',
   DAY = 'day',
   RESPITE = 'respite'
+  // aliases for older constants
+  ,REHABILITATION = 'respite'
+  ,PHYSICAL = 'respite'
 }
 
 // SeizureType: 発作タイプ区分（仮定義）
@@ -58,6 +66,11 @@ export enum MedicalCare {
   NEBULIZER = 'nebulizer',
   ENEMA = 'enema',
   OTHER = 'other'
+  // legacy aliases
+  ,IVH = 'other'
+  ,VENTILATOR = 'oxygen'
+  ,INHALATION = 'nebulizer'
+  ,CATHETERIZATION = 'catheter'
 }
 
 // School: 学校区分（仮定義、constants.ts用のダミー実装）
@@ -67,6 +80,8 @@ export enum School {
   HIGH = 'high',
   SPECIAL = 'special',
   NONE = 'none'
+  // alias used in constants
+  ,SPECIAL_SUPPORT = 'special'
 }
 
 // ServiceType: サービス種別（仮定義）
@@ -104,3 +119,68 @@ export type CareEventType =
   | 'vitals'
   | 'behavioral'
   | 'communication';
+
+// Minimal user and related types used across the app (shims to reduce TS noise)
+export interface User {
+  id: string;
+  name: string;
+  displayName?: string;
+  initials?: string;
+  age?: number;
+  gender?: Gender;
+  serviceType?: ServiceType[];
+  birthDate?: string;
+  admissionDate?: string;
+  disabilityLevel?: DisabilityLevel;
+  assistanceLevel?: AssistanceLevel;
+  medicalCare?: MedicalCare[];
+  handbooks?: HandbookType[];
+  status?: string;
+  profile?: UserProfile;
+}
+
+export interface Staff {
+  id: string;
+  name: string;
+}
+
+export interface FacilityInfo {
+  id: string;
+  name: string;
+}
+
+export interface Vitals {
+  temperature?: number | null;
+  pulse?: number | null;
+  spo2?: number | null;
+}
+
+export interface Seizure {
+  type: string;
+  notes?: string;
+}
+
+export interface DailyLog {
+  id: string;
+  userId: string;
+  createdAt?: string;
+  record_date?: string; // legacy alias
+  author?: string; // legacy alias
+  vitals?: Vitals | null;
+  seizure?: Seizure[];
+  expression?: any;
+  medication?: any;
+  special_notes?: any[];
+  other?: any;
+}
+
+export interface ActivityRecord {}
+export interface SpecialNote {}
+export interface SevereDisabilityUser {}
+
+// AuthState minimal shim
+export interface AuthState {
+  isAuthenticated?: boolean;
+  user?: User | null;
+  isLoading?: boolean;
+}

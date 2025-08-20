@@ -30,6 +30,8 @@ import type { User } from '../types';
 
 type DataContextType = {
   users: User[];
+  selectedUserId: string | null;
+  setSelectedUserId: (id: string | null) => void;
   dailyLogsByUser: Record<string, any[]>;
   getUserById: (id: string) => User | undefined;
   getDailyLogsByUser: (userId: string) => any[];
@@ -67,6 +69,16 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     return logs;
   });
 
+  // 選択中利用者ID（localStorageと同期）
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(() => {
+    try {
+      const s = localStorage.getItem('selectedUserId');
+      return s || null;
+    } catch (e) {
+      return null;
+    }
+  });
+
   // DataContext初期化時にlocalStorageのusersキーも必ず24名で上書き
   useEffect(() => {
     if (!users || users.length === 0) {
@@ -79,6 +91,16 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('users', JSON.stringify(users));
     }
   }, []); // 初回レンダリング時にのみ実行
+
+  // selectedUserId を localStorage に同期
+  useEffect(() => {
+    try {
+      if (selectedUserId) localStorage.setItem('selectedUserId', selectedUserId);
+      else localStorage.removeItem('selectedUserId');
+    } catch (e) {
+      // ignore
+    }
+  }, [selectedUserId]);
 
   const getUserById = (id: string) => users.find((u) => u.id === id);
   
@@ -166,7 +188,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <DataContext.Provider value={{ users, dailyLogsByUser, getUserById, getDailyLogsByUser, getFrequentTags, addDailyLog }}>
+    <DataContext.Provider value={{ users, selectedUserId, setSelectedUserId, dailyLogsByUser, getUserById, getDailyLogsByUser, getFrequentTags, addDailyLog }}>
       {children}
     </DataContext.Provider>
   );

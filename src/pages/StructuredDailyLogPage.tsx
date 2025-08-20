@@ -28,6 +28,7 @@ import InlineEditText from '../components/InlineEditText';
 import InlineEditableList from '../components/InlineEditableList';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useGoDailyLogInput } from '../hooks/useGoDailyLogInput';
 import { useNotification } from '../contexts/NotificationContext';
 import { DailyLog, User } from '../types';
 import { useLocation } from 'react-router-dom';
@@ -180,6 +181,7 @@ function generateDailyLog(
 const StructuredDailyLogPage: FC = () => {
   const navigate = useNavigate();
   const { users, dailyLogsByUser } = useData();
+  const goInput = useGoDailyLogInput();
   // const { user: currentUser } = useAuth(); // Commented out due to context type issues
   // const { addNotification } = useNotification(); // Commented out due to context type issues
   const location = useLocation();
@@ -364,7 +366,7 @@ const StructuredDailyLogPage: FC = () => {
               {users.map(user => (
                 <button
                   key={user.id}
-                  onClick={() => setSelectedUserId(user.id)}
+                  onClick={() => goInput(user.id)}
                   className="p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 rounded-lg border border-blue-200 transition-all duration-200 text-left"
                 >
                   <div className="font-semibold text-gray-800">{user.name}</div>

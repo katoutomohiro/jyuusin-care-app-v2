@@ -1,14 +1,14 @@
 export type User = {
   id: string;
   name: string;
-  initials: string;
-  age: number;
-  gender: string;
-  serviceType: string[];
+  initials?: string;
+  age?: number;
+  gender?: any;
+  serviceType?: string[];
   birthDate?: string;
   admissionDate?: string;
   disabilityLevel?: string;
-  underlyingConditions?: string[];
+  underlyingConditions?: any;
   medicalCare?: string[];
   handbooks?: string[];
   assistanceLevel?: string;
@@ -26,6 +26,8 @@ export type User = {
   careLevel?: string;
   school?: string;
   medicalCareDetails?: Record<string, any>;
+  email?: string;
+  [k: string]: any;
 };
 
 // --- Minimal enums/string unions to match existing constants usage ---
@@ -74,6 +76,8 @@ export interface Vitals {
   blood_pressure_systolic: number | null;
   blood_pressure_diastolic: number | null;
   spo2: number | null;
+  // alias sometimes used in code
+  spO2?: number | null;
   respiratory_rate: number | null;
   measurement_time: string; // ISO 8601 format
   measurement_position?: string;
@@ -133,6 +137,9 @@ export interface DailyLog {
   userId: string;
   userName: string;
   date: string;          // YYYY-MM-DD
+  // legacy aliases used across the codebase
+  record_date?: string;
+  author?: string;
   vitals: Vitals | null;
   hydration: Hydration[];   // 水分・食事
   excretion: Excretion[];   // 排泄

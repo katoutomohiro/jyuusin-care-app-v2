@@ -17,3 +17,10 @@ declare module 'pdf' {
   const pdf: any;
   export default pdf;
 }
+
+declare module 'lucide-react';
+
+declare module "*.ttf?url" {
+  const src: string;
+  export default src;
+}

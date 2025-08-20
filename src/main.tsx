@@ -29,15 +29,15 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
       <AuthProvider>
-        <DataProvider>
-          <BrowserRouter>
+        <AdminProvider>
+          <DataProvider>
             <NotificationProvider>
-              <AdminProvider>
+              <BrowserRouter>
                 <App />
-              </AdminProvider>
+              </BrowserRouter>
             </NotificationProvider>
-          </BrowserRouter>
-        </DataProvider>
+          </DataProvider>
+        </AdminProvider>
       </AuthProvider>
     </ErrorBoundary>
   </React.StrictMode>
