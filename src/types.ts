@@ -901,4 +901,54 @@ export enum PositionType {
   RIGHT_SIDE = 'right_side',
   SITTING = 'sitting',
   STANDING = 'standing'
+}// ====== compat patch: enums used in constants.ts ======
+export enum AssistanceLevel { FULL="FULL" }
+export enum School { SPECIAL_SUPPORT="SPECIAL_SUPPORT" }
+export enum Gender { BOY="BOY", GIRL="GIRL" }
+export enum HandbookType { REHABILITATION="REHABILITATION", PHYSICAL="PHYSICAL" }
+export enum MedicalCare {
+  TUBE_FEEDING="TUBE_FEEDING", IVH="IVH",
+  VENTILATOR="VENTILATOR", INHALATION="INHALATION", CATHETERIZATION="CATHETERIZATION"
 }
+
+// ====== compat patch: core domain types (minimal, optionalで許容) ======
+export type Seizure = { type?: string; [k:string]: any };
+
+export type Vitals = {
+  temperature?: number|null;
+  pulse?: number|null;
+  spo2?: number|null;   // 既存
+  spO2?: number|null;   // コンポーネント側の大文字O表記に合わせた別名
+  [k:string]: any;
+};
+
+export type DailyLog = {
+  record_date?: string;       // A4出力が参照
+  author?: string;
+  vitals?: Vitals;
+  seizure?: Seizure[];        // 既存typesの正表記
+  seizures?: Seizure[];       // 旧/別表記を暫定許容
+  expression?: any;
+  medication?: any;
+  special_notes?: { details?: string }[];
+  other?: any;
+  [k:string]: any;
+};
+
+// ====== compat patch: context types（一部画面が要求する項目を許容） ======
+export type User = { id?: string; name?: string; [k:string]: any };
+
+export type AuthState = {
+  user?: User|null;
+  isAuthenticated?: boolean;
+  isLoading?: boolean;
+  [k:string]: any;
+};
+
+export type DataContextType = {
+  users?: User[];
+  addUser?: (u:User)=>void;
+  removeUser?: (id:string)=>void;
+  updateUser?: (u:User)=>void;
+  [k:string]: any;
+};

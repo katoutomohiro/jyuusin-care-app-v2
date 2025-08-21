@@ -1,0 +1,13 @@
+﻿{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/pages/DataExportImportPanel.tsx",
+    "src/pages/DailyLogYearlyStockPage.tsx",
+    "src/types/shims.d.ts"
+  ],
+  "exclude": []
+}
