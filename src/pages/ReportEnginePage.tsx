@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
-import { BarChart, LineChart, PieChart, TrendingUp, FileText, Download, User, Calendar } from 'lucide-react';
+// import { BarChart, LineChart, PieChart, TrendingUp, FileText, Download, User, Calendar } from 'lucide-react';
 
 interface ReportData {
   totalRecords: number;
@@ -69,9 +69,14 @@ const ReportEnginePage: React.FC = () => {
     }
 
     // データ収集
+    // 全イベント型を0で初期化
+    const initialRecordsByType: { [key: string]: number } = {};
+    Object.keys(eventTypeLabels).forEach(eventType => {
+      initialRecordsByType[eventType] = 0;
+    });
     const reportData: ReportData = {
       totalRecords: 0,
-      recordsByType: {},
+      recordsByType: initialRecordsByType,
       recordsByUser: {},
       recordsByDay: {},
       trendAnalysis: {
@@ -192,7 +197,7 @@ const ReportEnginePage: React.FC = () => {
 
 記録種別内訳:
 ${Object.entries(reportData.recordsByType)
-  .filter(([_, count]) => count > 0)
+  .filter(([_, count]) => (count as number) > 0)
   .map(([type, count]) => `・${eventTypeLabels[type as keyof typeof eventTypeLabels]}: ${count}件`)
   .join('\n')}
 
@@ -239,7 +244,7 @@ ${Object.entries(reportData.recordsByUser)
             disabled={!reportData || isGenerating}
             className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
           >
-            <Download size={16} />
+            {/* <Download size={16} /> */}
             <span>レポート出力</span>
           </button>
         </div>
@@ -335,10 +340,10 @@ ${Object.entries(reportData.recordsByUser)
               <h2 className="text-xl font-semibold mb-4">📊 記録種別内訳</h2>
               <div className="space-y-2">
                 {Object.entries(reportData.recordsByType)
-                  .filter(([_, count]) => count > 0)
-                  .sort(([,a], [,b]) => b - a)
+                  .filter(([_, count]) => (count as number) > 0)
+                  .sort(([,a], [,b]) => (b as number) - (a as number))
                   .map(([type, count]) => {
-                    const percentage = Math.round((count / reportData.totalRecords) * 100);
+                    const percentage = Math.round(((count as number) / reportData.totalRecords) * 100);
                     return (
                       <div key={type} className="flex items-center">
                         <div className="w-32 text-sm text-gray-700">
@@ -367,10 +372,10 @@ ${Object.entries(reportData.recordsByUser)
                 <h2 className="text-xl font-semibold mb-4">👥 利用者別記録数</h2>
                 <div className="space-y-3">
                   {Object.entries(reportData.recordsByUser)
-                    .sort(([,a], [,b]) => b - a)
+                    .sort(([,a], [,b]) => (b as number) - (a as number))
                     .map(([userId, count]) => {
                       const user = users.find(u => u.id === userId);
-                      const percentage = Math.round((count / reportData.totalRecords) * 100);
+                      const percentage = Math.round(((count as number) / reportData.totalRecords) * 100);
                       return (
                         <div key={userId} className="flex items-center">
                           <div className="w-20">
@@ -426,7 +431,7 @@ ${Object.entries(reportData.recordsByUser)
 
         {reportData && reportData.totalRecords === 0 && !isGenerating && (
           <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-            <FileText size={48} className="mx-auto text-gray-400 mb-4" />
+            {/* <FileText size={48} className="mx-auto text-gray-400 mb-4" /> */}
             <h3 className="text-lg font-semibold text-gray-700 mb-2">記録がありません</h3>
             <p className="text-gray-600">
               選択した期間・利用者の記録がまだありません。<br />

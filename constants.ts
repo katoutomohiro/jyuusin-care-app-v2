@@ -1,3 +1,14 @@
+import { Home, Users, FileText, Plus, BarChart3 } from 'lucide-react';
+
+export const navigation = [
+  { name: 'ダッシュボード', subtitle: 'ホーム', href: '/', icon: Home },
+  { name: '利用者管理', subtitle: '利用者一覧', href: '/users', icon: Users },
+  { name: '日誌（ホーム）', subtitle: '利用者タイル', href: '/daily-log', icon: FileText },
+  { name: '日誌入力', subtitle: '新規入力', href: '/daily-log/input', icon: Plus },
+  { name: '日誌一覧', subtitle: '過去の記録', href: '/daily-log/list', icon: FileText },
+  { name: 'A4プレビュー', subtitle: 'A4 出力プレビュー', href: '/daily-log/preview', icon: FileText },
+  { name: '年間ストック', subtitle: '年次集計', href: '/daily-log/preview/yearly', icon: BarChart3 },
+];
 import { Gender, ServiceType, DisabilityLevel, HandbookType, AssistanceLevel, School, SeizureType, MedicalCare } from './types';
 import type { User, Staff, FacilityInfo, DailyLog, ActivityRecord, SpecialNote, SevereDisabilityUser } from './types';
 
@@ -165,7 +176,7 @@ export const MEDICAL_CARE_PROVIDED = ["吸引", "吸入", "経管栄養", "導�
 export const SPECIAL_NOTE_CATEGORIES = ["家族への連絡", "ヒヤリハット", "職員からの気づき", "要観察事項"];
 
 // とんさんの事業所情報に基づく利用者データ
-export const SEVERE_DISABILITY_USERS: SevereDisabilityUser[] = [
+export const SEVERE_DISABILITY_USERS: User[] = [
   // 生活介護利用者（14名）
   {
     id: '1',
@@ -188,7 +199,10 @@ export const SEVERE_DISABILITY_USERS: SevereDisabilityUser[] = [
       phone: '090-0000-0001',
       emergencyPhone: '090-0000-0001'
     },
-    status: 'active'
+    status: 'active',
+    underlyingDiseases: '',
+    certificates: '',
+    careLevel: ''
   },
   {
     id: '2',
@@ -211,7 +225,10 @@ export const SEVERE_DISABILITY_USERS: SevereDisabilityUser[] = [
       phone: '090-0000-0002',
       emergencyPhone: '090-0000-0002'
     },
-    status: 'active'
+    status: 'active',
+    underlyingDiseases: '',
+    certificates: '',
+    careLevel: ''
   },
   {
     id: '3',
@@ -234,7 +251,10 @@ export const SEVERE_DISABILITY_USERS: SevereDisabilityUser[] = [
       phone: '090-0000-0003',
       emergencyPhone: '090-0000-0003'
     },
-    status: 'active'
+    status: 'active',
+    underlyingDiseases: '',
+    certificates: '',
+    careLevel: ''
   },
   {
     id: '4',
@@ -262,7 +282,10 @@ export const SEVERE_DISABILITY_USERS: SevereDisabilityUser[] = [
       suctionFrequency: '必要時',
       specialCare: '腸瘻バルーン管理'
     },
-    status: 'active'
+    status: 'active',
+    underlyingDiseases: '',
+    certificates: '',
+    careLevel: ''
   },
   {
     id: '5',

@@ -1,82 +1,36 @@
-// src/components/pdf/registerFonts.ts
+import { Font } from '@react-pdf/renderer';
 
-// 将来の挙動切替用フラグ。featureFlags が無い環境でも壊さない。
-let flags: { pdfSafeMode?: boolean } = { pdfSafeMode: true };
-(async () => {
-  try {
-    // 動的 import：存在しなければ無視（型/ビルドを壊さない）
-  // NOTE: 拡張子無しで動的import（Vite推奨）。型解決失敗時は安全に null。
-  const mod = await import('../../config/featureFlags').catch(() => null as unknown as { featureFlags?: { pdfSafeMode?: boolean } });
-    if (mod?.featureFlags) flags = mod.featureFlags;
-  } catch {
-    // ignore
-  }
-})();
+// src 配下に置いた TTF を相対 import（?url）で取り込む。
+// これにより Vite がアセットとして確実にバンドル・配信する。
+import regularUrl from './fonts/ShipporiMincho-Regular.ttf?url';
+import boldUrl    from './fonts/ShipporiMincho-Bold.ttf?url';
 
-// フォント探索：マッチ0件でも Vite は空オブジェクトを返すため安全
-// Vite の import.meta.glob 型宣言が無い場合へのフォールバック (最小限)
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-const fontUrls = (import.meta as any).glob('./fonts/*.ttf', {
-  eager: true,
-  // Vite 5 の as:'url'。型の都合で any キャスト。
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  as: 'url' as any,
-}) as Record<string, string>;
-
+const FAMILY = 'Shippori Mincho';
 let registered = false;
 
 /**
- * PDFフォントを「存在する時だけ」安全に登録する。
- * - @react-pdf/renderer が未導入なら即 no-op
- * - フォントファイルが無ければ即 no-op
- * - 例外はログのみで UI/ビルドを壊さない
+ * PDF 用フォント登録（glyf 付き TTF 限定）
+ * - italic は登録しない（斜体は fauxItalic で表現）
+ * - weight は 400 / 700 のみ
+ * - import で解決された実在 URL を直接登録（SPA フォールバックで HTML を拾う事故を回避）
  */
-export async function ensurePdfFontsRegistered(): Promise<void> {
+export function registerPdfFonts() {
   if (registered) return;
-  if (!flags.pdfSafeMode) return;
 
-  // 動的 import（依存未導入でも壊さない）
-  let Font: any | undefined;
-  try {
-    const pdfMod = await import('@react-pdf/renderer').catch(() => null as unknown as { Font?: any });
-    Font = pdfMod?.Font;
-  } catch {
-    Font = undefined;
-  }
-  if (!Font) {
-    // @react-pdf/renderer 未導入：安全にスキップ
-    // console.info('[PDF FONT] @react-pdf/renderer not available, skip');
-    return;
-  }
+  Font.register({
+    family: FAMILY,
+    fonts: [
+      { src: (regularUrl as unknown as string), fontWeight: 400 },
+      { src: (boldUrl    as unknown as string), fontWeight: 700 },
+    ],
+  });
 
-  try {
-    const entries = Object.entries(fontUrls);
-    if (entries.length === 0) {
-      // フォント未同梱：安全にスキップ
-      // console.info('[PDF FONT] no TTF fonts found, skip registration');
-      return;
-    }
-
-    // "Regular"/"Bold" を優先。無ければ1件目をRegular扱いで登録。
-    const pick = (kw: string): string | undefined =>
-      entries.find(([p]) => p.toLowerCase().includes(kw))?.[1];
-
-    const regular = pick('regular') ?? entries[0][1];
-    const bold = pick('bold');
-
-    const fonts: Array<{ src: string; fontStyle: 'normal'; fontWeight: number }> = [
-      { src: regular, fontStyle: 'normal', fontWeight: 400 },
-    ];
-    if (bold) fonts.push({ src: bold, fontStyle: 'normal', fontWeight: 700 });
-
-    Font.register({ family: 'ShipporiMincho', fonts });
-    registered = true;
-  } catch (e) {
-    console.error('[PDF FONT] register failed (no-op):', e);
-    // 失敗してもUIを落とさない
-  }
+  registered = true;
 }
 
-// CFF/CFF2禁止。イタリックはfaux対応（必要時のみ）
+export const pdfFamily = FAMILY;
+
+/**
+ * 疑似イタリック（react-pdf 用スタイル）
+ */
 export const fauxItalic = { transform: 'skewX(-8deg)' } as const;

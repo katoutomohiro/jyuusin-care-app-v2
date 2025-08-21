@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
-import type { User, MedicalCare, ServiceType } from '../types';
+import type { User, MedicalCare, ServiceType } from '../../types';
 
 /**
  * 利用者の基本情報を編集するページです。利用者一覧から「編集」をクリックすると

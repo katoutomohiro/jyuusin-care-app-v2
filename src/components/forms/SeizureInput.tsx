@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertTriangle, Clock, Activity } from 'lucide-react';
-import { SeizureRecord } from '../../types';
+import { SeizureRecord } from '../../../types';
 
 interface SeizureInputProps {
   value: SeizureRecord[];
